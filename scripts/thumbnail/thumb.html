@@ -33,23 +33,31 @@
   .title{position:absolute;left:0;right:0;bottom:var(--tb,7%);text-align:center;color:#fff;font-weight:900;
     font-size:calc(var(--u)*var(--ts,9));letter-spacing:-.02em;text-shadow:0 calc(var(--u)*.6) 0 #0a3f24,0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.45)}
   .title span{color:#ffd166}
+  .title small{display:block;margin:calc(var(--u)*.6) auto 0;width:max-content;font-size:.26em;letter-spacing:.02em;font-weight:900;color:#3a2600;background:#ffd166;border-radius:999px;
+    padding:calc(var(--u)*.5) calc(var(--u)*2.4);text-shadow:none;box-shadow:0 calc(var(--u)*.5) 0 #c98410}
+  /* a chess knight on a wooden token */
+  .knight{position:absolute;width:calc(var(--u)*15);height:calc(var(--u)*15);margin:calc(var(--u)*-7.5);border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#f6dfb6,#d3a873 60%,#a87a45);box-shadow:0 calc(var(--u)*1) calc(var(--u)*2.4) rgba(0,0,0,.4),inset 0 0 0 calc(var(--u)*.5) #8a5d2e;
+    display:flex;align-items:center;justify-content:center;font-size:calc(var(--u)*11);line-height:1;font-family:"Apple Symbols","Segoe UI Symbol","DejaVu Sans",serif;color:#1d1f27;
+    text-shadow:0 calc(var(--u)*.3) 0 rgba(255,255,255,.4)}
+  .spark{position:absolute;color:#ffe08a;font-size:calc(var(--u)*3);opacity:.9}
   .chip{position:absolute;width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:50%;margin:calc(var(--u)*-3.5);
     background:var(--c);box-shadow:inset 0 0 0 calc(var(--u)*.7) #fff,inset 0 0 0 calc(var(--u)*1.5) var(--c),inset 0 0 0 calc(var(--u)*1.9) rgba(255,255,255,.75),0 calc(var(--u)*.6) calc(var(--u)*1.2) rgba(0,0,0,.4)}
 </style></head>
 <body>
 <div class="glow"></div>
 <div class="scene" id="scene"></div>
-<div class="title" id="title">Kort<span>bord</span></div>
+<div class="title" id="title">Free <span>Deck</span><small id="tag">Cards · Chess · Your own games</small></div>
 <script>
 const q = new URLSearchParams(location.search);
 const W = innerWidth, H = innerHeight, portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
 const root = document.documentElement.style;
 if (q.get('title') === '0') document.getElementById('title').remove();
-else if (portrait) { root.setProperty('--ts', 14); root.setProperty('--tb', '24%'); }
-else if (square) { root.setProperty('--ts', 13); root.setProperty('--tb', '6%'); }
+else if (portrait) { root.setProperty('--ts', 15); root.setProperty('--tb', '20%'); }
+else if (square) { root.setProperty('--ts', 13); root.setProperty('--tb', '5%'); }
 const hasTitle = q.get('title') !== '0';
 document.body.style.setProperty('--s', portrait ? 1.12 : square ? 1.1 : 1.05);
-document.body.style.setProperty('--top', hasTitle ? (portrait ? '40%' : square ? '45%' : '42%') : '52%');
+document.body.style.setProperty('--top', hasTitle ? (portrait ? '38%' : square ? '40%' : '38%') : '52%');
 const card = (r, s, x, y, rot, z) => {
   const red = s === '♥' || s === '♦', face = 'JQK'.includes(r);
   return `<div class="card${red ? ' red' : ''}" style="left:calc(var(--u)*${x});top:calc(var(--u)*${y});transform:rotate(${rot}deg);z-index:${z}">
@@ -65,6 +73,10 @@ const fan = [['10', '♦'], ['J', '♣'], ['Q', '♥'], ['K', '♠'], ['A', '♥
 fan.forEach(([r, s], i) => { const k = i - 2; html += card(r, s, 6 + k * 7.5, Math.abs(k) * 1.6, k * 13, 20 + i); });
 // a few chips
 [['#e0443a', 24, 13], ['#2d6cdf', 29, 9], ['#1f2433', 27, 16.5]].forEach(([c, x, y], i) => html += `<div class="chip" style="--c:${c};left:calc(var(--u)*${x});top:calc(var(--u)*${y});z-index:${40 + i}"></div>`);
+// a chess knight token, a flying card and a few sparkles
+html += `<div class="knight" style="left:calc(var(--u)*36);top:calc(var(--u)*-6);z-index:45;transform:rotate(8deg)">\u265E\uFE0E</div>`;
+html += `<div class="card back" style="left:calc(var(--u)*-40);top:calc(var(--u)*-15);transform:rotate(-28deg) scale(.8);z-index:1;opacity:.95"></div>`;
+[[-18, -20], [30, -18], [44, 14], [-44, 14]].forEach(([x, y]) => html += `<div class="spark" style="left:calc(var(--u)*${x});top:calc(var(--u)*${y})">✦</div>`);
 document.getElementById('scene').innerHTML = html;
 </script>
 </body></html>
