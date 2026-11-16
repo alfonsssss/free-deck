@@ -17,7 +17,7 @@ add({
     'bj.rPush': 'Lika ({v}) – fick tillbaka {b}', 'bj.rLose': 'Förlorade {b} ({v} mot {d})', 'bj.has': '{t} · har {n}', 'bj.tDealerBust': 'Dealern blev tjock! 🎉', 'bj.tDealer': 'Dealern fick {d}',
     'bj.bet': 'Satsa {n}', 'bj.hit': 'Ta kort', 'bj.stand': 'Stå', 'bj.double': 'Dubbla', 'bj.hBet': 'Tryck på markerna för att satsa – du har {n}.', 'bj.hBetting': 'Din insats: {b}. Tryck på fler marker eller Dela ut. Kvar: {n}.', 'bj.clear': 'Rensa', 'bj.deal': 'Dela ut ({n})', 'bj.same': 'Samma igen ({n})', 'bj.hWaitBets': 'Väntar på att alla ska satsa…',
     'bj.hTurn': 'Du har {v}. Vill du ta ett kort till eller stå?', 'bj.hDealer': 'Dealern spelar…', 'bj.betOk': '✅ Satsat', 'bj.betting': 'Satsar…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
-    'bj.yourCards': 'Dina kort · {v}', 'bj.split': 'Dela', 'bj.noSplit': 'Du kan bara dela två lika kort.', 'bj.splitMsg': '{a} delade handen', 'bj.hTurnN': 'Hand {i} av {n}: du har {v}. Ta kort eller stå?',
+    'bj.yourCards': 'Dina kort · {v}', 'bj.bjPaid': 'Blackjack! {a} vann {n} direkt', 'bj.split': 'Dela', 'bj.noSplit': 'Du kan bara dela två lika kort.', 'bj.splitMsg': '{a} delade handen', 'bj.hTurnN': 'Hand {i} av {n}: du har {v}. Ta kort eller stå?',
     'bj.yourHandN': 'Hand {i} av {n} · {v}', 'bj.rWon': '{a} vann {n}', 'bj.rLost': '{a} förlorade {n}', 'bj.rEven': '{a} fick tillbaka insatsen', 'bj.paren': '({t})', 'bj.pBust': 'tjock på {v}', 'bj.pBJ': 'blackjack',
     'bj.pDealerBJ': 'dealern hade blackjack', 'bj.pVs': '{v} mot {d}', 'bj.pPush': 'lika på {v}', 'bj.busted': 'tjock' },
   en: { 'bj.newChips': '{a} got {n} new chips', 'bj.chooseBet': 'Choose how much to bet.', 'bj.reveal': 'The dealer turns over the hidden card…', 'bj.bj': 'Blackjack! 🎉', 'bj.dealerBJ': 'The dealer has blackjack!',
@@ -27,7 +27,7 @@ add({
     'bj.rPush': 'Push ({v}) – got {b} back', 'bj.rLose': 'Lost {b} ({v} vs {d})', 'bj.has': '{t} · has {n}', 'bj.tDealerBust': 'The dealer went bust! 🎉', 'bj.tDealer': 'The dealer got {d}',
     'bj.bet': 'Bet {n}', 'bj.hit': 'Hit', 'bj.stand': 'Stand', 'bj.double': 'Double', 'bj.hBet': 'Tap the chips to bet – you have {n}.', 'bj.hBetting': 'Your bet: {b}. Tap more chips or Deal. Left: {n}.', 'bj.clear': 'Clear', 'bj.deal': 'Deal ({n})', 'bj.same': 'Same again ({n})', 'bj.hWaitBets': 'Waiting for everyone to bet…',
     'bj.hTurn': 'You have {v}. Take another card or stand?', 'bj.hDealer': 'The dealer is playing…', 'bj.betOk': '✅ Bet placed', 'bj.betting': 'Betting…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
-    'bj.yourCards': 'Your cards · {v}', 'bj.split': 'Split', 'bj.noSplit': 'You can only split two cards of the same value.', 'bj.splitMsg': '{a} split the hand', 'bj.hTurnN': 'Hand {i} of {n}: you have {v}. Hit or stand?',
+    'bj.yourCards': 'Your cards · {v}', 'bj.bjPaid': 'Blackjack! {a} won {n} right away', 'bj.split': 'Split', 'bj.noSplit': 'You can only split two cards of the same value.', 'bj.splitMsg': '{a} split the hand', 'bj.hTurnN': 'Hand {i} of {n}: you have {v}. Hit or stand?',
     'bj.yourHandN': 'Hand {i} of {n} · {v}', 'bj.rWon': '{a} won {n}', 'bj.rLost': '{a} lost {n}', 'bj.rEven': '{a} got the bet back', 'bj.paren': '({t})', 'bj.pBust': 'bust on {v}', 'bj.pBJ': 'blackjack',
     'bj.pDealerBJ': 'the dealer had blackjack', 'bj.pVs': '{v} vs {d}', 'bj.pPush': 'push on {v}', 'bj.busted': 'bust' },
 });
@@ -78,10 +78,20 @@ function deal(G) {
   for (let s = 0; s < G.n; s++) G.sp[s][0].cards.push(draw(G));
   G.dealer.push(draw(G));
   G.phase = 'play'; G.hole = true;
-  for (let s = 0; s < G.n; s++) if (isBJ(G.sp[s][0].cards)) { G.done[s] = true; G.sp[s][0].done = true; G.sp[s][0].status = M('bj.bj'); }
   if (isBJ(G.dealer)) { G.done.fill(true); G.msg = M('bj.dealerBJ'); }
-  else G.msg = '';
+  else {
+    G.msg = '';
+    // blackjack wins at once: paid 3 to 2 right away (the dealer has checked for blackjack)
+    for (let s = 0; s < G.n; s++) {
+      const h = G.sp[s][0];
+      if (!isBJ(h.cards)) continue;
+      const win = Math.floor(h.bet * 2.5);
+      G.chips[s] += win; h.paid = win; h.done = true; G.done[s] = true; h.status = M('bj.bj');
+      G.msg = M('bj.bjPaid', { a: seat(s), n: win - h.bet });
+    }
+  }
   nextTurn(G);
+  if (G.phase === 'dealer' && G.sp.every(hs => hs.every(h => h.paid != null))) step(G, 'settle'); // everyone had blackjack: no need to wait for the dealer
 }
 const canSplit = (G, s) => { const h = cur(G, s); return h && h.cards.length === 2 && cval(h.cards[0]) === cval(h.cards[1]) && G.sp[s].length < 4 && G.chips[s] >= h.bet; };
 function act(G, s, m) {
@@ -145,6 +155,7 @@ function step(G, key) {
     for (const h of hs) {
       const v = value(h.cards).t, b = h.bet, bj = isBJ(h.cards) && hs.length === 1;
       let win = 0;
+      if (h.paid != null) { parts.push(M('bj.pBJ')); net += h.paid - b; continue; } // already paid when it was dealt
       if (v > 21) parts.push(M('bj.pBust', { v }));
       else if (bj && !dBJ) { win = Math.floor(b * 2.5); parts.push(M('bj.pBJ')); }
       else if (dBJ && !bj) parts.push(M('bj.pDealerBJ'));
