@@ -254,7 +254,7 @@ function deckGather() {
   const want = cfg ? ddMakeCards(cfg.deck) : null; // after "Use these cards" the deck changes
   DK.st = { piles: [{ id: dkId(), x: 0.5, y: 0.42, cards: want || dkShuffle(all) }], hands: {} };
   if (cfg) DK.st.cfg = cfg; if (meta) DK.st.meta = meta;
-  sfx('slide'); deckCommit(); setTimeout(() => { sfx('shuffle'); dkShakePile(DK.st.piles[0]); }, 280);
+  sfx('slide'); deckCommit(); setTimeout(() => { sfx('shuffle'); dkShakePile(DK.st.piles[0]); cgMidgame(); }, 600);
 }
 // deal n cards from the biggest pile, one at a time like a dealer
 function deckDeal(n, to, up) {
@@ -541,7 +541,7 @@ function deckNewRound() {
   deckSnap();
   const players = DK.online ? DK.peers.map(p => p.pid) : [DK.me];
   DK.st = dkFromSetup(DK.game.setup, players.length ? players : [DK.me]);
-  sfx('shuffle'); deckCommit('shuffle');
+  sfx('shuffle'); deckCommit('shuffle'); cgMidgame();
 }
 function deckCreate() {
   DK.game = null; DK.creating = true; DK.hist = [];

@@ -25,7 +25,41 @@ async function platformInit() {
   try { LANG = detectLang(CG.sdk.user.systemInfo && CG.sdk.user.systemInfo.locale); } catch (e) {}
   try { if (CG.sdk.user.isUserAccountAvailable) { const u = await CG.sdk.user.getUser(); if (u && u.username) CG.username = u.username; } } catch (e) {}
   try { CG.sdk.game.addJoinRoomListener(params => { const code = params && params.room; if (code) enterRoom(cleanCode(code), null, false, true); }); } catch (e) {}
+  // CrazyGames' own "mute" setting
+  try { const st = CG.sdk.game.settings; if (st && st.muteAudio) SFX.platformMute = true;
+    CG.sdk.game.addSettingsChangeListener(n => { SFX.platformMute = !!(n && n.muteAudio); }); } catch (e) {}
 }
+
+/* ---------- ads (CrazyGames only) ----------
+   Kind to players: never at the start, only at natural breaks (a round or game is over, a new deal,
+   going back to the start page), at most one every 3 minutes. Rewarded ads only when the player asks
+   (e.g. "Free chips"). Sound is muted and the game is paused while an ad plays. */
+const ADS = { lastAt: Date.now(), busy: false, GAP: 3 * 60 * 1000, FIRST: 2 * 60 * 1000 };
+function cgAd(type) {
+  return new Promise(res => {
+    if (!CG.sdk || ADS.busy) return res(false);
+    ADS.busy = true;
+    const wasPlaying = CG.playing;
+    const done = ok => { ADS.busy = false; SFX.adMute = false; if (ok || type === 'midgame') ADS.lastAt = Date.now(); if (wasPlaying) cgGameplay(true); res(ok); };
+    try {
+      CG.sdk.ad.requestAd(type, {
+        adStarted: () => { SFX.adMute = true; try { SFX.ctx && SFX.ctx.suspend(); } catch (e) {} if (CG.playing) cgGameplay(false); },
+        adFinished: () => { try { SFX.ctx && !SFX.muted && SFX.ctx.resume(); } catch (e) {} done(true); },
+        adError: () => done(false),
+      });
+    } catch (e) { done(false); }
+  });
+}
+// a short ad at a natural break – skipped if one was shown recently
+function cgMidgame() {
+  if (!CG.sdk || ADS.busy) return Promise.resolve(false);
+  const now = Date.now();
+  if (now - ADS.lastAt < (ADS.shown ? ADS.GAP : ADS.FIRST)) return Promise.resolve(false);
+  ADS.shown = true;
+  return cgAd('midgame');
+}
+const cgCanReward = () => !!CG.sdk;
+const cgRewarded = () => cgAd('rewarded');
 function platformLoaded() { try { CG.sdk && CG.sdk.game.loadingStop(); } catch (e) {} }
 const cleanCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
 

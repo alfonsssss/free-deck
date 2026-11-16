@@ -760,7 +760,7 @@ function route(){
   else if(cgInstant()&&hasServer()) enterRoom(randomCode(),'g-vandatta',false,true); // CrazyGames "instant multiplayer": straight into a room
   else showLanding();
 }
-function goHome(){ navTo('/'); showLanding(); }
+function goHome(){ const wasPlaying=!!room||(typeof DK!=='undefined'&&DK.open); navTo('/'); showLanding(); if(wasPlaying) cgMidgame(); } // a natural break: maybe a short ad
 window.addEventListener('popstate',route);
 function showLanding(){
   if(typeof DK!=='undefined'&&DK.open) deckClose();

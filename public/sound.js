@@ -7,7 +7,7 @@ const SFX = { ctx: null, muted: false, noise: null, last: {} };
 try { SFX.muted = localStorage.getItem('kortbord-mute') === '1'; } catch (e) {}
 
 function sfxCtx() {
-  if (SFX.muted) return null;
+  if (SFX.muted || SFX.adMute || SFX.platformMute) return null; // muted by the player, during an ad, or by CrazyGames
   if (!SFX.ctx) {
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
     SFX.ctx = new AC();

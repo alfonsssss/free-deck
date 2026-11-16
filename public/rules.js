@@ -272,7 +272,7 @@ add({
     'bj.rPush': 'Lika ({v}) – fick tillbaka {b}', 'bj.rLose': 'Förlorade {b} ({v} mot {d})', 'bj.has': '{t} · har {n}', 'bj.tDealerBust': 'Dealern blev tjock! 🎉', 'bj.tDealer': 'Dealern fick {d}',
     'bj.bet': 'Satsa {n}', 'bj.hit': 'Ta kort', 'bj.stand': 'Stå', 'bj.double': 'Dubbla', 'bj.hBet': 'Tryck på markerna för att satsa – du har {n}.', 'bj.hBetting': 'Din insats: {b}. Tryck på fler marker eller Dela ut. Kvar: {n}.', 'bj.clear': 'Rensa', 'bj.deal': 'Dela ut ({n})', 'bj.same': 'Samma igen ({n})', 'bj.hWaitBets': 'Väntar på att alla ska satsa…',
     'bj.hTurn': 'Du har {v}. Vill du ta ett kort till eller stå?', 'bj.hDealer': 'Dealern spelar…', 'bj.betOk': '✅ Satsat', 'bj.betting': 'Satsar…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
-    'bj.yourCards': 'Dina kort · {v}', 'bj.bjPaid': 'Blackjack! {a} vann {n} direkt', 'bj.split': 'Dela', 'bj.noSplit': 'Du kan bara dela två lika kort.', 'bj.splitMsg': '{a} delade handen', 'bj.hTurnN': 'Hand {i} av {n}: du har {v}. Ta kort eller stå?',
+    'bj.yourCards': 'Dina kort · {v}', 'bj.bjPaid': 'Blackjack! {a} vann {n} direkt', 'bj.bonus': 'Gratis marker +500', 'bj.bonusMsg': '{a} fick 500 gratis marker', 'bj.split': 'Dela', 'bj.noSplit': 'Du kan bara dela två lika kort.', 'bj.splitMsg': '{a} delade handen', 'bj.hTurnN': 'Hand {i} av {n}: du har {v}. Ta kort eller stå?',
     'bj.yourHandN': 'Hand {i} av {n} · {v}', 'bj.rWon': '{a} vann {n}', 'bj.rLost': '{a} förlorade {n}', 'bj.rEven': '{a} fick tillbaka insatsen', 'bj.paren': '({t})', 'bj.pBust': 'tjock på {v}', 'bj.pBJ': 'blackjack',
     'bj.pDealerBJ': 'dealern hade blackjack', 'bj.pVs': '{v} mot {d}', 'bj.pPush': 'lika på {v}', 'bj.busted': 'tjock' },
   en: { 'bj.newChips': '{a} got {n} new chips', 'bj.chooseBet': 'Choose how much to bet.', 'bj.reveal': 'The dealer turns over the hidden card…', 'bj.bj': 'Blackjack! 🎉', 'bj.dealerBJ': 'The dealer has blackjack!',
@@ -282,7 +282,7 @@ add({
     'bj.rPush': 'Push ({v}) – got {b} back', 'bj.rLose': 'Lost {b} ({v} vs {d})', 'bj.has': '{t} · has {n}', 'bj.tDealerBust': 'The dealer went bust! 🎉', 'bj.tDealer': 'The dealer got {d}',
     'bj.bet': 'Bet {n}', 'bj.hit': 'Hit', 'bj.stand': 'Stand', 'bj.double': 'Double', 'bj.hBet': 'Tap the chips to bet – you have {n}.', 'bj.hBetting': 'Your bet: {b}. Tap more chips or Deal. Left: {n}.', 'bj.clear': 'Clear', 'bj.deal': 'Deal ({n})', 'bj.same': 'Same again ({n})', 'bj.hWaitBets': 'Waiting for everyone to bet…',
     'bj.hTurn': 'You have {v}. Take another card or stand?', 'bj.hDealer': 'The dealer is playing…', 'bj.betOk': '✅ Bet placed', 'bj.betting': 'Betting…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
-    'bj.yourCards': 'Your cards · {v}', 'bj.bjPaid': 'Blackjack! {a} won {n} right away', 'bj.split': 'Split', 'bj.noSplit': 'You can only split two cards of the same value.', 'bj.splitMsg': '{a} split the hand', 'bj.hTurnN': 'Hand {i} of {n}: you have {v}. Hit or stand?',
+    'bj.yourCards': 'Your cards · {v}', 'bj.bjPaid': 'Blackjack! {a} won {n} right away', 'bj.bonus': 'Free chips +500', 'bj.bonusMsg': '{a} got 500 free chips', 'bj.split': 'Split', 'bj.noSplit': 'You can only split two cards of the same value.', 'bj.splitMsg': '{a} split the hand', 'bj.hTurnN': 'Hand {i} of {n}: you have {v}. Hit or stand?',
     'bj.yourHandN': 'Hand {i} of {n} · {v}', 'bj.rWon': '{a} won {n}', 'bj.rLost': '{a} lost {n}', 'bj.rEven': '{a} got the bet back', 'bj.paren': '({t})', 'bj.pBust': 'bust on {v}', 'bj.pBJ': 'blackjack',
     'bj.pDealerBJ': 'the dealer had blackjack', 'bj.pVs': '{v} vs {d}', 'bj.pPush': 'push on {v}', 'bj.busted': 'bust' },
 });
@@ -361,6 +361,7 @@ function act(G, s, m) {
       G.pend[s] += amt; return null;
     }
     if (id === 'clear') { G.pend[s] = 0; return null; }
+    if (id === 'bonus') { if (G.chips[s] < 250) { G.chips[s] += 500; G.msg = M('bj.bonusMsg', { a: seat(s) }); } return null; } // after watching an ad
     let amt;
     if (id === 'place') { amt = G.pend[s]; if (amt < BETS[0]) return M('bj.chooseBet'); }
     else { amt = +id.replace('bet', ''); if (!BETS.includes(amt) && !(amt >= BETS[0])) return null; } // one tap (computer players, or the timer)
@@ -433,6 +434,7 @@ function view(G, s) {
     BETS.forEach(b => buttons.push({ id: 'add' + b, label: String(b), chip: b, off: b > left }));
     if (G.pend[me]) { buttons.push({ id: 'clear', label: M('bj.clear'), icon: 'undo', tone: 'plain' }); buttons.push({ id: 'place', label: M('bj.deal', { n: G.pend[me] }), icon: 'cards', tone: 'good', primary: true }); }
     else if (G.lastBet[me] <= G.chips[me]) buttons.push({ id: 'bet' + G.lastBet[me], label: M('bj.same', { n: G.lastBet[me] }), icon: 'restart', tone: 'plain' });
+    if (!G.pend[me] && G.chips[me] < 250) buttons.push({ id: 'bonus', label: M('bj.bonus'), icon: 'coins', tone: 'warn', reward: true });
   }
   const mine = me >= 0 ? cur(G, me) : null;
   if (myTurn && mine) {

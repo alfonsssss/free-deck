@@ -172,11 +172,11 @@ function renderEngine() {
   const hint = v.hint || '';
   $('eHint').textContent = myTurn ? (/^(Din tur|Your turn)/.test(hint) ? hint : t('yourTurn') + ' ' + hint)
     : waitTurn && !/(Väntar|Waiting)/.test(hint) ? `${t('waitingFor', { name: v.turnName })} ${hint}` : hint;
-  const chips = (v.buttons || []).filter(b => b.chip), rest = (v.buttons || []).filter(b => !b.chip);
+  const chips = (v.buttons || []).filter(b => b.chip), rest = (v.buttons || []).filter(b => !b.chip && (!b.reward || cgCanReward()));
   $('eButtons').classList.toggle('haschips', chips.length > 0);
   $('eButtons').innerHTML = (chips.length ? `<div class="chiprow">${chips.map(b => `<button class="betchip c${b.chip}${b.primary ? ' on' : ''}" data-btn="${esc(b.id)}" aria-label="${esc(b.label)}" ${b.off ? 'disabled' : ''}><span>${esc(b.label)}</span></button>`).join('')}</div>` : '') +
     (chips.length ? '<div class="btnrow">' : '') +
-    rest.map(b => `<button class="ebtn t-${b.tone || BTN_TONE[b.id] || 'plain'}${b.primary ? ' primary' : ''}" data-btn="${esc(b.id)}" data-lobby="${v.phase === 'lobby' ? 1 : ''}"><span class="ic">${icOrText(b.icon, esc)}</span>${esc(b.label)}</button>`).join('') + (chips.length ? '</div>' : '');
+    rest.map(b => `<button class="ebtn t-${b.tone || BTN_TONE[b.id] || 'plain'}${b.primary ? ' primary' : ''}" data-btn="${esc(b.id)}" data-lobby="${v.phase === 'lobby' ? 1 : ''}"><span class="ic">${icOrText(b.icon, esc)}</span>${esc(b.label)}${b.reward ? '<small class="adtag">AD</small>' : ''}</button>`).join('') + (chips.length ? '</div>' : '');
   tickIdle();
 
   engRenderHand(v, hw);
@@ -239,6 +239,7 @@ function engRenderResult(v) {
     if (iWon) cgHappy();
     if (iWon && r.final) confetti(['♠', '♥', '♦', '♣']);
     sfx(iWon ? 'win' : 'pop');
+    setTimeout(() => cgMidgame(), 1400); // after a round: maybe a short ad (at most one every 3 minutes)
   }
 }
 function tickCountdown(final) {
@@ -376,6 +377,7 @@ function engClick(e) {
     if (b.dataset.lobby) return send({ t: 'btn', id: b.dataset.btn });
     const def = (v.buttons || []).find(x => x.id === b.dataset.btn);
     if (def && def.raise) return openRaise(def);
+    if (def && def.reward) { b.disabled = true; return cgRewarded().then(ok => { b.disabled = false; if (ok) { sfx('win'); engAct({ a: 'btn', id: def.id }); } }); } // watch an ad, get the reward
     return engAct({ a: 'btn', id: b.dataset.btn });
   }
   const h = t.closest('[data-hand]');
