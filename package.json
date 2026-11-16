@@ -1,0 +1,21 @@
+{
+  "name": "kortbord",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Digital kortlek och spelbord – multiplayer med regler, datorspelare och community",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "prestart": "node scripts/build-rules.js",
+    "start": "node server.js",
+    "build:rules": "node scripts/build-rules.js",
+    "test": "node test/engines.test.js",
+    "test:rooms": "node test/rooms.test.js",
+    "build:crazygames": "node scripts/build-crazygames.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

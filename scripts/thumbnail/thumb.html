@@ -1,0 +1,70 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../public/fonts/nunito.css">
+<style>
+  /* Thumbnail for CrazyGames. Open as thumb.html?title=1 (with game name) or ?title=0.
+     Size comes from the window: 1920x1080, 800x1200, 800x800. */
+  html,body{margin:0;width:100%;height:100%;overflow:hidden}
+  body{font-family:Nunito,system-ui,sans-serif;--u:min(1vw,1.78vh);
+    background:radial-gradient(ellipse at 50% 42%,#3fb877 0%,#1f8a52 38%,#126238 70%,#0a3f24 100%)}
+  /* felt texture */
+  body::before{content:"";position:absolute;inset:0;opacity:.13;
+    background-image:repeating-radial-gradient(circle at 30% 20%,rgba(255,255,255,.5) 0 1px,transparent 1px 3px)}
+  /* light glow behind the cards */
+  .glow{position:absolute;left:50%;top:50%;width:calc(var(--u)*90);height:calc(var(--u)*60);transform:translate(-50%,-50%);
+    background:radial-gradient(ellipse,rgba(255,240,180,.38),transparent 65%)}
+  .scene{position:absolute;left:50%;top:var(--top,54%);transform:translate(-50%,-50%) scale(var(--s,1));width:0;height:0}
+  .card{position:absolute;width:calc(var(--u)*17);height:calc(var(--u)*24);margin:calc(var(--u)*-12) 0 0 calc(var(--u)*-8.5);
+    border-radius:calc(var(--u)*1.6);background:#fff;box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*2.6) rgba(0,0,0,.38),inset 0 0 0 calc(var(--u)*.25) #e6e0d4;
+    transform-origin:50% 120%;color:#1f2433;font-weight:900}
+  .card.red{color:#d8312b}
+  .card .tl,.card .br{position:absolute;display:flex;flex-direction:column;align-items:center;line-height:.9;font-size:calc(var(--u)*3.4)}
+  .card .tl{left:calc(var(--u)*1.1);top:calc(var(--u)*1)}
+  .card .br{right:calc(var(--u)*1.1);bottom:calc(var(--u)*1);transform:rotate(180deg)}
+  .card .tl b,.card .br b{font-size:calc(var(--u)*2.8)}
+  .card .mid{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--u)*11)}
+  .card .mid.face{font-size:calc(var(--u)*9.5);letter-spacing:-.04em}
+  .back{background:#fff;padding:calc(var(--u)*.9);box-sizing:border-box}
+  .back::after{content:"";position:absolute;inset:calc(var(--u)*.9);border-radius:calc(var(--u)*1);
+    background:repeating-linear-gradient(45deg,#c0392b 0 calc(var(--u)*.8),#a32b20 calc(var(--u)*.8) calc(var(--u)*1.6));
+    box-shadow:inset 0 0 0 calc(var(--u)*.5) #e8b24a}
+  /* the deck: a stack of backs */
+  .deck .card{transform-origin:50% 50%}
+  .title{position:absolute;left:0;right:0;bottom:var(--tb,7%);text-align:center;color:#fff;font-weight:900;
+    font-size:calc(var(--u)*var(--ts,9));letter-spacing:-.02em;text-shadow:0 calc(var(--u)*.6) 0 #0a3f24,0 calc(var(--u)*1.4) calc(var(--u)*3) rgba(0,0,0,.45)}
+  .title span{color:#ffd166}
+  .chip{position:absolute;width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:50%;margin:calc(var(--u)*-3.5);
+    background:var(--c);box-shadow:inset 0 0 0 calc(var(--u)*.7) #fff,inset 0 0 0 calc(var(--u)*1.5) var(--c),inset 0 0 0 calc(var(--u)*1.9) rgba(255,255,255,.75),0 calc(var(--u)*.6) calc(var(--u)*1.2) rgba(0,0,0,.4)}
+</style></head>
+<body>
+<div class="glow"></div>
+<div class="scene" id="scene"></div>
+<div class="title" id="title">Kort<span>bord</span></div>
+<script>
+const q = new URLSearchParams(location.search);
+const W = innerWidth, H = innerHeight, portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
+const root = document.documentElement.style;
+if (q.get('title') === '0') document.getElementById('title').remove();
+else if (portrait) { root.setProperty('--ts', 14); root.setProperty('--tb', '24%'); }
+else if (square) { root.setProperty('--ts', 13); root.setProperty('--tb', '6%'); }
+const hasTitle = q.get('title') !== '0';
+document.body.style.setProperty('--s', portrait ? 1.12 : square ? 1.1 : 1.05);
+document.body.style.setProperty('--top', hasTitle ? (portrait ? '40%' : square ? '45%' : '42%') : '52%');
+const card = (r, s, x, y, rot, z) => {
+  const red = s === '♥' || s === '♦', face = 'JQK'.includes(r);
+  return `<div class="card${red ? ' red' : ''}" style="left:calc(var(--u)*${x});top:calc(var(--u)*${y});transform:rotate(${rot}deg);z-index:${z}">
+    <span class="tl">${r}<b>${s}</b></span><span class="mid${face ? ' face' : ''}">${face ? r : s}</span><span class="br">${r}<b>${s}</b></span></div>`;
+};
+let html = '';
+// deck stack on the left
+html += '<div class="deck">';
+for (let i = 0; i < 9; i++) html += `<div class="card back" style="left:calc(var(--u)*${-30 + i * .35});top:calc(var(--u)*${3 - i * .55});transform:rotate(-8deg);z-index:${i}"></div>`;
+html += '</div>';
+// fan of cards
+const fan = [['10', '♦'], ['J', '♣'], ['Q', '♥'], ['K', '♠'], ['A', '♥']];
+fan.forEach(([r, s], i) => { const k = i - 2; html += card(r, s, 6 + k * 7.5, Math.abs(k) * 1.6, k * 13, 20 + i); });
+// a few chips
+[['#e0443a', 24, 13], ['#2d6cdf', 29, 9], ['#1f2433', 27, 16.5]].forEach(([c, x, y], i) => html += `<div class="chip" style="--c:${c};left:calc(var(--u)*${x});top:calc(var(--u)*${y});z-index:${40 + i}"></div>`);
+document.getElementById('scene').innerHTML = html;
+</script>
+</body></html>

@@ -1,0 +1,18 @@
+# Render (render.com) blueprint for the Free Deck server – free plan.
+# The free plan has no disk and sleeps after a while without visitors, so the games people
+# publish are kept in a free Turso database instead (turso.tech). Fill in TURSO_URL and
+# TURSO_TOKEN in Render when it asks. Without them the server still works, but published
+# games disappear when it restarts.
+services:
+  - type: web
+    name: free-deck
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: KORTBORD_DB
+        value: /tmp/kortbord.db
+      - key: TURSO_URL
+        sync: false
+      - key: TURSO_TOKEN
+        sync: false

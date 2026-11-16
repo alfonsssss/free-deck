@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Free Deck</title>
+<link rel="stylesheet" href="fonts/nunito.css">
+<link rel="stylesheet" href="engine.css">
+<script src="config.js"></script>
+<style>
+:root{
+  --ink:#1f2433;--muted:#6c7488;--paper:#fbf6ee;--card:#ffffff;--line:#ece4d6;
+  --accent:#ff6b4a;--accent-dk:#d9502f;--sun:#ffb02e;--good:#22a35a;
+  --glass:rgba(12,16,24,.42);--glass-hi:rgba(12,16,24,.62);
+  --backbg:repeating-linear-gradient(45deg,#c0392b 0 6px,#a93226 6px 12px);
+  --handH:150px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
+  font:15px/1.4 Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+button:disabled{opacity:.4;cursor:default}
+.hide{display:none!important}
+
+/* ---------- shared controls ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:999px;font-weight:800;background:#efe8db;color:var(--ink);transition:transform .1s,filter .15s}
+.btn:hover{filter:brightness(.97)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:0 4px 0 var(--accent-dk)}
+.btn.primary:active{box-shadow:0 2px 0 var(--accent-dk);transform:translateY(2px)}
+.btn.big{padding:14px 22px;font-size:17px}
+.btn.wide{width:100%}
+.btn.ghost{background:transparent;border:2px solid var(--line)}
+.btn.small{padding:6px 12px;font-size:13px}
+.field{width:100%;padding:11px 14px;border-radius:12px;border:2px solid var(--line);background:#fff;outline:none}
+.field:focus{border-color:var(--sun)}
+textarea.field{resize:vertical}
+select.field{padding:9px 10px;appearance:auto}
+.sw{display:flex;align-items:center;gap:10px;margin:10px 0;cursor:pointer;font-weight:700}
+.sw input{appearance:none;width:44px;height:26px;border-radius:999px;background:#ddd5c6;position:relative;cursor:pointer;transition:background .2s;flex:none;margin:0}
+.sw input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s}
+.sw input:checked{background:var(--good)}
+.sw input:checked::after{left:21px}
+.seg{display:flex;background:#efe8db;border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;padding:9px 8px;border-radius:10px;font-weight:800;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.stepper{display:inline-flex;align-items:center;gap:12px;background:#efe8db;border-radius:999px;padding:4px}
+.stepper button{width:36px;height:36px;border-radius:50%;background:#fff;font-weight:900;font-size:20px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.stepper b{min-width:28px;text-align:center;font-size:18px}
+.stepper.big button{width:48px;height:48px;font-size:26px}
+.stepper.big b{font-size:28px;min-width:44px}
+
+/* ---------- tooltip ---------- */
+#tip{position:fixed;z-index:10000;max-width:260px;background:var(--ink);color:#fff;border-radius:14px;padding:10px 13px;pointer-events:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:13px;line-height:1.45;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+#tip.show{opacity:1;transform:none}
+#tip b{display:block;font-size:14px;margin-bottom:2px}
+#tip span{opacity:.85}
+
+/* ---------- dialogs ---------- */
+dialog{border:0;border-radius:24px;padding:24px;background:var(--card);color:var(--ink);width:min(460px,calc(100vw - 32px));box-shadow:0 30px 80px rgba(0,0,0,.35);max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(20,16,10,.45);backdrop-filter:blur(2px)}
+dialog h3{margin:0 0 16px;font-size:22px;font-weight:900}
+dialog .q{font-weight:800;margin:16px 0 8px}
+dialog .row{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
+dialog .row .left{margin-right:auto}
+dialog.wide{width:min(900px,calc(100vw - 32px))}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pills button{padding:9px 14px;border-radius:999px;border:2px solid var(--line);font-weight:800;color:var(--muted);background:#fff}
+.pills button.on{border-color:var(--good);background:#e6f6ec;color:#17733f}
+.note{color:var(--muted);font-size:13px;margin-top:6px}
+#rulesText{white-space:pre-wrap;line-height:1.6;margin:0}
+.intro{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.intro li{display:flex;gap:12px;align-items:flex-start;background:#f8f3ea;border-radius:14px;padding:10px 12px}
+.intro li b{font-size:24px;line-height:1}
+/* action editor */
+.steps{display:flex;flex-direction:column;gap:8px}
+#dAction{width:min(580px,calc(100vw - 32px))}
+.step{display:flex;align-items:flex-start;gap:6px;background:#f8f3ea;border-radius:14px;padding:8px 8px 8px 12px;font-weight:700}
+.step>span:first-child{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0;padding-top:3px}
+.step select,.step input[type=number]{padding:5px 8px;border-radius:9px;border:2px solid var(--line);background:#fff;font-weight:800}
+.step input[type=number]{width:60px}
+.step .x{margin-left:auto;display:flex;gap:2px;flex:none}
+.step .x button{width:30px;height:30px;border-radius:50%;color:var(--muted);font-weight:900}
+.step .x button:hover{background:#fff;color:var(--ink)}
+.step label{display:inline-flex;gap:4px;align-items:center;font-size:13px;color:var(--muted)}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.presets button{padding:8px 12px;border-radius:12px;background:#f8f3ea;font-weight:800;font-size:13px}
+.presets button:hover{background:#efe6d6}
+
+/* ---------- landing ---------- */
+#landing{position:fixed;inset:0;overflow:auto;background:
+  radial-gradient(circle at 10% -10%,#ffe3c4 0,transparent 40%),radial-gradient(circle at 100% 0,#ffd6e0 0,transparent 35%),var(--paper)}
+.lwrap{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-weight:900;font-size:24px;display:flex;align-items:center;gap:8px;letter-spacing:-.3px}
+.logo .fan{display:inline-flex}
+.logo .fan i{display:inline-block;width:22px;height:30px;border-radius:5px;background:#fff;border:2px solid var(--ink);margin-left:-10px;font-style:normal;font-size:13px;line-height:26px;text-align:center;font-weight:900}
+.logo .fan i:first-child{margin-left:0;transform:rotate(-12deg)}
+.logo .fan i:nth-child(2){color:#e0443a;transform:translateY(-3px)}
+.logo .fan i:nth-child(3){transform:rotate(12deg)}
+.namebox{display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:6px 6px 6px 16px;box-shadow:0 2px 10px rgba(0,0,0,.06);font-weight:700;color:var(--muted)}
+.namebox input{border:0;outline:none;background:#f6f1e7;border-radius:999px;padding:8px 14px;width:150px;font-weight:800;color:var(--ink)}
+.hero{margin:26px 0 34px;padding:34px;border-radius:28px;color:#fff;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 70% 30%,#38a46a,#1a6440 60%,#0f4a2e)}
+.hero h1{margin:0 0 8px;font-size:clamp(28px,5vw,44px);line-height:1.1;font-weight:900;letter-spacing:-.5px;max-width:560px}
+.hero p{margin:0 0 22px;opacity:.85;font-size:17px;max-width:480px}
+.heroActs{display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:relative;z-index:1}
+.join{display:flex;background:rgba(255,255,255,.16);border-radius:999px;padding:5px;gap:4px}
+.join input{width:130px;border:0;outline:none;background:transparent;color:#fff;padding:8px 14px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+.join input::placeholder{color:rgba(255,255,255,.65);letter-spacing:0;text-transform:none;font-weight:700}
+.join button{background:#fff;color:#1a6440;border-radius:999px;padding:8px 16px;font-weight:900}
+.hero .deco{position:absolute;right:-10px;bottom:-30px;display:flex;pointer-events:none}
+.hero .deco span{width:110px;height:154px;border-radius:12px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25);margin-left:-50px;display:flex;align-items:center;justify-content:center;font-size:54px;color:#1f2433;font-weight:900}
+.hero .deco span:nth-child(1){transform:rotate(-18deg) translateY(20px)}
+.hero .deco span:nth-child(2){transform:rotate(-4deg);color:#e0443a}
+.hero .deco span:nth-child(3){transform:rotate(12deg) translateY(10px);background:repeating-linear-gradient(45deg,#c0392b 0 8px,#a93226 8px 16px);border:6px solid #fff}
+@media (max-width:900px){.hero .deco{display:none}}
+@media (max-width:640px){.hero{padding:24px}}
+.sechead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:30px 0 14px}
+.sechead h2{margin:0;font-size:22px;font-weight:900}
+.sechead input{max-width:240px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.tile{background:var(--card);border-radius:20px;overflow:hidden;box-shadow:0 2px 0 var(--line),0 8px 24px rgba(60,40,10,.06);display:flex;flex-direction:column;transition:transform .15s}
+.tile:hover{transform:translateY(-3px)}
+.prev{position:relative;aspect-ratio:5/3}
+.prev svg{position:absolute;inset:0;width:100%;height:100%}
+.star{position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center}
+.star.on{background:#fff;color:var(--sun)}
+.tbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.tname{font-weight:900;font-size:17px;display:flex;align-items:center;gap:8px}
+.tdesc{color:var(--muted);font-size:13.5px;flex:1}
+.tmeta{color:#a39a88;font-size:12px;font-weight:700}
+.tacts{display:flex;gap:8px;margin-top:8px}
+.tacts .primary{flex:1}
+.tabs{display:flex;gap:6px;background:#fff;border-radius:999px;padding:5px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.tabs button{min-height:46px;padding:0 20px;border-radius:999px;font-weight:900;font-size:16px;color:var(--muted)}
+.tabs button.on{background:var(--accent);color:#fff}
+@media (max-width:640px){.lhead{justify-content:center}.tabs{order:3;width:100%}.tabs button{flex:1}}
+.chero{margin:26px 0 20px;padding:28px;border-radius:28px;background:linear-gradient(135deg,#fff4e8,#ffe1d6);display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.chero h1{margin:0 0 4px;font-size:clamp(26px,4vw,36px);font-weight:900}
+.chero p{margin:0;color:var(--muted);font-size:16px;max-width:520px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.filters .field{max-width:300px;min-height:48px}
+.filters select.field{max-width:220px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.eprev{display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden}
+.eprev .bigemo{font-size:64px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+.eprev .fan3{display:flex}
+.eprev .fan3 i{width:38px;height:54px;border-radius:6px;background:#fff;margin-left:-14px;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;font-size:14px;box-shadow:0 3px 8px rgba(0,0,0,.3);color:#1f2433}
+.eprev .fan3 i:first-child{transform:rotate(-12deg);margin-left:0}.eprev .fan3 i.r{color:#d42b2b;transform:translateY(-4px)}.eprev .fan3 i:last-child{transform:rotate(12deg)}
+.chips2{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.chips2 span{background:#f6f1e7;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:800;color:#6c5f48}
+.chips2 .kids{background:#e6f6ec;color:#17733f}
+.tplays{font-weight:900;color:var(--accent-dk);font-size:14px}
+.tacts .btn.primary{min-height:50px;font-size:17px}
+.tacts .rep{padding:10px 12px}
+.pubgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+@media (max-width:720px){.pubgrid{grid-template-columns:1fr}}
+.lbl2{display:block;font-weight:800;margin:12px 0 6px}
+.emojis{display:flex;flex-wrap:wrap;gap:6px}
+.emojis button{width:44px;height:44px;border-radius:12px;background:#f6f1e7;font-size:22px}
+.emojis button.on{background:#fff;box-shadow:0 0 0 3px var(--sun)}
+.row2{display:flex;gap:8px;align-items:center}
+.row2 select{max-width:100px}
+#pPreview .tile{pointer-events:none}
+body.noserver .web-only{display:none!important} /* Community, own games, names: need the server */
+body.cg #lFavSec,body.cg .tile .star{display:none}
+body.noserver .needs-server{display:none!important}
+.hero .btn.quick{min-height:58px;padding:0 28px;font-size:19px;background:var(--sun);color:#3a2600;box-shadow:0 5px 0 #c98410}
+.tile{cursor:pointer}
+@media (max-width:640px){
+  .lwrap{padding:12px 12px 40px}
+  .lhead{gap:8px}.logo{font-size:21px}
+  .hero{margin:12px 0 6px;padding:20px 18px;border-radius:22px}
+  .hero h1{font-size:25px}.hero p{font-size:15px;margin-bottom:14px}
+  .heroActs{flex-direction:column;align-items:stretch}.hero .btn.quick{width:100%}
+  .join input{flex:1;width:auto}
+  .sechead{margin:18px 0 10px}.sechead h2{font-size:19px}
+  .grid{grid-template-columns:1fr 1fr;gap:10px}
+  .tile .tdesc,.tile .chips2,.tile .tmeta{display:none}
+  .tbody{padding:8px 10px 10px}.tname{font-size:15px}
+  .eprev .bigemo{font-size:40px}.eprev .fan3 i{width:28px;height:40px;font-size:11px}
+  .tacts{margin-top:4px}.tacts .btn.primary{min-height:42px;font-size:15px}
+}
+.langbox select{border:0;outline:none;background:#f6f1e7;border-radius:999px;padding:8px 10px;font-weight:800}
+.emptyl{grid-column:1/-1;padding:22px;border:2px dashed var(--line);border-radius:18px;color:var(--muted);text-align:center;font-weight:700}
+
+/* ---------- game ---------- */
+#game{position:fixed;inset:0;background:#0b0e14;color:#fff}
+#top{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;gap:10px;padding:0 12px;z-index:8000;
+  background:linear-gradient(to bottom,rgba(0,0,0,.5),rgba(0,0,0,.12))}
+.gbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 14px;border-radius:999px;background:var(--glass);color:#fff;font-weight:800;backdrop-filter:blur(6px);transition:background .15s,transform .1s;white-space:nowrap}
+.gbtn:hover{background:var(--glass-hi)}
+.gbtn:active{transform:scale(.96)}
+.gbtn.round{width:40px;padding:0;font-size:18px}
+.gbtn.on{background:#fff;color:var(--ink)}
+#gtitle{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+#gtitle b{font-weight:900;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gtitle span{font-size:12px;opacity:.7;font-weight:700}
+#avatars{flex:1;display:flex;justify-content:center;gap:12px;min-width:0;overflow:hidden;padding-top:4px}
+.av{display:flex;flex-direction:column;align-items:center;position:relative;font-size:11px;font-weight:800;max-width:74px;cursor:pointer;border-radius:12px;padding:2px 4px}
+.av i{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;font-size:15px;color:#1b1b1b;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:box-shadow .2s}
+.av.me i{outline:3px solid #fff}
+.av.turn i{box-shadow:0 0 0 4px var(--sun),0 0 18px var(--sun);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(255,176,46,.5),0 0 22px var(--sun)}}
+.av span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74px;opacity:.9}
+.av em{position:absolute;top:-4px;right:2px;background:#fff;color:var(--ink);font-style:normal;border-radius:999px;padding:0 6px;font-size:11px;font-weight:900;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.av .sc{position:absolute;top:-4px;left:0;background:var(--sun);color:var(--ink);border-radius:999px;padding:0 5px;font-size:10px;font-weight:900}
+.av.drop{background:rgba(255,255,255,.25)}
+.topacts{display:flex;gap:8px}
+@media (max-width:760px){.lbl{display:none}.gbtn{padding:0 12px}#gtitle span{display:none}.av span{display:none}}
+
+#stage{position:absolute;inset:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+#board{position:absolute;left:0;top:0;width:1000px;height:600px;transform-origin:0 0;z-index:1}
+body.tools #board{outline:3px dashed rgba(255,255,255,.22);outline-offset:6px;border-radius:24px}
+#turnBanner{position:absolute;left:50%;top:72px;transform:translateX(-50%);z-index:7100;padding:7px 16px;border-radius:999px;font-weight:900;font-size:14px;
+  background:var(--glass-hi);backdrop-filter:blur(6px);white-space:nowrap;pointer-events:none}
+#turnBanner.mine{background:var(--sun);color:var(--ink);box-shadow:0 6px 20px rgba(255,176,46,.45);animation:pop .35s}
+@keyframes pop{0%{transform:translateX(-50%) scale(.7)}70%{transform:translateX(-50%) scale(1.08)}}
+
+.zone{position:absolute;border:2px dashed rgba(255,255,255,.22);border-radius:18px;background:rgba(255,255,255,.04);transition:border-color .15s,background .15s}
+.zone.hover{border-color:#fff;background:rgba(255,255,255,.16)}
+.zone.mine{border:3px solid var(--owner);background:rgba(255,255,255,.08)}
+.zlabel{position:absolute;top:5px;left:8px;right:8px;display:flex;gap:6px;align-items:center;font-weight:800;font-size:var(--lf,13px);color:rgba(255,255,255,.8);white-space:nowrap}
+.zn{padding:2px 8px;border-radius:9px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.zn:hover{background:rgba(0,0,0,.25)}
+.zowner{color:var(--owner);overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:4}
+.zn{flex-shrink:1;min-width:3.5em}
+.zmoney,.zsum,.zsit{flex:none}
+.zsit{background:#fff;color:var(--ink);border-radius:999px;padding:2px 10px;font-weight:900;font-size:calc(var(--lf,13px)*.9);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.zsit:hover{background:var(--sun)}
+.zsum{background:#fff;color:var(--ink);border-radius:999px;padding:0 8px;font-weight:900;font-size:calc(var(--lf,13px)*.9)}
+.zsum.bust{background:#ff6b6b;color:#fff}
+.zsum.bj{background:var(--sun)}
+.zsum:empty{display:none}
+.zmoney{background:rgba(0,0,0,.45);color:#ffd76a;border-radius:999px;padding:0 8px;font-weight:900;font-size:calc(var(--lf,13px)*.9);margin-left:auto}
+.zmoney:empty{display:none}
+.chipRows{display:flex;flex-direction:column;gap:8px;max-height:44vh;overflow:auto}
+.chipRow2{display:flex;align-items:center;gap:10px;background:#f8f3ea;border-radius:14px;padding:8px 8px 8px 14px;font-weight:800}
+.chipRow2 .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chipRow2 .who small{color:var(--muted);font-weight:700}
+.money{display:flex;align-items:center;gap:6px}
+.money input{width:110px;text-align:right;font-weight:900}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.quick button{padding:6px 12px;border-radius:999px;background:#f8f3ea;font-weight:800;font-size:13px}
+.quick button:hover{background:#efe6d6}
+.zhint{position:absolute;top:calc(100% + 4px);left:-20px;right:-20px;text-align:center;font-size:calc(var(--lf,13px)*.8);font-weight:800;color:rgba(255,255,255,.55);pointer-events:none}
+.resize{display:none;position:absolute;right:-8px;bottom:-8px;width:28px;height:28px;border-radius:50%;background:#fff;cursor:nwse-resize;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.resize::after{content:"⤡";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink);font-weight:900;font-size:15px}
+body.tools .zone{border-style:solid;border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.08)}
+body.tools .zn{background:rgba(0,0,0,.45);cursor:move;color:#fff}
+body.tools .zn::after{content:" ✎";opacity:.7}
+body.tools .resize{display:block}
+body.tools .zhint,body.tools .zsit{display:none}
+body.nomo .card{transition:none}
+
+.chip{position:absolute;width:44px;height:44px;border-radius:50%;cursor:grab;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.35),0 4px 8px rgba(0,0,0,.25);border:5px dashed rgba(255,255,255,.85)}
+.chip::before{content:"";position:absolute;inset:4px;border-radius:50%;border:2px solid rgba(255,255,255,.5)}
+.chip.white{border-color:#d33}
+.chip.drag{cursor:grabbing;box-shadow:0 10px 20px rgba(0,0,0,.4)}
+.chip .cnt{position:absolute;top:-12px;right:-14px;background:#fff;color:var(--ink);border-radius:999px;padding:0 6px;font-size:12px;font-weight:900;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:grab}
+
+.card{position:absolute;left:0;top:0;width:72px;height:100px;transform-origin:0 0;cursor:grab;
+  transition:left .28s cubic-bezier(.3,.7,.3,1),top .28s cubic-bezier(.3,.7,.3,1),transform .28s;z-index:100}
+.card.drag{transition:transform .15s;cursor:grabbing}
+.lift{width:100%;height:100%;perspective:700px;transition:transform .15s}
+.card.inhand:hover .lift{transform:translateY(-16px)}
+.card.drag .lift{transform:rotate(-3deg)}
+.inner{position:relative;width:100%;height:100%;transition:transform .4s;transform-style:preserve-3d}
+.card.up .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.card.drag .face{box-shadow:0 14px 28px rgba(0,0,0,.45)}
+.card.remote .face{box-shadow:0 0 0 3px var(--by),0 14px 28px rgba(0,0,0,.45)}
+.front{background:#fffdf8;transform:rotateY(180deg);color:#1b1b1b;border:1px solid #e3ddcf}
+.front.red{color:#d42b2b}
+.back{background:#fff;border:1px solid #d8d2c4}
+.back::after{content:"";position:absolute;inset:4px;border-radius:5px;background:var(--backbg)}
+.corner{position:absolute;font-weight:900;font-size:15px;line-height:1;text-align:center;font-family:Nunito,system-ui}
+.corner small{display:block;font-size:13px}
+.tl{top:5px;left:5px}.br{bottom:5px;right:5px;transform:rotate(180deg)}
+.pip{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:38px}
+.pip.fc{font:900 28px Georgia,serif}
+.pip.jk{font:900 11px Nunito,system-ui;letter-spacing:1px;flex-direction:column;gap:2px}
+.pip.jk b{font-size:30px}
+.big-faces .corner{font-size:23px;top:4px;left:5px}
+.big-faces .corner small{font-size:19px}
+.big-faces .br{display:none}
+.big-faces .pip{font-size:40px;justify-content:flex-end;align-items:flex-end;padding:0 8px 4px 0}
+.big-faces .pip.fc{font-size:26px}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translate(-6px,-2px) rotate(-5deg)}40%{transform:translate(5px,1px) rotate(4deg)}60%{transform:translate(-3px,0) rotate(-2deg)}80%{transform:translate(2px,0)}}
+
+#handTray{position:absolute;left:0;right:0;bottom:0;height:var(--handH);z-index:2;
+  background:linear-gradient(to top,rgba(0,0,0,.6),rgba(0,0,0,.28));border-top:1px solid rgba(255,255,255,.1);transition:background .15s}
+#handTray.hover{background:linear-gradient(to top,rgba(0,0,0,.6),rgba(255,255,255,.14))}
+#handLabel{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:12px;font-weight:800;color:rgba(255,255,255,.6);pointer-events:none}
+#handLabel.empty{top:50%;transform:translateY(-50%);font-size:14px}
+#handTools{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:6000}
+#handTools .gbtn{height:34px;font-size:13px;padding:0 12px}
+@media (max-width:760px){#handTools{flex-direction:row;top:auto;bottom:calc(var(--handH) + 4px);right:auto;left:12px}}
+#actions{position:absolute;left:12px;right:12px;bottom:calc(var(--handH) + 12px);z-index:7000;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;pointer-events:none}
+#actions>*{pointer-events:auto}
+#actions .gbtn{height:46px;font-size:15px;padding:0 18px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#actions .gbtn.round{width:46px;padding:0}
+#actions .act{background:#fff;color:var(--ink)}
+#actions .act:first-child,#actions .deal{background:var(--accent);color:#fff;box-shadow:0 4px 0 #c94a2c,0 6px 16px rgba(0,0,0,.3)}
+body.tools #actions,body.tools #handTools{display:none}
+@media (max-width:760px){#actions .gbtn{height:40px;padding:0 12px;font-size:14px}#actions .gbtn.round{width:40px}}
+#trash{position:absolute;left:16px;bottom:calc(var(--handH) + 12px);z-index:7000;padding:12px 18px;border-radius:16px;border:2px dashed rgba(255,255,255,.5);color:#fff;font-weight:800;background:rgba(0,0,0,.3);display:none}
+body.tools #trash{display:block}
+#trash.hot{background:#e0443a;border-color:#fff}
+#conn{position:absolute;top:74px;left:50%;transform:translateX(-50%);background:#e0443a;color:#fff;padding:8px 16px;border-radius:999px;font-weight:800;z-index:9000}
+
+/* ---------- tools drawer ---------- */
+#tools{position:absolute;top:0;right:0;bottom:0;width:min(370px,100%);background:var(--card);color:var(--ink);z-index:8500;
+  overflow:auto;padding:18px 20px 40px;box-shadow:-10px 0 40px rgba(0,0,0,.35)}
+.thead{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;position:sticky;top:-18px;background:var(--card);padding:6px 0;z-index:2}
+.thead b{font-size:20px;font-weight:900}
+.tnote{color:var(--muted);font-size:13px;margin:6px 0 8px}
+#tools h4{margin:24px 0 10px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#a39a88}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tiles button{background:#f6f1e7;border-radius:14px;padding:10px 4px;font-weight:800;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .1s}
+.tiles button span{font-size:24px;line-height:1}
+.tiles button:hover{background:#efe6d6}
+.tiles button:active{transform:scale(.95)}
+.chipRow{display:flex;gap:8px;flex-wrap:wrap}
+.chipRow .chip{position:relative;cursor:pointer;width:42px;height:42px}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatches button{width:48px;height:48px;border-radius:14px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);position:relative}
+.swatches button.on{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--sun)}
+.swatches.backs button{width:38px;height:52px;border-radius:7px;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.swatches.backs button.on{box-shadow:0 0 0 3px var(--sun)}
+.swlabel{font-size:12px;color:var(--muted);font-weight:700;margin-top:6px}
+.rowline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0}
+.rowline span{font-weight:700}
+.rowline select{max-width:180px}
+#tools .field{margin-bottom:8px}
+.actList{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.actItem{display:flex;align-items:center;gap:8px;background:#f6f1e7;border-radius:12px;padding:8px 8px 8px 12px;font-weight:800}
+.actItem .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actItem .s{color:var(--muted);font-size:12px;font-weight:700}
+.actItem button{width:32px;height:32px;border-radius:50%}
+.actItem button:hover{background:#fff}
+
+/* ---------- popover + toast ---------- */
+#pop{position:fixed;z-index:9500;background:var(--card);color:var(--ink);border-radius:18px;padding:12px;min-width:230px;max-width:290px;box-shadow:0 16px 50px rgba(0,0,0,.4)}
+#pop .pt{font-weight:900;font-size:16px;margin:2px 4px 8px}
+#pop .pl{font-weight:800;font-size:12px;color:var(--muted);margin:10px 4px 6px;text-transform:uppercase;letter-spacing:.4px}
+#pop .mi{display:flex;width:100%;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;font-weight:800;text-align:left}
+#pop .mi:hover{background:#f6f1e7}
+#pop .seg button{font-size:13px;padding:8px 4px}
+#pop .scorebox{display:flex;align-items:center;justify-content:space-between;background:#f6f1e7;border-radius:12px;padding:6px 6px 6px 12px;font-weight:800}
+#toast{position:fixed;left:50%;bottom:calc(var(--handH) + 76px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-weight:800;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:calc(100vw - 32px);text-align:center}
+</style>
+</head>
+<body>
+
+<!-- ================= START PAGE ================= -->
+<div id="landing" class="hide"><div class="lwrap">
+  <header class="lhead">
+    <div class="logo"><span class="fan"><i>A</i><i>♥</i><i>K</i></span> Free Deck</div>
+    <nav class="tabs web-only" id="lTabs"><button data-tab="spel" class="on"><i data-ic="cards"></i> <span data-i18n="tabGames"></span></button><button data-tab="community"><i data-ic="globe"></i> Community</button></nav>
+    <label class="namebox web-only"><span data-i18n="yourName"></span> <input id="lName" maxlength="20"></label>
+    <label class="namebox langbox">🌐 <select id="lLang" aria-label="Language"><option value="sv">Svenska</option><option value="en">English</option></select></label>
+  </header>
+  <div id="tabSpel">
+    <section class="hero">
+      <h1 id="lHeroTitle" data-i18n="heroTitle"></h1>
+      <p id="lHeroText" data-i18n="heroText"></p>
+      <div class="heroActs">
+        <button id="lQuick" class="btn primary big quick"><i data-ic="play"></i> <span id="lQuickTxt"></span></button>
+        <form id="lJoin" class="join needs-server"><input id="lCode" maxlength="8" data-i18n-ph="haveCode" autocomplete="off" aria-label="Room code"><button data-i18n="join"></button></form>
+        <button id="lCreate" class="btn big web-only" data-i18n-tip="createTip"><i data-ic="plus"></i> <span data-i18n="createOwn"></span></button>
+      </div>
+      <div class="deco" aria-hidden="true"><span>A♠</span><span>K♥</span><span></span></div>
+    </section>
+    <div id="lFavSec"><div class="sechead"><h2 data-i18n="favorites"></h2></div><div id="lFavs" class="grid"></div></div>
+    <div class="sechead"><h2 data-i18n="chooseGame"></h2></div>
+    <div id="lGames" class="grid"></div>
+    <div id="lMineSec" class="web-only"><div class="sechead"><h2 data-i18n="myGames"></h2></div><div id="lMine" class="grid"></div></div>
+  </div>
+  <div id="tabCommunity" class="hide">
+    <section class="chero"><div><h1>🌍 Community</h1><p>Spel som andra har skapat. Spela dem, spara dina favoriter – eller gör ett eget och dela med alla!</p></div>
+      <button id="cCreate" class="btn primary big"><i data-ic="upload"></i> Skapa och publicera</button></section>
+    <div class="filters">
+      <input id="cSearch" class="field" placeholder="🔍 Sök spel…" aria-label="Sök spel">
+      <select id="cPlayers" class="field" aria-label="Antal spelare"><option value="">👥 Alla antal spelare</option><option value="1">1 spelare</option><option value="2">2 spelare</option><option value="3">3 spelare</option><option value="4">4 eller fler</option></select>
+      <label class="sw"><input type="checkbox" id="cKids"> 👶 För barn</label>
+    </div>
+    <div class="sechead"><h2>🔥 Populära spel</h2></div><div id="cPopular" class="grid"></div>
+    <div class="sechead"><h2>✨ Nya spel</h2></div><div id="cNew" class="grid"></div>
+  </div>
+</div></div>
+
+<div id="eng" class="hide"></div>
+
+<!-- ================= GAME ================= -->
+<div id="game" class="hide">
+  <div id="stage">
+    <div id="board"></div>
+    <div id="turnBanner" class="hide"></div>
+    <div id="handTray"><div id="handLabel"></div></div>
+    <div id="handTools">
+      <button id="hSort" class="gbtn" data-tip="Sortera handen|Ordna korten efter färg. Tryck igen för att ordna efter valör."><i data-ic="sort"></i> <span class="lbl">Sortera</span></button>
+      <button id="hShow" class="gbtn" data-tip="Visa handen|Lägger alla dina kort uppvända på din plats så alla ser dem – t.ex. vid visning i poker."><i data-ic="eye"></i> <span class="lbl">Visa</span></button>
+      <button id="hFold" class="gbtn" data-tip="Släng handen|Lägger alla dina kort dolda i kasthögen – t.ex. när du lägger dig i poker."><i data-ic="trash"></i> <span class="lbl">Släng</span></button>
+    </div>
+    <div id="actions"></div>
+    <div id="trash" data-tip="Papperskorg|Dra marker hit för att ta bort dem.">🗑 Dra hit för att ta bort</div>
+  </div>
+  <header id="top">
+    <button id="back" class="gbtn round" data-tip="Till startsidan|Lämna bordet. Du kan komma tillbaka med samma länk."><i data-ic="home"></i></button>
+    <div id="gtitle"><b id="gname"></b><span id="groom"></span></div>
+    <div id="avatars"></div>
+    <div class="topacts">
+      <button id="invite" class="gbtn" data-tip="Bjud in|Kopierar en länk som du kan skicka till dina vänner. De hamnar direkt vid samma bord."><i data-ic="link"></i> <span class="lbl">Bjud in</span></button>
+      <button id="rulesBtn" class="gbtn hide" data-tip="Regler|Visa hur spelet går till."><i data-ic="book"></i> <span class="lbl">Regler</span></button>
+      <button id="toolsBtn" class="gbtn" data-tip="Verktyg|Bygg om bordet: lägg till platser, marker och spelknappar, byt bord och kortlek. Syns inte under spelet."><i data-ic="tools"></i> <span class="lbl">Verktyg</span></button>
+    </div>
+  </header>
+  <div id="conn" class="hide" data-i18n="connLost"></div>
+
+  <aside id="tools" class="hide">
+    <div class="thead"><b>🛠 Verktyg</b><button id="toolsDone" class="btn primary">Klar</button></div>
+    <p class="tnote">Bygg ditt bord här. Inget av det här syns under själva spelet. Håll muspekaren över något för att se vad det gör.</p>
+
+    <h4>Lägg till på bordet</h4>
+    <div class="tiles">
+      <button data-add="spot" data-tip="Spelarplats|En plats där en spelare kan sätta sig (Sitt här). Används för t.ex. blackjack-händer, utlagda kombinationer i rummy eller visade kort i poker."><span><i data-ic="user"></i></span>Spelarplats</button>
+      <button data-add="win" data-tip="Vinsthög|En dold hög som tillhör en spelare. Perfekt för vunna stick (Hjärter) eller vunna kort."><span><i data-ic="layers"></i></span>Vinsthög</button>
+      <button data-add="row" data-tip="Rad på bordet|Kort ligger bredvid varandra uppvända. Används för t.ex. poker-bordets 5 kort, sticket eller en strid."><span>▭</span>Rad</button>
+      <button data-add="pile" data-tip="Hög|En hög där korten behåller sin sida. Bra för grundhögar i patiens."><span><i data-ic="card"></i></span>Hög</button>
+      <button data-add="discard" data-tip="Kasthög|En hög där korten läggs dolda. Blir automatiskt dit Släng skickar korten."><span><i data-ic="trash"></i></span>Kasthög</button>
+      <button data-add="column" data-tip="Kolumn|Kort ligger överlappande nedåt, som i patiens. Drar man ett kort följer korten under med."><span>▯</span>Kolumn</button>
+    </div>
+    <p class="tnote">Dra platserna dit du vill. Tryck på en plats namn för att ändra den.</p>
+
+    <h4>Spelknappar</h4>
+    <div id="actList" class="actList"></div>
+    <button id="actAdd" class="btn ghost wide" data-tip="Ny spelknapp|Gör en knapp som gör flera saker med ett tryck, t.ex. 'Ny runda', 'Floppen' eller 'Ge mig ett kort'.">＋ Ny knapp</button>
+
+    <h4>Automatik</h4>
+    <div class="rowline" data-tip="Tryck på leken|Vad som händer när någon trycker på kortleken."><span>Tryck på leken</span><select id="setDeck" class="field"></select></div>
+    <div class="rowline" data-tip="Dubbeltryck i handen|Vart ett kort i handen läggs när man dubbeltrycker på det. Snabbt för spel där man lägger kort på en hög."><span>Dubbeltryck i handen</span><select id="setPlay" class="field"></select></div>
+    <div class="rowline" data-tip="Startmarker|Hur mycket varje spelare får i marker när hen trycker 'Sitt här'. 0 = inga marker."><span>💰 Marker när man sätter sig</span><input id="setChips" class="field" type="number" min="0" max="100000" step="10" style="max-width:110px;text-align:right"></div>
+    <div class="rowline" data-tip="Släng-knappen|Vart korten hamnar när någon trycker 🗑 Släng vid sin hand."><span>🗑 Släng läggs i</span><select id="setDiscard" class="field"></select></div>
+
+    <h4>Marker</h4>
+    <div class="chipRow" id="chipRow"></div>
+    <p class="tnote">Tryck för att lägga ut 5 st. Dra en marker till 🗑 för att ta bort den.</p>
+
+    <h4>Bordet</h4>
+    <div class="swatches" id="feltSw"></div>
+    <h4>Kortens baksida</h4>
+    <div class="swatches backs" id="backSw"></div>
+
+    <h4>Korten</h4>
+    <div class="seg" id="faceSeg"><button data-face="classic" data-tip="Klassiska kort|Traditionellt utseende med symbol i mitten.">Klassiska</button><button data-face="big" data-tip="Extra tydliga|Stora siffror i hörnet – lättare att läsa på liten skärm och när korten överlappar.">Extra tydliga</button></div>
+    <div class="rowline" data-tip="Antal kortlekar|Fler lekar blandas ihop, t.ex. 2–6 lekar i blackjack."><span>Antal kortlekar</span><div class="stepper"><button data-dk="-1">–</button><b id="deckN">1</b><button data-dk="1">+</button></div></div>
+    <label class="sw" data-tip="Jokrar|Lägger till 2 jokrar per kortlek."><input type="checkbox" id="jokers"> Med jokrar</label>
+
+    <h4>Dela ditt spel</h4>
+    <p class="tnote">När bordet är klart: ge spelet ett namn och publicera det i Community så att andra kan spela det.</p>
+    <button id="tPublish" class="btn primary wide" data-tip="Publicera|Sparar bordet, platserna, markerna, knapparna och utseendet som ett spel. Du ser en förhandsvisning innan det publiceras."><i data-ic="upload"></i> Publicera ditt spel</button>
+    <h4>Annat</h4>
+    <button id="tSwitch" class="btn ghost wide" data-tip="Byt spel|Välj ett annat spel. Bordet byts för alla i rummet."><i data-ic="swap"></i> Byt till ett annat spel</button>
+  </aside>
+</div>
+
+<!-- ================= DIALOGS ================= -->
+<dialog id="dName"><form method="dialog">
+  <h3 data-i18n="whatName"></h3>
+  <input name="name" class="field" maxlength="20" required data-i18n-ph="yourName" autocomplete="nickname">
+  <div class="row"><button class="btn primary" value="ok" data-i18n="go"></button></div>
+</form></dialog>
+
+<dialog id="dIntro"><form method="dialog">
+  <h3>🎉 Så här spelar du</h3>
+  <ul class="intro">
+    <li><b>✋</b><div><strong>Din hand är hemlig.</strong> Korten längst ner ser bara du.</div></li>
+    <li><b>👆</b><div><strong>Dra kort</strong> från handen till bordet. Tryck på ett kort på bordet för att vända det.</div></li>
+    <li><b>🂠</b><div><strong>Tryck på leken</strong> för att dra ett kort. <strong>Dubbeltryck</strong> på ett kort i handen för att spela det.</div></li>
+    <li><b>🔘</b><div><strong>Knapparna</strong> längst ner gör det spelet behöver – t.ex. Ny runda eller Floppen.</div></li>
+    <li><b>💡</b><div><strong>Osäker?</strong> Håll muspekaren över en knapp så förklarar den sig själv.</div></li>
+  </ul>
+  <div class="row"><button class="btn primary" value="ok">Nu kör vi!</button></div>
+</form></dialog>
+
+<dialog id="dDeal"><form method="dialog">
+  <h3>🃏 Dela ut</h3>
+  <div class="q">Hur många kort var?</div>
+  <div class="stepper big"><button type="button" data-n="-1">–</button><b id="dealN">2</b><button type="button" data-n="1">+</button></div>
+  <div class="q">Till vem?</div>
+  <div class="pills" id="dealTo"></div>
+  <div class="note" id="dealHandNote">✋ Korten i handen syns bara för den som har dem.</div>
+  <div id="dealFaceBox">
+    <div class="q">Korten på bordet ska vara…</div>
+    <div class="seg" id="dealFace"><button type="button" data-face="down"><i data-ic="eyeoff"></i> Dolda</button><button type="button" data-face="up"><i data-ic="eye"></i> Synliga</button></div>
+  </div>
+  <label class="sw" style="margin-top:16px"><input type="checkbox" id="dealFresh"> Samla ihop och blanda först</label>
+  <div class="row"><button class="btn ghost" value="cancel">Avbryt</button><button class="btn primary" value="ok">Dela ut</button></div>
+</form></dialog>
+
+<dialog id="dAction"><form method="dialog">
+  <h3>🔘 Spelknapp</h3>
+  <div style="display:flex;gap:8px">
+    <input id="aEmoji" class="field" maxlength="4" style="width:70px;text-align:center;font-size:20px" placeholder="⭐">
+    <input id="aLabel" class="field" maxlength="24" placeholder="Knappens namn, t.ex. Ny runda">
+  </div>
+  <div class="q">Vad ska hända när man trycker?</div>
+  <div id="aSteps" class="steps"></div>
+  <div id="aPresetsBox">
+    <div class="note" style="margin:4px 0 8px">Börja med en färdig knapp:</div>
+    <div class="presets" id="aPresets"></div>
+  </div>
+  <select id="aAddStep" class="field" style="margin-top:10px"></select>
+  <div class="row"><button class="btn ghost left" value="delete" id="aDel" style="color:#c7381d"><i data-ic="trash"></i> Ta bort</button><button class="btn ghost" value="cancel">Avbryt</button><button class="btn primary" value="ok">Spara knappen</button></div>
+</form></dialog>
+
+<dialog id="dChips"><form method="dialog">
+  <h3>💰 Marker till spelarna</h3>
+  <div class="note" style="margin:-8px 0 12px">Skriv in hur mycket varje spelare ska ha. Markerna läggs på spelarens plats.</div>
+  <div class="q" style="margin-top:0">Samma för alla</div>
+  <div class="money"><input id="chAll" class="field" type="number" min="0" max="100000" step="10" inputmode="numeric"><button type="button" class="btn small" id="chFill">Fyll i alla</button></div>
+  <div class="quick" id="chQuick"></div>
+  <div class="q">Per spelare</div>
+  <div class="chipRows" id="chRows"></div>
+  <label class="sw" style="margin-top:14px" data-tip="Byt ut|Tar bort markerna som redan ligger på platsen och lägger dit exakt beloppet. Annars läggs beloppet till."><input type="checkbox" id="chReplace" checked> Byt ut markerna som redan ligger där</label>
+  <div class="row"><button class="btn ghost" value="cancel">Avbryt</button><button class="btn primary" value="ok"><i data-ic="coins"></i> Ge marker</button></div>
+</form></dialog>
+
+<dialog id="dRules"><form method="dialog">
+  <h3 id="rulesTitle">Regler</h3>
+  <p id="rulesText"></p>
+  <div class="row"><button class="btn primary" value="ok" data-i18n="gotIt"></button></div>
+</form></dialog>
+
+<dialog id="dGames" class="wide">
+  <h3>🔁 Byt spel</h3>
+  <p class="note" style="margin:-8px 0 14px">Bordet byts för alla i rummet.</p>
+  <div id="gGrid" class="grid" style="max-height:62vh;overflow:auto;padding:4px"></div>
+  <div class="row"><button class="btn ghost" id="gClose">Stäng</button></div>
+</dialog>
+
+<dialog id="dPublish" class="wide"><form method="dialog">
+  <h3>📣 Publicera ditt spel</h3>
+  <div class="pubgrid">
+    <div>
+      <label class="lbl2" for="pName">Namn</label><input id="pName" class="field" maxlength="40" required placeholder="t.ex. Fredagspoker">
+      <label class="lbl2" for="pDesc">Kort beskrivning</label><input id="pDesc" class="field" maxlength="200" placeholder="t.ex. Snabbt och roligt för hela familjen">
+      <label class="lbl2">Ikon</label><div class="emojis" id="pEmojis"></div>
+      <label class="lbl2">Antal spelare</label><div class="row2"><select id="pMin" class="field" aria-label="Minst"></select><span>till</span><select id="pMax" class="field" aria-label="Högst"></select></div>
+      <label class="sw"><input type="checkbox" id="pKids"> 👶 Passar för barn</label>
+      <label class="lbl2" for="pRules">Regler <span class="note">(valfritt – visas under 📖 Regler)</span></label><textarea id="pRules" class="field" rows="4" maxlength="3000" placeholder="Hur spelar man? Skriv med vanliga ord."></textarea>
+      <label class="sw"><input type="checkbox" id="pPublic" checked> 🌍 Visa i Community (annars bara för dig)</label>
+    </div>
+    <div><div class="note" style="margin:0 0 8px">Så här ser det ut i Community:</div><div id="pPreview"></div><div class="note" id="pCheck"></div></div>
+  </div>
+  <div class="row"><button class="btn ghost" value="cancel" formnovalidate>Avbryt</button><button class="btn primary" value="ok"><i data-ic="upload"></i> Publicera</button></div>
+</form></dialog>
+
+<dialog id="dRaise"><form method="dialog">
+  <h3 data-i18n="raiseTitle"></h3>
+  <div class="amount" id="rAmount"></div>
+  <div class="row2" style="justify-content:center"><button type="button" class="btn" id="rMinus" data-i18n="less"></button><button type="button" class="btn" id="rPlus" data-i18n="more"></button></div>
+  <input type="range" id="rRange" aria-label="Amount">
+  <div class="quick4" id="rQuick"><button type="button" data-q="min" data-i18n="qMin"></button><button type="button" data-q="half" data-i18n="qHalf"></button><button type="button" data-q="pot" data-i18n="qPot"></button><button type="button" data-q="max" data-i18n="qAll"></button></div>
+  <div class="row"><button class="btn ghost" value="cancel" data-i18n="cancel"></button><button class="btn primary" value="ok" id="rOk"></button></div>
+</form></dialog>
+
+<dialog id="dGuide">
+  <div id="gBody"></div>
+  <div class="row"><button class="btn ghost" id="gSkip" data-i18n="skip"></button><button class="btn primary" id="gNext" data-i18n="next"></button></div>
+</dialog>
+
+<div id="pop" class="hide"></div>
+<div id="toast" class="hide"></div>
+<div id="tip"></div>
+
+<script src="i18n.js"></script>
+<script src="i18n-ui.js"></script>
+<script src="platform.js"></script>
+<script src="icons.js"></script>
+<script src="rules.js"></script>
+<script src="local.js"></script>
+<script src="engine.js"></script>
+<script>
+/* =========================================================
+   Constants
+   ========================================================= */
+const BW=1000,BH=600,CW=72,CH=100,CHIP=44,PAD=12,HEAD=30;
+const FELT_CSS={
+  green:'radial-gradient(ellipse at 50% 35%,#2f9160 0%,#1a6440 55%,#0d3a25 100%)',
+  blue:'radial-gradient(ellipse at 50% 35%,#3470b8 0%,#1c4680 55%,#0c2243 100%)',
+  red:'radial-gradient(ellipse at 50% 35%,#b0364a 0%,#76192b 55%,#3d0b15 100%)',
+  purple:'radial-gradient(ellipse at 50% 35%,#7d4fbd 0%,#4f2b80 55%,#26123f 100%)',
+  wood:'radial-gradient(ellipse at 50% 35%,rgba(255,220,170,.25),rgba(0,0,0,.35)),repeating-linear-gradient(92deg,#8b5a34 0 36px,#7c4f2d 36px 70px,#94633b 70px 110px)',
+  night:'radial-gradient(ellipse at 50% 35%,#323b52 0%,#1a2030 55%,#0a0d15 100%)'};
+const FELT_NAMES={green:'Grön',blue:'Blå',red:'Röd',purple:'Lila',wood:'Trä',night:'Natt'};
+const BACK_CSS={
+  red:'repeating-linear-gradient(45deg,#d0413a 0 6px,#b0322c 6px 12px)',
+  blue:'repeating-linear-gradient(45deg,#3477dc 0 6px,#2660b8 6px 12px)',
+  green:'repeating-linear-gradient(-45deg,#2aa260 0 6px,#1e844c 6px 12px)',
+  black:'radial-gradient(circle,#5a5f6b 1.6px,transparent 2px) 0 0/9px 9px,#1d2027',
+  purple:'radial-gradient(circle,#d4b3ff 2px,transparent 2.6px) 0 0/11px 11px,#6431a8',
+  gold:'repeating-linear-gradient(45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 9px),repeating-linear-gradient(-45deg,rgba(255,255,255,.35) 0 2px,transparent 2px 9px),#d7a531'};
+const BACK_NAMES={red:'Röd',blue:'Blå',green:'Grön',black:'Svart',purple:'Lila',gold:'Guld'};
+const CHIPS={white:{v:1,bg:'#f6f4ee',fg:'#333'},red:{v:5,bg:'#e0443a',fg:'#fff'},blue:{v:10,bg:'#2f6fe0',fg:'#fff'},
+  green:{v:25,bg:'#22a35a',fg:'#fff'},black:{v:100,bg:'#25272d',fg:'#fff'},purple:{v:500,bg:'#8a4ee0',fg:'#fff'}};
+const ZONE_KINDS={
+  spot:   n=>({name:'Spelare '+n,layout:'fan',faceUp:true,seat:true,w:280,h:170}),
+  win:    n=>({name:'Spelare '+n,layout:'stack',faceUp:false,seat:true,w:140,h:170}),
+  row:    ()=>({name:'Bord',layout:'fan',faceUp:true,w:400,h:170}),
+  pile:   ()=>({name:'Hög',layout:'stack',faceUp:null,w:140,h:170}),
+  discard:()=>({name:'Kasthög',layout:'stack',faceUp:false,w:140,h:170}),
+  column: ()=>({name:'Kolumn',layout:'column',faceUp:null,w:115,h:330}),
+};
+// Building blocks for game buttons, described in plain words.
+const STEP_INFO={
+  collect:{label:'🔄 Samla ihop alla kort och blanda',make:()=>({k:'collect'})},
+  deal:{label:'🃏 Ge kort till…',make:()=>({k:'deal',n:1,to:'hands',face:'down',lastUp:false})},
+  flip:{label:'👀 Vänd upp alla kort på en plats',make:()=>({k:'flip',zone:''})},
+  drawTo:{label:'🎩 Dra kort tills summan når…',make:()=>({k:'drawTo',zone:'',target:17})},
+  moveAll:{label:'📦 Flytta alla kort från en plats',make:()=>({k:'moveAll',from:'',to:'deck',keepTop:false})},
+  shuffle:{label:'🔀 Blanda leken',make:()=>({k:'shuffle'})},
+  next:{label:'▶️ Turen går vidare till nästa',make:()=>({k:'next'})},
+  turnFirst:{label:'1️⃣ Turen börjar om från första spelaren',make:()=>({k:'turnFirst'})},
+  chips:{label:'💰 Ge varje spelare marker',make:()=>({k:'chips',amount:1000,replace:true})},
+};
+const PRESETS=[
+  {emoji:'🆕',label:'Ny giv',tip:'Samla ihop, blanda och ge alla 5 kort i handen',steps:[{k:'collect'},{k:'deal',n:5,to:'hands',face:'down'},{k:'turnFirst'}]},
+  {emoji:'➕',label:'Kort',tip:'Ge mig ett uppvänt kort på min plats (som "hit" i blackjack)',steps:[{k:'deal',n:1,to:'mySeat',face:'up'}]},
+  {emoji:'✋',label:'Dra ett kort',tip:'Ge mig ett kort i handen',steps:[{k:'deal',n:1,to:'me',face:'down'}]},
+  {emoji:'▶️',label:'Klar – nästa',tip:'Turen går till nästa spelare',steps:[{k:'next'}]},
+];
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const store={get(s,k){try{return window[s].getItem(k)}catch(e){return null}},set(s,k,v){try{window[s].setItem(k,v)}catch(e){}}};
+let toastT;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hide'),3200)}
+function randomCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
+const newId=p=>p+Math.random().toString(36).slice(2,10);
+
+/* =========================================================
+   Tooltips: hover (mouse) or long-press (touch) on [data-tip="Title|Text"]
+   ========================================================= */
+const tipEl=$('tip');let tipT,tipFor=null;
+function showTip(el){
+  const [t,d]=(el.dataset.tip||'').split('|');if(!t) return;
+  tipEl.innerHTML=`<b>${esc(t)}</b>${d?`<span>${esc(d)}</span>`:''}`;tipFor=el;
+  const r=el.getBoundingClientRect(),w=tipEl.offsetWidth,h=tipEl.offsetHeight;
+  let top=r.top-h-10;if(top<8)top=r.bottom+10;
+  tipEl.style.left=clamp(r.left+r.width/2-w/2,8,innerWidth-w-8)+'px';tipEl.style.top=clamp(top,8,innerHeight-h-8)+'px';
+  tipEl.classList.add('show');
+}
+function hideTip(){clearTimeout(tipT);tipEl.classList.remove('show');tipFor=null}
+document.addEventListener('pointerover',e=>{
+  if(e.pointerType==='touch'||drag) return;
+  const t=e.target.closest('[data-tip]');if(!t||t===tipFor) return;
+  clearTimeout(tipT);tipEl.classList.remove('show');tipT=setTimeout(()=>showTip(t),380);
+});
+document.addEventListener('pointerout',e=>{const t=e.target.closest('[data-tip]');if(t&&!t.contains(e.relatedTarget))hideTip()});
+document.addEventListener('pointerdown',e=>{
+  hideTip();
+  if(e.pointerType!=='touch') return;
+  const t=e.target.closest('[data-tip]');if(t) tipT=setTimeout(()=>{showTip(t);setTimeout(hideTip,2500)},550);
+},true);
+document.addEventListener('pointerup',()=>clearTimeout(tipT),true);
+
+/* =========================================================
+   Identity (no accounts)
+   ========================================================= */
+let myName=store.get('localStorage','kortbord-name')||'';
+let me=store.get('sessionStorage','kortbord-pid');           // one player per browser tab
+if(!me){me=newId('p');store.set('sessionStorage','kortbord-pid',me)}
+let authorKey=store.get('localStorage','kortbord-author');   // proves "I made this game"
+if(!authorKey){authorKey=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');store.set('localStorage','kortbord-author',authorKey)}
+let favorites;
+try{favorites=JSON.parse(store.get('localStorage','kortbord-favs'))}catch(e){}
+if(!Array.isArray(favorites)) favorites=['g-vandatta','g-blackjack','g-poker','g-patiens'];
+favorites=favorites.map(id=>({'b-blackjack':'g-blackjack','b-poker':'g-poker','b-vandatta':'g-vandatta','b-patiens':'g-patiens','b-rummy':'g-rummy','b-hjarter':'g-hjarter','b-krig':'g-krig','b-finnsisjon':'g-finnsisjon'}[id]||id));
+const saveFavs=()=>store.set('localStorage','kortbord-favs',JSON.stringify(favorites));
+function setName(n){myName=(n||'').trim().slice(0,20);store.set('localStorage','kortbord-name',myName)}
+
+/* =========================================================
+   Connection
+   ========================================================= */
+let ws=null, room=null, games=[], engGames=LocalServer.engineList(LANG), canUndo=false, localRoom=false; // the built-in games show at once, before the server answers
+const allGames=()=>[...engGames,...games];
+// solo games run in the browser (local.js); the server is only needed to play with friends
+const useLocal=()=>room?localRoom:!hasServer();
+function connect(){
+  let sock;
+  try{sock=useLocal()?new LocalSocket():new WebSocket(serverURL())}catch(e){sock=new LocalSocket();localRoom=!!room}
+  ws=sock;
+  sock.onopen=()=>{if(sock!==ws)return;$('conn').classList.add('hide');
+    sock.send(JSON.stringify(room?{t:'hello',room,pid:me,name:myName,author:authorKey,want:pendingTpl,lang:LANG}:{t:'lobby',author:authorKey,lang:LANG}))};
+  sock.onmessage=e=>{if(sock===ws)onMessage(JSON.parse(e.data))};
+  sock.onclose=()=>{if(sock!==ws)return;if(room)$('conn').classList.remove('hide');
+    else if(!engGames.length){localRoom=false;const l=new LocalSocket();ws=l;l.onopen=sock.onopen;l.onmessage=sock.onmessage;return} // no server: still show the games
+    setTimeout(()=>{if(sock===ws)connect()},1000)};
+}
+function reconnect(){const old=ws;ws=null;if(old)try{old.close()}catch(e){};connect()}
+const send=m=>{if(ws&&ws.readyState===1)ws.send(JSON.stringify(m))};
+function onMessage(m){
+  if(m.t==='state') onState(m);
+  else if(m.t==='drag') onRemoteDrag(m);
+  else if(m.t==='fx') m.ids.forEach(id=>{const l=els.get(id)?.firstChild;if(l){l.classList.remove('shake');void l.offsetWidth;l.classList.add('shake')}});
+  else if(m.t==='templates'){games=m.list;engGames=m.engines||engGames;renderLanding();renderGameSwitch()}
+  else if(m.t==='eng') showEngine(m.v);
+  else if(m.t==='nope') toast(m.msg);
+  else if(m.t==='published'){if(!favorites.includes(m.id)){favorites.unshift(m.id);saveFavs()}
+    toast(m.public?`🎉 "${m.name}" är sparat och delat med alla!`:`💾 "${m.name}" är sparat bland dina spel.`)}
+  else if(m.t==='error') toast(m.msg);
+}
+
+/* =========================================================
+   Routing: start page  ⇄  game room
+   ========================================================= */
+function route(){
+  const code=invitedRoom();
+  if(code) enterRoom(code,null,false,true);
+  else if(cgInstant()&&hasServer()) enterRoom(randomCode(),'g-vandatta',false,true); // CrazyGames "instant multiplayer": straight into a room
+  else showLanding();
+}
+function goHome(){ navTo('/'); showLanding(); }
+window.addEventListener('popstate',route);
+function showLanding(){
+  room=null;localRoom=false;clearTable();setTools(false);pendingTpl=null;
+  EV=null;evSeenIds.clear();evResultKey='';$('eResult')&&$('eResult').classList.add('hide');
+  $('game').classList.add('hide');$('eng').classList.add('hide');$('landing').classList.remove('hide');
+  $('lName').value=myName;cgGameplay(false);cgRoom(null);reconnect();renderLanding();
+}
+function askName(){
+  return new Promise(res=>{
+    const d=$('dName'),f=d.querySelector('form');f.name.value=myName;
+    d.addEventListener('cancel',e=>e.preventDefault(),{once:true});
+    d.onclose=()=>{setName(f.name.value||t('yourName'));res()};d.showModal();
+  });
+}
+let pendingTpl=null, toolsOnJoin=false, firstState=true;
+async function enterRoom(code,tplId,withTools,fromUrl){
+  if(CG.username) setName(CG.username); // CrazyGames username is shown in the game
+  if(!myName&&code) await askName();     // only friends need to see a name; alone you are "You"
+  localRoom=!code;                         // no room code = a solo table in the browser
+  room=code||'LOCAL';pendingTpl=tplId;toolsOnJoin=withTools;firstState=true;S=null;clearTable();
+  if(!fromUrl&&!localRoom) navTo('?rum='+code);
+  $('landing').classList.add('hide');$('eng').classList.add('hide');
+  if(!(tplId||'').startsWith('g-')) $('game').classList.remove('hide'); // rule games show their own table when it arrives
+  $('gname').textContent=t('loading');$('groom').textContent=localRoom?'':t('room',{code});$('actions').innerHTML='';
+  geom();reconnect();
+}
+
+/* =========================================================
+   Start page
+   ========================================================= */
+function previewSVG(g){
+  const z=g.zones.map(z=>`<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="16" fill="${z.deck?'rgba(255,255,255,.3)':'rgba(255,255,255,.1)'}" stroke="rgba(255,255,255,.6)" stroke-width="5" ${z.deck?'':'stroke-dasharray="14 10"'}/>`).join('');
+  const c=(g.chips||[]).map(c=>`<circle cx="${c.x+22}" cy="${c.y+22}" r="20" fill="${(CHIPS[c.color]||CHIPS.red).bg}" stroke="#fff" stroke-width="4" stroke-dasharray="7 5"/>`).join('');
+  return `<svg viewBox="0 0 ${BW} ${BH}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${z}${c}</svg>`;
+}
+const sv=n=>fmt(n);
+const playersText=g=>t('players',{n:g.min===g.max?String(g.min):`${g.min}–${g.max}`});
+function tile(g,opts={}){
+  const fav=favorites.includes(g.id);
+  const prev=g.engine||opts.preview===false
+    ?`<div class="prev eprev" style="background:${FELT_CSS[g.theme?.felt]||FELT_CSS.green}"><span class="bigemo">${esc(g.emoji||'🃏')}</span><span class="fan3"><i>A♠</i><i class="r">K♥</i><i>Q♣</i></span>`
+    :`<div class="prev" style="background:${FELT_CSS[g.theme?.felt]||FELT_CSS.green}">${previewSVG(g)}`;
+  const chips=[`<span>${playersText(g)}</span>`,g.kids?`<span class="kids">${esc(t('kids'))}</span>`:'',g.public||g.builtin?'':`<span>🔒 ${esc(t('onlyYou'))}</span>`].join('');
+  return `<div class="tile" data-id="${esc(g.id)}">
+    ${prev}${opts.noStar?'':`<button class="star${fav?' on':''}" data-star data-tip="${esc(t(fav?'favOffTip':'favOnTip'))}" aria-label="${esc(t('favorite'))}">${fav?'★':'☆'}</button>`}</div>
+    <div class="tbody">
+      <div class="tname"><span>${esc(g.emoji||'🃏')}</span>${esc(g.name)}</div>
+      <div class="tdesc">${esc(g.desc)}</div>
+      <div class="tmeta">${g.builtin?esc(t('classic')):esc(t('by',{name:g.author}))}${g.plays==null?'':' · '}${g.plays==null?'':`<span class="tplays">${esc(t('plays',{n:g.plays}))}</span>`}</div>
+      <div class="chips2">${chips}</div>
+      <div class="tacts"><button class="btn primary" data-play>${ic('play')} ${esc(t('play'))}</button>${g.mine?`<button class="btn ghost" data-del data-tip="${esc(t('delTip'))}">${ic('trash')}</button>`:(!g.builtin&&!opts.noStar?`<button class="btn ghost rep" data-report data-tip="${esc(t('reportTip'))}">${ic('flag')}</button>`:'')}</div>
+    </div></div>`;
+}
+let lTab='spel';
+function renderLanding(){
+  if($('landing').classList.contains('hide')) return;
+  const qg=quickGame();$('lQuick').disabled=!qg;$('lQuickTxt').textContent=qg?t('playNow',{name:qg.name}):t('loading');
+  $('lHeroText').textContent=t(hasServer()?'heroText':'heroTextSolo');
+  $('lHeroTitle').textContent=t(hasServer()?'heroTitle':'heroTitleSolo');
+  document.querySelectorAll('#lTabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===lTab));
+  $('tabSpel').classList.toggle('hide',lTab!=='spel');$('tabCommunity').classList.toggle('hide',lTab!=='community');
+  const all=allGames();
+  const favs=favorites.map(id=>all.find(g=>g.id===id)).filter(g=>g&&(hasServer()||g.engine));
+  $('lFavs').innerHTML=favs.length?favs.map(g=>tile(g)).join(''):`<div class="emptyl">${esc(t('favEmpty'))}</div>`;
+  $('lGames').innerHTML=[...engGames,...(hasServer()?games.filter(g=>g.builtin):[])].map(g=>tile(g)).join('')||`<div class="emptyl">${esc(t('loading'))}</div>`;
+  const mine=games.filter(g=>g.mine);
+  $('lMineSec').classList.toggle('hide',!mine.length);
+  $('lMine').innerHTML=mine.map(g=>tile(g)).join('');
+  // community: games made by people
+  const q=$('cSearch').value.trim().toLowerCase(),n=+$('cPlayers').value||0,kids=$('cKids').checked;
+  const com=games.filter(g=>!g.builtin&&g.public).filter(g=>(!q||(g.name+' '+g.desc+' '+g.author).toLowerCase().includes(q))&&(!n||(n>=4?g.max>=4:g.min<=n&&g.max>=n))&&(!kids||g.kids));
+  const empty=q||n||kids?'<div class="emptyl">Inga spel matchar din sökning.</div>':'<div class="emptyl">Inga spel här än – bli först med att publicera ett! 🎨</div>';
+  $('cPopular').innerHTML=com.length?com.slice().sort((a,b)=>b.plays-a.plays||b.created-a.created).slice(0,8).map(g=>tile(g)).join(''):empty;
+  $('cNew').innerHTML=com.length?com.slice().sort((a,b)=>b.created-a.created).slice(0,12).map(g=>tile(g)).join(''):empty;
+}
+$('lTabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;lTab=b.dataset.tab;renderLanding();if(lTab==='community')send({t:'listTemplates'})};
+['cSearch','cPlayers','cKids'].forEach(id=>$(id).addEventListener('input',renderLanding));
+$('cCreate').onclick=()=>{enterRoom(randomCode(),'b-free',true);setTimeout(()=>toast('Bygg ditt bord – tryck sedan 📣 Publicera i verktygen'),1200)};
+$('lName').onchange=e=>setName(e.target.value);
+$('lCreate').onclick=()=>enterRoom(randomCode(),'b-free',true);
+const quickGame=()=>{const last=store.get('localStorage','kortbord-last');return engGames.find(g=>g.id===last)||engGames.find(g=>g.id==='g-blackjack')||engGames[0]};
+$('lQuick').onclick=()=>{const g=quickGame();if(g)playSolo(g.id)};
+$('lJoin').onsubmit=e=>{e.preventDefault();const c=$('lCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(c)enterRoom(c,null,false);else{$('lCode').focus();toast(t('writeCode'))}};
+let rulesOnStart=null;
+function playSolo(id){store.set('localStorage','kortbord-last',id);enterRoom(null,id,false)}
+// "Invite" at a solo table: move the same game to the server so friends can join
+function goOnline(){const id=EV&&EV.meta.id;if(!hasServer()||!id)return;const code=randomCode();enterRoom(code,id,false).then(()=>setTimeout(()=>copyInvite($('eInvite')),600))}
+document.addEventListener('click',e=>{
+  const tl=e.target.closest('.tile');if(!tl||tl.closest('#pPreview')) return;
+  const g=allGames().find(o=>o.id===tl.dataset.id);if(!g) return;
+  if(e.target.closest('[data-star]')){
+    favorites=favorites.includes(g.id)?favorites.filter(i=>i!==g.id):[g.id,...favorites];saveFavs();renderLanding();renderGameSwitch();hideTip();
+    toast(t(favorites.includes(g.id)?'favSaved':'favRemoved'));
+  }else if(e.target.closest('[data-del]')){
+    if(confirm(`Ta bort "${g.name}"? Det går inte att ångra.`)){send({t:'deleteTemplate',id:g.id});favorites=favorites.filter(i=>i!==g.id);saveFavs()}
+  }else if(e.target.closest('[data-report]')){
+    if(confirm(`Rapportera "${g.name}" som olämpligt? Spelet döljs om flera rapporterar det.`)) send({t:'report',id:g.id,reason:'olämpligt'});
+  }else if(e.target.closest('[data-play]')||(!e.target.closest('button')&&tl.closest('#lGames,#lFavs,#lMine,#cPopular,#cNew'))){
+    if(room){ send({t:'switchGame',id:g.id});$('dGames').close();setTools(false);if(g.rules&&!g.engine) setTimeout(()=>showRules(g.name,g.rules),350); }
+    else if(g.engine) playSolo(g.id);
+    else{rulesOnStart=g.rules&&!g.engine?g:null;enterRoom(randomCode(),g.id,false)}
+  }
+});
+
+/* =========================================================
+   Game state + geometry
+   ========================================================= */
+let money=new Map();
+const chipInZone=(c,z)=>c.x+22>=z.x&&c.x+22<=z.x+z.w&&c.y+22>=z.y&&c.y+22<=z.y+z.h;
+let S=null, players=[], cardMap=new Map(), tools=false, drag=null, localDrag=new Set();
+const els=new Map(), zels=new Map(), chipEls=new Map(), remote=new Map();
+const G={s:1,ox:0,oy:0,hs:1,W:0,H:0,handH:150};
+const zoneById=id=>S.zones.find(z=>z.id===id);
+const isHandZ=z=>typeof z==='string'&&z.startsWith('h:');
+const isMine=c=>c.zone==='h:'+me;
+const player=pid=>players.find(p=>p.pid===pid);
+const stage=$('stage'),board=$('board');
+
+function clearTable(){
+  for(const m of [els,zels,chipEls]){for(const el of m.values())el.remove();m.clear()}
+  remote.clear();drag=null;localDrag.clear();closePop();
+}
+function geom(){
+  const r=stage.getBoundingClientRect();G.W=r.width;G.H=r.height;
+  G.handH=S&&!S.myHand.length?64:G.W<640?124:150;   // an empty hand takes less room → bigger table
+  const top=104,bottom=G.handH+72,availW=G.W-24,availH=Math.max(120,G.H-top-bottom);
+  G.s=Math.min(availW/BW,availH/BH);
+  G.ox=(G.W-BW*G.s)/2;G.oy=top+(availH-BH*G.s)/2;
+  G.hs=clamp((G.handH-34)/CH,.85,1.15);   // hand cards fill the tray without being cut off
+  board.style.transform=`translate(${G.ox}px,${G.oy}px) scale(${G.s})`;
+  board.style.setProperty('--lf',Math.min(26,12/G.s)+'px'); // keep spot names readable on small screens
+  document.documentElement.style.setProperty('--handH',G.handH+'px');
+}
+let rzS=0;new ResizeObserver(()=>{cancelAnimationFrame(rzS);rzS=requestAnimationFrame(()=>{if(room){geom();render()}})}).observe(stage);
+const pt=e=>{const r=stage.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+const toBoard=p=>({x:(p.x-G.ox)/G.s,y:(p.y-G.oy)/G.s});
+const inHandArea=p=>p.y>G.H-G.handH;
+
+function onState(m){
+  if(!$('eng').classList.contains('hide')){$('eng').classList.add('hide');EV=null}
+  $('game').classList.remove('hide');
+  S=m.S;players=m.players;me=m.you;canUndo=m.canUndo;
+  cardMap=new Map(S.cards.map(c=>[c.id,c]));
+  if(drag&&drag.zid){const z=zoneById(drag.zid);if(z)Object.assign(z,drag.geom)}       // keep what I'm dragging
+  if(drag&&drag.chips){for(const id of drag.chips){const c=S.chips.find(o=>o.id===id);if(c){c.x=drag.cx;c.y=drag.cy}}}
+  remote.clear();
+  if(firstState){
+    firstState=false;
+    if(!S.zones.length) send({t:'useTemplate',id:'b-free'});
+    pendingTpl=null;
+    if(toolsOnJoin){toolsOnJoin=false;setTimeout(()=>setTools(true),200)}
+    else if(rulesOnStart){const g=rulesOnStart;rulesOnStart=null;setTimeout(()=>showRules(g.name,g.rules),400)}
+    else if(!store.get('localStorage','kortbord-intro')){store.set('localStorage','kortbord-intro','1');setTimeout(()=>$('dIntro').showModal(),400)}
+  }
+  render();
+  if(tools) syncTools();
+}
+function onRemoteDrag(m){
+  if(m.kind==='chip'){const el=chipEls.get(m.id);if(el&&!(drag&&drag.chips&&drag.chips.includes(m.id))){el.style.left=m.x+'px';el.style.top=m.y+'px';el.style.zIndex=99999}return}
+  const el=els.get(m.id);if(!el||localDrag.has(m.id)) return;
+  remote.set(m.id,m);
+  el.classList.add('drag','remote');el.style.setProperty('--by',(player(m.by)||{}).color||'#fff');
+  el.style.left=(G.ox+m.x*G.s)+'px';el.style.top=(G.oy+m.y*G.s)+'px';el.style.transform=`scale(${G.s})`;el.style.zIndex=7400;
+}
+
+/* =========================================================
+   Layout + render
+   ========================================================= */
+function layout(){
+  for(const z of S.zones){
+    const ids=z.cards.filter(id=>!localDrag.has(id)&&cardMap.has(id)),n=ids.length,cy=z.y+HEAD+(z.h-HEAD-CH)/2;
+    ids.forEach((id,i)=>{
+      const c=cardMap.get(id);
+      if(z.layout==='stack'){const off=Math.min(i*0.15,8);c.x=z.x+(z.w-CW)/2-off*0.4;c.y=cy-off}
+      else if(z.layout==='fan'){const avail=z.w-2*PAD-CW,step=n>1?Math.min(32,avail/(n-1)):0,tot=(n-1)*step;c.x=z.x+(z.w-CW-tot)/2+i*step;c.y=cy}
+      else{const avail=z.h-HEAD-PAD-CH,step=n>1?Math.min(28,avail/(n-1)):0;c.x=z.x+(z.w-CW)/2;c.y=z.y+HEAD+i*step;c.colStep=step}
+      c.zi=100+i;
+    });
+  }
+  const hand=S.myHand.filter(id=>!localDrag.has(id)&&cardMap.has(id)),n=hand.length,cw=CW*G.hs;
+  const room_=G.W<760?40:150;   // leave room for the hand buttons on wide screens
+  const step=n>1?Math.min(cw*0.66,(G.W-room_-24-cw)/(n-1)):0,x0=(G.W-cw-(n-1)*step)/2;
+  hand.forEach((id,i)=>{const c=cardMap.get(id);c.hx=x0+i*step;c.hy=G.H-G.handH+26;c.zi=5000+i});
+}
+const cardScreen=c=>isMine(c)?{x:c.hx,y:c.hy,k:G.hs}:{x:G.ox+c.x*G.s,y:G.oy+c.y*G.s,k:G.s};
+function frontHTML(c){
+  if(!c.r) return '';
+  let center;
+  if(c.r==='JOKER') center='<div class="pip jk"><b>★</b>JOKER</div>';
+  else if(['J','Q','K'].includes(c.r)) center=`<div class="pip fc">${c.r}${c.s}</div>`;
+  else center=`<div class="pip">${c.s}</div>`;
+  const cr=c.r==='JOKER'?'★':c.r,cs=c.r==='JOKER'?'':c.s;
+  return `<div class="corner tl">${cr}<small>${cs}</small></div>${center}<div class="corner br">${cr}<small>${cs}</small></div>`;
+}
+function bjValue(z){
+  let t=0,a=0,seen=0,hidden=0;
+  for(const id of z.cards){const c=cardMap.get(id);if(!c)continue;if(!c.up||!c.r){hidden++;continue}if(c.r==='JOKER')continue;seen++;
+    if(c.r==='A'){t+=1;a++}else t+=['J','Q','K'].includes(c.r)?10:+c.r}
+  if(!seen) return null;
+  if(a&&t+10<=21) t+=10;
+  return {t,bj:t===21&&seen===2&&!hidden,hidden};
+}
+function render(){
+  if(!S) return;
+  if(!!S.myHand.length!==G.hadHand){G.hadHand=!!S.myHand.length;geom()}
+  layout();
+  const th=S.theme||{};
+  stage.style.background=FELT_CSS[th.felt]||FELT_CSS.green;
+  stage.style.setProperty('--backbg',BACK_CSS[th.back]||BACK_CSS.red);
+  stage.classList.toggle('big-faces',th.face==='big');
+
+  // table spots (+ value of the chips lying in each spot)
+  const zs=new Set(),deckTap=S.settings?.deckTap;
+  money=new Map(S.zones.map(z=>[z.id,S.chips.reduce((t,c)=>t+(chipInZone(c,z)?(CHIPS[c.color]||CHIPS.red).v:0),0)]));
+  for(const z of S.zones){
+    let el=zels.get(z.id);
+    if(!el){el=document.createElement('div');el.className='zone';el.dataset.id=z.id;
+      el.innerHTML='<div class="zlabel"><span class="zn"></span><span class="zowner"></span><span class="zsum"></span><span class="zmoney" data-tip="Marker på platsen|Summan av alla marker som ligger på den här platsen."></span><button class="zsit" data-tip="Sitt här|Ta den här platsen. Knappar som Kort och Visa använder din plats.">Sitt här</button></div><div class="zhint"></div><div class="resize" data-tip="Ändra storlek|Dra för att göra platsen större eller mindre."></div>';
+      zels.set(z.id,el)}
+    board.appendChild(el);zs.add(z.id);
+    Object.assign(el.style,{left:z.x+'px',top:z.y+'px',width:z.w+'px',height:z.h+'px'});
+    const owner=z.owner&&player(z.owner);
+    el.style.setProperty('--owner',owner?owner.color:'#fff');
+    el.classList.toggle('mine',!!z.seat&&z.owner===me);
+    const zn=el.querySelector('.zn');zn.textContent=(z.seat?'👤 ':'')+z.name;
+    zn.dataset.tip=tools?'Ändra platsen|Dra för att flytta. Tryck för att byta namn, form och om korten ska synas.':`${z.name}|Tryck för att blanda, vända eller flytta korten här.`;
+    el.querySelector('.zowner').textContent=owner?(z.owner===me?'· du':'· '+owner.name):'';
+    el.querySelector('.zsit').classList.toggle('hide',!(z.seat&&!z.owner));
+    const mv=money.get(z.id);el.querySelector('.zmoney').textContent=mv&&!z.deck?'💰 '+mv.toLocaleString('sv-SE'):'';
+    const v=z.sum?bjValue(z):null,s=el.querySelector('.zsum');
+    s.textContent=v==null?'':v.bj?'21 Blackjack!':v.t>21?v.t+' 💥':v.hidden?v.t+' + ?':v.t;
+    s.classList.toggle('bust',!!v&&v.t>21);s.classList.toggle('bj',!!v&&v.bj);
+    el.querySelector('.zhint').textContent=z.deck?(z.cards.length?(deckTap==='hand'?'Tryck = dra ett kort':deckTap==='mySeat'?'Tryck = ett kort till din plats':'Tryck = vänd upp ett kort'):'Leken är tom'):'';
+  }
+  for(const [id,el] of zels) if(!zs.has(id)){el.remove();zels.delete(id)}
+
+  // chips (+ how many are stacked on the same spot)
+  const cs=new Set(),stacks=new Map();
+  for(const c of S.chips){const k=c.x+','+c.y;stacks.set(k,(stacks.get(k)||[]).concat(c))}
+  for(const c of S.chips){
+    let el=chipEls.get(c.id);
+    if(!el){const k=CHIPS[c.color]||CHIPS.red;el=document.createElement('div');el.className='chip '+c.color;el.dataset.id=c.id;
+      el.style.background=k.bg;el.style.color=k.fg;el.innerHTML=`${k.v}<span class="cnt hide" data-tip="Hela högen|Dra i siffran för att flytta hela högen på en gång."></span>`;board.appendChild(el);chipEls.set(c.id,el)}
+    cs.add(c.id);
+    const st=stacks.get(c.x+','+c.y),top=st.reduce((a,b)=>b.z>a.z?b:a),cnt=el.querySelector('.cnt');
+    cnt.classList.toggle('hide',!(st.length>1&&top===c));cnt.textContent='×'+st.length;
+    el.dataset.tip=`Marker ${(CHIPS[c.color]||CHIPS.red).v}|Dra för att flytta en marker. Släpp den på en annan för att stapla.`;
+    if(drag&&drag.chips&&drag.chips.includes(c.id)) continue;
+    el.style.left=c.x+'px';el.style.top=c.y+'px';el.style.zIndex=500+c.z;el.classList.remove('drag');
+  }
+  for(const [id,el] of chipEls) if(!cs.has(id)){el.remove();chipEls.delete(id)}
+
+  // cards
+  for(const c of S.cards){
+    let el=els.get(c.id);
+    if(!el){el=document.createElement('div');el.className='card';el.dataset.id=c.id;
+      el.innerHTML='<div class="lift"><div class="inner"><div class="face back"></div><div class="face front"></div></div></div>';
+      stage.appendChild(el);els.set(c.id,el)}
+    const mine=isMine(c),showFace=!!c.r&&(c.up||mine),face=showFace?c.s+c.r:'';
+    if(el.dataset.face!==face){el.dataset.face=face;const f=el.querySelector('.front');f.innerHTML=frontHTML(c);f.classList.toggle('red',!!c.red)}
+    el.classList.toggle('up',showFace);el.classList.toggle('inhand',mine);
+    if(localDrag.has(c.id)||remote.has(c.id)) continue;
+    const p=cardScreen(c);
+    el.classList.remove('drag','remote');
+    el.style.left=p.x+'px';el.style.top=p.y+'px';el.style.transform=`scale(${p.k})`;
+    el.style.zIndex=mine?c.zi:c.zone?c.zi:1000+c.z;
+  }
+  for(const [id,el] of els) if(!cardMap.has(id)){el.remove();els.delete(id)}
+
+  renderTop();renderActions();renderHand();
+}
+function renderTop(){
+  const meta=S.meta||{};
+  $('gname').textContent=(meta.emoji?meta.emoji+' ':'')+(meta.name||'Free Deck');
+  $('groom').textContent='Rum '+room;
+  $('rulesBtn').classList.toggle('hide',!meta.rules);
+  $('avatars').innerHTML=players.filter(p=>p.online).map(p=>{
+    const n=p.pid===me?S.myHand.length:(S.handCounts[p.pid]||0),sc=S.scores?.[p.pid],seatZ=S.zones.find(z=>z.seat&&z.owner===p.pid),mv=seatZ?money.get(seatZ.id):0;
+    return `<div class="av${p.pid===me?' me':''}${S.turn===p.pid?' turn':''}" data-pid="${esc(p.pid)}" data-tip="${esc(p.pid===me?'Du':p.name)}|${n} kort på handen${mv?` · 💰 ${mv.toLocaleString('sv-SE')} i marker`:''}. Tryck för poäng och tur. Dra ett kort hit för att ge det${p.pid===me?' till dig själv':' till '+esc(p.name)}.">
+      <i style="background:${p.color}">${esc((p.name||'?')[0].toUpperCase())}</i><span>${p.pid===me?'Du':esc(p.name)}</span>${n?`<em>${n}</em>`:''}${sc?`<b class="sc">⭐${sc}</b>`:''}</div>`}).join('');
+  const tb=$('turnBanner'),tp=S.turn&&player(S.turn);
+  tb.classList.toggle('hide',!tp);tb.classList.toggle('mine',S.turn===me);
+  if(tp) tb.textContent=S.turn===me?'🎯 Din tur!':`⏳ ${tp.name}s tur`;
+}
+function renderActions(){
+  const acts=S.actions||[];
+  const hasSeats=S.zones.some(z=>z.seat);
+  const sig=JSON.stringify([acts.map(a=>[a.id,a.label,a.emoji]),canUndo,hasSeats]);
+  if($('actions').dataset.sig===sig) return;
+  $('actions').dataset.sig=sig;
+  const describe=a=>{const t=a.steps.map(stepText).join(' → ');return t?t[0].toUpperCase()+t.slice(1):'Gör inget ännu'};
+  let h=acts.map(a=>`<button class="gbtn act" data-act="${esc(a.id)}" data-tip="${esc(a.label)}|${esc(describe(a))}">${esc(a.label)}</button>`).join('');
+  if(!acts.length) h+=`<button class="gbtn deal" data-do="deal" data-tip="Dela ut|Välj hur många kort, till vem och om de ska vara dolda eller synliga.">${ic('cards')} Dela ut</button>
+    <button class="gbtn round" data-do="shuffle" data-tip="Blanda leken|Blandar korten i leken.">${ic('shuffle')}</button>
+    <button class="gbtn round" data-do="collect" data-tip="Samla ihop|Alla kort – även i händerna – går tillbaka till leken.">${ic('restart')}</button>`;
+  else h+=`<button class="gbtn round" data-do="more" data-tip="Mer|Dela ut fritt, blanda eller samla ihop alla kort.">${ic('dots')}</button>`;
+  if(hasSeats) h+=`<button class="gbtn round" data-do="chips" data-tip="Ge marker|Skriv in hur mycket varje spelare ska ha. Markerna läggs på spelarnas platser.">${ic('coins')}</button>`;
+  h+=`<button class="gbtn round" data-do="undo" ${canUndo?'':'disabled'} data-tip="Ångra|Tar tillbaka det senaste som hände vid bordet.">${ic('undo')}</button>`;
+  $('actions').innerHTML=h;
+}
+function renderHand(){
+  const n=S.myHand.length,hl=$('handLabel');
+  hl.textContent=n?`🔒 Din hand · ${n} kort · bara du ser den`+(S.settings?.playTo?' · dubbeltryck för att spela':''):'Din hand är tom – tryck på leken för att dra ett kort';
+  hl.classList.toggle('empty',!n);
+  $('handTools').classList.toggle('hide',!n);
+}
+// Plain-language description of a step (used in tooltips and the editor list)
+function zoneName(id){if(id==='deck')return'leken';if(id==='hands')return'allas händer';if(id==='me')return'min hand';if(id==='seats')return'alla spelarplatser';if(id==='mySeat')return'min plats';if(id==='hand')return'handen';const z=S&&zoneById(id);return z?z.name:'?'}
+function stepText(s){
+  switch(s.k){
+    case 'collect':return'samla ihop & blanda';
+    case 'shuffle':return'blanda leken';
+    case 'deal':return`ge ${s.n==='all'?'alla':s.n} kort till ${zoneName(s.to)} (${s.face==='up'?'synliga':'dolda'}${s.lastUp?', sista synligt':''})`;
+    case 'flip':return`vänd upp ${zoneName(s.zone)}`;
+    case 'drawTo':return`dra till ${zoneName(s.zone)} tills ${s.target}`;
+    case 'moveAll':return`flytta ${zoneName(s.from)} till ${zoneName(s.to)}`;
+    case 'next':return'nästa spelares tur';
+    case 'turnFirst':return'första spelaren börjar';
+    case 'chips':return`ge alla marker för ${s.amount}`;
+  }return'';
+}
+
+/* =========================================================
+   Pointer interaction (cards, chips, spots)
+   ========================================================= */
+function zoneAt(b){for(let i=S.zones.length-1;i>=0;i--){const z=S.zones[i];if(b.x>=z.x&&b.x<=z.x+z.w&&b.y>=z.y&&b.y<=z.y+z.h)return z}return null}
+function avatarAt(e){const a=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList&&el.classList.contains('av'));return a||null}
+function setHover(t,av){
+  for(const [id,el] of zels)el.classList.toggle('hover',!!t&&t!=='hand'&&id===t.id);
+  $('handTray').classList.toggle('hover',t==='hand');
+  document.querySelectorAll('.av').forEach(a=>a.classList.toggle('drop',a===av));
+}
+const overTrash=e=>{const r=$('trash').getBoundingClientRect();return tools&&e.clientX>=r.left-10&&e.clientX<=r.right+10&&e.clientY>=r.top-10&&e.clientY<=r.bottom+10};
+let lastSend=0,lastTap={id:null,t:0};
+
+stage.addEventListener('pointerdown',e=>{
+  if(!S||e.button!==0||e.target.closest('button,#actions,#trash,#handTools')) return;
+  closePop();
+  const p=pt(e),b=toBoard(p);
+  const cel=e.target.closest('.card'),chel=e.target.closest('.chip'),zl=e.target.closest('.zn'),rs=e.target.closest('.resize');
+  if(cel){
+    let c=cardMap.get(cel.dataset.id);if(!c) return;
+    const z=c.zone&&!isHandZ(c.zone)&&zoneById(c.zone);
+    if(z&&z.layout==='stack'&&z.cards.length) c=cardMap.get(z.cards[z.cards.length-1]);
+    // in a column, the cards on top of the one you grab come along (patiens)
+    const group=z&&z.layout==='column'?z.cards.slice(z.cards.indexOf(c.id)):[c.id];
+    const sp=cardScreen(c);
+    drag={type:'card',c,group,sx:p.x,sy:p.y,ox:p.x-sp.x,oy:p.y-sp.y,x:sp.x,y:sp.y,k:sp.k,moved:false,fromHand:isMine(c),deck:!!(z&&z.deck),
+      step:(z&&z.layout==='column'?(c.colStep||24):0)};
+  }else if(chel){
+    const ch=S.chips.find(o=>o.id===chel.dataset.id);if(!ch) return;
+    const whole=!!e.target.closest('.cnt');
+    const ids=whole?S.chips.filter(o=>o.x===ch.x&&o.y===ch.y).map(o=>o.id):[ch.id];
+    drag={type:'chip',chips:ids,cx:ch.x,cy:ch.y,sx:p.x,sy:p.y,ox:b.x-ch.x,oy:b.y-ch.y,moved:false};
+  }else if(zl||(tools&&rs)){
+    const z=zoneById((zl||rs).closest('.zone').dataset.id);if(!z) return;
+    drag=tools?{type:rs?'resize':'move',zid:z.id,sx:p.x,sy:p.y,bx:b.x,by:b.y,ox:b.x-z.x,oy:b.y-z.y,w:z.w,h:z.h,geom:{x:z.x,y:z.y,w:z.w,h:z.h},moved:false}
+               :{type:'zmenu',zid:z.id,sx:p.x,sy:p.y};
+  }else return;
+  hideTip();stage.setPointerCapture(e.pointerId);e.preventDefault();
+});
+stage.addEventListener('pointermove',e=>{
+  if(!drag) return;
+  const p=pt(e),now=performance.now(),far=Math.hypot(p.x-drag.sx,p.y-drag.sy)>6;
+  if(drag.type==='card'){
+    const c=drag.c;
+    if(!drag.moved){if(!far)return;drag.moved=true;drag.group.forEach((id,i)=>{localDrag.add(id);const el=els.get(id);el.classList.add('drag');el.style.zIndex=7500+i});render()}
+    drag.x=p.x-drag.ox;drag.y=p.y-drag.oy;
+    const k=inHandArea(p)?G.hs:G.s;
+    drag.group.forEach((id,i)=>{const el=els.get(id);el.style.left=drag.x+'px';el.style.top=(drag.y+i*drag.step*G.s)+'px';if(k!==drag.k)el.style.transform=`scale(${k})`});
+    drag.k=k;
+    const av=avatarAt(e);
+    setHover(av?null:inHandArea(p)?'hand':zoneAt(toBoard(p)),av);
+    if(!drag.fromHand&&now-lastSend>40){lastSend=now;send({t:'drag',kind:'card',id:c.id,x:Math.round((drag.x-G.ox)/G.s),y:Math.round((drag.y-G.oy)/G.s)})}
+  }else if(drag.type==='chip'){
+    if(!drag.moved){if(!far)return;drag.moved=true}
+    const b=toBoard(p);
+    drag.cx=Math.round(clamp(b.x-drag.ox,0,BW-CHIP));drag.cy=Math.round(clamp(b.y-drag.oy,0,BH-CHIP));
+    drag.chips.forEach((id,i)=>{const el=chipEls.get(id);el.style.left=drag.cx+'px';el.style.top=drag.cy+'px';el.style.zIndex=99990+i;el.classList.add('drag')});
+    $('trash').classList.toggle('hot',overTrash(e));
+    if(now-lastSend>40){lastSend=now;drag.chips.forEach(id=>send({t:'drag',kind:'chip',id,x:drag.cx,y:drag.cy}))}
+  }else if(drag.type==='move'||drag.type==='resize'){
+    if(!drag.moved){if(!far)return;drag.moved=true;document.body.classList.add('nomo')}
+    const b=toBoard(p),z=zoneById(drag.zid);if(!z) return;
+    if(drag.type==='move'){drag.geom.x=Math.round(clamp(b.x-drag.ox,0,BW-z.w));drag.geom.y=Math.round(clamp(b.y-drag.oy,0,BH-z.h))}
+    else{drag.geom.w=Math.round(clamp(drag.w+b.x-drag.bx,92,BW-z.x));drag.geom.h=Math.round(clamp(drag.h+b.y-drag.by,130,BH-z.y))}
+    Object.assign(z,drag.geom);render();
+    if(now-lastSend>50){lastSend=now;send({t:'zone',zone:{id:z.id,...drag.geom},top:true})}
+  }
+});
+function removeLocal(id){
+  const c=cardMap.get(id);if(!c) return;
+  if(isHandZ(c.zone)) S.myHand=S.myHand.filter(x=>x!==id);
+  else if(c.zone){const z=zoneById(c.zone);if(z)z.cards=z.cards.filter(x=>x!==id)}
+}
+function endDrag(e){
+  if(!drag) return;
+  const d=drag;drag=null;setHover(null);$('trash').classList.remove('hot');
+  const p=pt(e);
+  if(d.type==='card'){
+    const c=d.c;
+    if(!d.moved){
+      if(d.deck) send({t:'draw'});
+      else if(d.fromHand){ // double-tap plays the card
+        const now=performance.now();
+        if(lastTap.id===c.id&&now-lastTap.t<380){lastTap={id:null,t:0};
+          if(S.settings?.playTo) send({t:'play',id:c.id}); else toast('Dra kortet till bordet för att spela det');}
+        else lastTap={id:c.id,t:now};
+      }
+      else send({t:'flip',id:c.id});
+      return;
+    }
+    d.group.forEach(id=>els.get(id)?.classList.remove('drag'));
+    const av=avatarAt(e),ids=d.group;
+    if(av&&av.dataset.pid&&av.dataset.pid!==me){ // give to another player
+      send({t:'moveMany',ids,to:'h:'+av.dataset.pid});
+      ids.forEach(removeLocal);ids.forEach(id=>{const o=cardMap.get(id);if(o)o.zone='h:'+av.dataset.pid});
+      toast(`🎁 Gav ${ids.length>1?ids.length+' kort':'kortet'} till ${player(av.dataset.pid)?.name||'spelaren'}`);
+    }else if(inHandArea(p)||(av&&av.dataset.pid===me)){
+      const index=S.myHand.filter(id=>!ids.includes(id)&&cardMap.has(id)).filter(id=>cardMap.get(id).hx+CW*G.hs/2<p.x).length;
+      send({t:'moveMany',ids,to:'hand',index});
+      ids.forEach(removeLocal);S.myHand.splice(index,0,...ids);ids.forEach(id=>{const o=cardMap.get(id);o.zone='h:'+me});
+    }else{
+      const b=toBoard(p),z=zoneAt(b),tl={x:(d.x-G.ox)/G.s,y:(d.y-G.oy)/G.s};
+      let index=null;
+      if(z&&z.layout!=='stack') index=z.cards.filter(id=>!ids.includes(id)&&cardMap.has(id)).filter(id=>{const o=cardMap.get(id);return z.layout==='fan'?o.x+CW/2<b.x:o.y+CH/2<b.y}).length;
+      send({t:'moveMany',ids,to:z?z.id:null,index,x:Math.round(tl.x),y:Math.round(tl.y)});
+      ids.forEach(removeLocal);
+      ids.forEach((id,i)=>{const o=cardMap.get(id);if(d.fromHand)o.up=true;
+        if(z){z.cards.splice((index??z.cards.length)+i,0,id);o.zone=z.id}else{o.zone=null;o.x=tl.x;o.y=tl.y+i*24;o.z=++S.ztop}});
+    }
+    localDrag.clear();render();
+  }else if(d.type==='chip'){
+    if(!d.moved) return;
+    if(overTrash(e)){send({t:'chipDel',ids:d.chips});S.chips=S.chips.filter(o=>!d.chips.includes(o.id))}
+    else{
+      // snap onto a nearby stack
+      const near=S.chips.find(o=>!d.chips.includes(o.id)&&Math.hypot(o.x-d.cx,o.y-d.cy)<26);
+      if(near){d.cx=near.x;d.cy=near.y}
+      send({t:'chipMove',ids:d.chips,x:d.cx,y:d.cy});
+      d.chips.forEach(id=>{const c=S.chips.find(o=>o.id===id);if(c){c.x=d.cx;c.y=d.cy;c.z=++S.ztop}});
+    }
+    render();
+  }else if(d.type==='zmenu'){
+    const z=zoneById(d.zid);if(z) openZoneMenu(z,e);
+  }else{
+    document.body.classList.remove('nomo');
+    if(d.moved) send({t:'zone',zone:{id:d.zid,...d.geom},top:true});
+    else{const z=zoneById(d.zid);if(z)openZoneEditor(z,e)}
+  }
+}
+stage.addEventListener('pointerup',endDrag);
+stage.addEventListener('pointercancel',endDrag);
+// "Sitt här"
+board.addEventListener('click',e=>{const b=e.target.closest('.zsit');if(b)send({t:'claim',zone:b.closest('.zone').dataset.id})});
+
+/* =========================================================
+   Popovers: spot menu, spot editor, player menu, "more" menu
+   ========================================================= */
+function openPop(html,e){
+  const pop=$('pop');pop.innerHTML=html;pop.classList.remove('hide');
+  const r=pop.getBoundingClientRect();
+  pop.style.left=clamp(e.clientX-20,8,innerWidth-r.width-8)+'px';
+  pop.style.top=clamp(e.clientY+12,8,innerHeight-r.height-8)+'px';
+  return pop;
+}
+function closePop(){$('pop').classList.add('hide')}
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#pop')&&!e.target.closest('[data-do=more]')&&!e.target.closest('.av'))closePop()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop()});
+
+function openZoneMenu(z,e){
+  const n=z.cards.length,others=S.zones.filter(o=>o!==z&&!o.deck);
+  const pop=openPop(`<div class="pt">${esc(z.name)} <span class="note">· ${n} kort</span></div>
+    ${z.deck?`<button class="mi" data-a="draw">${ic('hand')} Dra ett kort</button>`:''}
+    ${z.seat&&z.owner===me?`<button class="mi" data-a="leave">${ic('leave')} Lämna platsen</button>`:''}
+    ${z.seat&&!z.owner?`<button class="mi" data-a="claim">${ic('user')} Sitt här</button>`:''}
+    <button class="mi" data-a="shuffle">${ic('shuffle')} Blanda</button>
+    <button class="mi" data-a="flip">${ic('refresh')} Vänd alla kort</button>
+    ${!z.deck&&n?`<button class="mi" data-a="take">${ic('hand')} Ta upp alla i handen</button><button class="mi" data-a="todeck">${ic('undo')} Lägg tillbaka i leken</button>`:''}
+    ${!z.deck&&n&&others.length?`<div class="pl">Flytta alla kort till</div>${others.map(o=>`<button class="mi" data-to="${esc(o.id)}">${ic('next')} ${esc(o.name)}</button>`).join('')}`:''}`,e);
+  pop.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;const a=b.dataset.a;
+    if(b.dataset.to)send({t:'moveZone',from:z.id,to:b.dataset.to});
+    else if(a==='draw')send({t:'draw'});else if(a==='shuffle')send({t:'shuffle',zone:z.id});
+    else if(a==='flip')send({t:'flipAll',zone:z.id});else if(a==='take')send({t:'takeAll',zone:z.id});
+    else if(a==='todeck')send({t:'moveZone',from:z.id,to:'deck'});
+    else if(a==='claim')send({t:'claim',zone:z.id});else if(a==='leave')send({t:'leave',zone:z.id});
+    closePop()};
+}
+function openZoneEditor(z,e){
+  const face=z.faceUp===true?'up':z.faceUp===false?'down':'keep';
+  const pop=openPop(`<div class="pt">Ändra plats</div>
+    <input class="field" id="zeName" maxlength="24" value="${esc(z.name)}">
+    <div class="pl">Kort som läggs här blir</div>
+    <div class="seg" id="zeFace"><button data-v="up" class="${face==='up'?'on':''}" data-tip="Synliga|Alla kort som hamnar här vänds upp.">${ic('eye')} Synliga</button><button data-v="down" class="${face==='down'?'on':''}" data-tip="Dolda|Alla kort som hamnar här vänds ner.">${ic('eyeoff')} Dolda</button><button data-v="keep" class="${face==='keep'?'on':''}" data-tip="Som de är|Korten behåller sin sida – bra för dealerns dolda kort och patiens.">Som de är</button></div>
+    <div class="pl">Form</div>
+    <div class="seg" id="zeLay"><button data-v="fan" class="${z.layout==='fan'?'on':''}">▭ Rad</button><button data-v="stack" class="${z.layout==='stack'?'on':''}">🂠 Hög</button><button data-v="column" class="${z.layout==='column'?'on':''}">▯ Kolumn</button></div>
+    <label class="sw" data-tip="Spelarplats|En spelare kan sätta sig här. Knappar som 'Kort' och 'Visa' använder spelarens plats."><input type="checkbox" id="zeSeat" ${z.seat?'checked':''}> 👤 Spelarplats</label>
+    <label class="sw" data-tip="Räkna poäng|Visar summan av uppvända kort som i blackjack (ess = 1 eller 11, klädda = 10)."><input type="checkbox" id="zeSum" ${z.sum?'checked':''}> Räkna poäng (21)</label>
+    ${z.deck?'<div class="note">Det här är kortleken – den kan inte tas bort.</div>':'<button class="mi" data-a="del" style="color:#c7381d">'+ic('trash')+' Ta bort platsen</button>'}`,e);
+  const upd=o=>send({t:'zone',zone:{id:z.id,...o}});
+  pop.querySelector('#zeName').oninput=ev=>upd({name:ev.target.value});
+  pop.querySelector('#zeSum').onchange=ev=>upd({sum:ev.target.checked});
+  pop.querySelector('#zeSeat').onchange=ev=>upd({seat:ev.target.checked});
+  pop.querySelectorAll('#zeFace button').forEach(b=>b.onclick=()=>{pop.querySelectorAll('#zeFace button').forEach(o=>o.classList.toggle('on',o===b));upd({faceUp:b.dataset.v==='up'?true:b.dataset.v==='down'?false:null})});
+  pop.querySelectorAll('#zeLay button').forEach(b=>b.onclick=()=>{pop.querySelectorAll('#zeLay button').forEach(o=>o.classList.toggle('on',o===b));upd({layout:b.dataset.v})});
+  const del=pop.querySelector('[data-a=del]');
+  if(del) del.onclick=()=>{send({t:'zoneDel',id:z.id});closePop()};
+}
+$('avatars').addEventListener('click',e=>{
+  const a=e.target.closest('.av');if(!a) return;
+  const p=player(a.dataset.pid);if(!p) return;
+  const sc=S.scores?.[p.pid]||0;
+  const pop=openPop(`<div class="pt">${p.pid===me?'Du':esc(p.name)}</div>
+    <div class="scorebox">⭐ Poäng: ${sc}<div class="stepper"><button data-d="-1">–</button><button data-d="1">+</button></div></div>
+    <button class="mi" data-a="turn">${ic('next')} ${S.turn===p.pid?'Ta bort turen':'Ge turen till '+(p.pid===me?'mig':esc(p.name))}</button>
+    ${p.pid!==me?`<div class="note" style="margin:6px 4px 0">💡 Dra ett kort till ${esc(p.name)}s bild för att ge det.</div>`:''}`,e);
+  pop.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;
+    if(b.dataset.d){send({t:'score',pid:p.pid,d:+b.dataset.d});closePop();}
+    else if(b.dataset.a==='turn'){send({t:'setTurn',pid:S.turn===p.pid?null:p.pid});closePop()}};
+});
+
+/* =========================================================
+   Action bar, hand tools
+   ========================================================= */
+$('actions').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b) return;
+  if(b.dataset.act){send({t:'action',id:b.dataset.act});return}
+  const d=b.dataset.do;
+  if(d==='deal') openDeal();
+  else if(d==='shuffle'){send({t:'shuffle'});toast('🔀 Leken är blandad')}
+  else if(d==='collect') send({t:'collect'});
+  else if(d==='undo') send({t:'undo'});
+  else if(d==='chips') openChips();
+  else if(d==='more'){
+    const r=b.getBoundingClientRect();
+    const pop=openPop(`<div class="pt">Mer</div>
+      <button class="mi" data-m="deal">${ic('cards')} Dela ut fritt…</button>
+      <button class="mi" data-m="shuffle">${ic('shuffle')} Blanda leken</button>
+      <button class="mi" data-m="collect">${ic('restart')} Samla ihop alla kort</button>
+      ${S.zones.some(z=>z.seat)?'<button class="mi" data-m="chips">'+ic('coins')+' Ge marker…</button>':''}`,{clientX:r.left,clientY:r.top-240});
+    pop.onclick=ev=>{const m=ev.target.closest('[data-m]')?.dataset.m;if(!m)return;closePop();
+      if(m==='chips')openChips();else if(m==='deal')openDeal();else if(m==='shuffle'){send({t:'shuffle'});toast('🔀 Leken är blandad')}else send({t:'collect'})};
+  }
+});
+let sortBy='suit';
+$('hSort').onclick=()=>{send({t:'sortHand',by:sortBy});sortBy=sortBy==='suit'?'rank':'suit'};
+$('hShow').onclick=()=>{if(confirm('Visa hela din hand för alla?'))send({t:'reveal'})};
+$('hFold').onclick=()=>{if(confirm('Släng hela din hand?'))send({t:'fold'})};
+
+/* ---------- free deal dialog ---------- */
+const dealUI={count:2,hands:true,zones:new Set(),face:'down',fresh:true};
+function openDeal(){
+  if(!S) return;
+  const cfg=S.dealCfg||{};
+  dealUI.count=cfg.count||2;dealUI.hands=cfg.hands!==false;dealUI.face=cfg.face||'down';dealUI.fresh=cfg.fresh!==false;
+  dealUI.zones=new Set((cfg.zones||[]).filter(id=>S.zones.some(z=>z.id===id)));
+  renderDeal();$('dDeal').returnValue='';$('dDeal').showModal();
+}
+function renderDeal(){
+  $('dealN').textContent=dealUI.count;
+  const zs=S.zones.filter(z=>!z.deck);
+  $('dealTo').innerHTML=`<button type="button" data-hands class="${dealUI.hands?'on':''}">${ic('hand')} Allas händer</button>`+
+    zs.map(z=>`<button type="button" data-z="${esc(z.id)}" class="${dealUI.zones.has(z.id)?'on':''}">${esc(z.name)}</button>`).join('');
+  $('dealHandNote').classList.toggle('hide',!dealUI.hands);
+  $('dealFaceBox').classList.toggle('hide',!dealUI.zones.size);
+  document.querySelectorAll('#dealFace button').forEach(b=>b.classList.toggle('on',b.dataset.face===dealUI.face));
+  $('dealFresh').checked=dealUI.fresh;
+}
+document.querySelectorAll('#dDeal [data-n]').forEach(b=>b.onclick=()=>{dealUI.count=clamp(dealUI.count+ +b.dataset.n,1,52);renderDeal()});
+$('dealTo').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.hasAttribute('data-hands'))dealUI.hands=!dealUI.hands;else{const id=b.dataset.z;dealUI.zones.has(id)?dealUI.zones.delete(id):dealUI.zones.add(id)}renderDeal()};
+document.querySelectorAll('#dealFace button').forEach(b=>b.onclick=()=>{dealUI.face=b.dataset.face;renderDeal()});
+$('dealFresh').onchange=e=>dealUI.fresh=e.target.checked;
+$('dDeal').addEventListener('close',()=>{
+  if($('dDeal').returnValue!=='ok') return;
+  if(!dealUI.hands&&!dealUI.zones.size){toast('Välj vem som ska få korten');return}
+  send({t:'deal',count:dealUI.count,hands:dealUI.hands,zones:[...dealUI.zones],face:dealUI.face,fresh:dealUI.fresh});
+});
+
+/* ---------- chips dialog: type how much each player gets ---------- */
+function openChips(){
+  if(!S) return;
+  const all=S.zones.filter(z=>z.seat),owned=all.filter(z=>z.owner),list=owned.length?owned:all;
+  if(!list.length){toast('Lägg till spelarplatser under 🛠 Verktyg först');return}
+  const def=S.settings?.startChips||1000;
+  $('chAll').value=def;
+  $('chQuick').innerHTML=[100,500,1000,5000].map(v=>`<button type="button" data-v="${v}">${v.toLocaleString('sv-SE')}</button>`).join('');
+  $('chRows').innerHTML=list.map(z=>{const o=z.owner&&player(z.owner);
+    return `<div class="chipRow2"><div class="who">👤 ${esc(z.name)} <small>${o?'· '+esc(o.pid===me?'du':o.name):'· ledig'}${money.get(z.id)?' · har '+money.get(z.id).toLocaleString('sv-SE'):''}</small></div>
+      <div class="money"><input class="field" type="number" min="0" max="100000" step="10" inputmode="numeric" data-z="${esc(z.id)}" value="${def}"></div></div>`}).join('');
+  $('dChips').returnValue='';$('dChips').showModal();
+}
+$('chFill').onclick=()=>document.querySelectorAll('#chRows input').forEach(i=>i.value=$('chAll').value);
+$('chQuick').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;$('chAll').value=b.dataset.v;document.querySelectorAll('#chRows input').forEach(i=>i.value=b.dataset.v)};
+$('dChips').addEventListener('close',()=>{
+  if($('dChips').returnValue!=='ok') return;
+  const amounts={};document.querySelectorAll('#chRows input').forEach(i=>amounts[i.dataset.z]=Math.max(0,Math.floor(+i.value||0)));
+  send({t:'giveChips',amounts,replace:$('chReplace').checked});
+  toast('💰 Markerna är utdelade');
+});
+
+/* =========================================================
+   Top bar
+   ========================================================= */
+$('back').onclick=goHome;
+$('invite').onclick=async()=>{
+  const link=inviteLinkFor(room);
+  try{await navigator.clipboard.writeText(link);toast('🔗 Länken är kopierad – skicka den till dina vänner!')}
+  catch(e){prompt('Skicka den här länken till dina vänner:',link)}
+};
+function showRules(name,rules){$('rulesTitle').textContent='📖 '+name;$('rulesText').textContent=rules;$('dRules').showModal()}
+$('rulesBtn').onclick=()=>{const m=S.meta||{};showRules(m.name||'Regler',m.rules||'')};
+$('toolsBtn').onclick=()=>setTools(!tools);
+
+/* =========================================================
+   Tools drawer (only visible while building)
+   ========================================================= */
+function setTools(on){
+  tools=on;document.body.classList.toggle('tools',on);$('tools').classList.toggle('hide',!on);
+  $('toolsBtn').classList.toggle('on',on);closePop();hideTip();
+  if(on&&S){const m=S.meta||{};const custom=m.templateId&&!m.templateId.startsWith('b-');
+    syncTools()}
+  if(S) render();
+}
+$('toolsDone').onclick=()=>setTools(false);
+$('feltSw').innerHTML=Object.keys(FELT_CSS).map(k=>`<div style="text-align:center"><button data-felt="${k}" style="background:${FELT_CSS[k]}" data-tip="${FELT_NAMES[k]} bord|Byter bordets färg för alla vid bordet."></button><div class="swlabel">${FELT_NAMES[k]}</div></div>`).join('');
+$('backSw').innerHTML=Object.keys(BACK_CSS).map(k=>`<button data-back="${k}" style="background:${BACK_CSS[k]}" data-tip="${BACK_NAMES[k]} baksida|Så ser korten ut när de ligger dolda."></button>`).join('');
+$('chipRow').innerHTML=Object.entries(CHIPS).map(([k,c])=>`<button class="chip ${k}" data-chip="${k}" style="background:${c.bg};color:${c.fg}" data-tip="Marker värda ${c.v}|Lägger ut en hög med 5 st på bordet. Används för att satsa, t.ex. i poker och blackjack.">${c.v}</button>`).join('');
+function zoneOptions(sel,extra){
+  return extra.map(([v,t])=>`<option value="${v}" ${sel===v?'selected':''}>${t}</option>`).join('')+
+    S.zones.filter(z=>!z.deck).map(z=>`<option value="${esc(z.id)}" ${sel===z.id?'selected':''}>${esc(z.name)}</option>`).join('');
+}
+function syncTools(){
+  const th=S.theme||{},st=S.settings||{};
+  document.querySelectorAll('#feltSw [data-felt]').forEach(b=>b.classList.toggle('on',b.dataset.felt===th.felt));
+  document.querySelectorAll('#backSw [data-back]').forEach(b=>b.classList.toggle('on',b.dataset.back===th.back));
+  document.querySelectorAll('#faceSeg button').forEach(b=>b.classList.toggle('on',b.dataset.face===(th.face||'classic')));
+  $('deckN').textContent=S.decks;$('jokers').checked=!!S.jokers;
+  if(document.activeElement!==$('setDeck')) $('setDeck').innerHTML=zoneOptions(st.deckTap||'hand',[['hand','Dra till handen'],['mySeat','Lägg på min plats']]).replace(/(<option value="z[^"]*"[^>]*>)/g,'$1Vänd upp på ');
+  if(document.activeElement!==$('setPlay')) $('setPlay').innerHTML=zoneOptions(st.playTo||'',[['','Gör inget']]).replace(/(<option value="z[^"]*"[^>]*>)/g,'$1Lägg på ');
+  if(document.activeElement!==$('setChips')) $('setChips').value=st.startChips||0;
+  if(document.activeElement!==$('setDiscard')) $('setDiscard').innerHTML=zoneOptions(st.discard||'',[['','Tillbaka i leken']]);
+  $('actList').innerHTML=(S.actions||[]).map(a=>`<div class="actItem"><span>${esc(a.emoji)}</span><div class="n">${esc(a.label)}<div class="s">${esc(a.steps.map(stepText).join(' → ')||'inga steg')}</div></div>
+    <button data-edit="${esc(a.id)}" data-tip="Ändra knappen|Byt namn eller vad den gör.">✎</button><button data-up="${esc(a.id)}" data-tip="Flytta fram|Knapparna visas i den här ordningen.">↑</button></div>`).join('')||'<div class="note">Inga knappar än. Utan knappar visas Dela ut, Blanda och Samla ihop.</div>';
+}
+$('setDeck').onchange=e=>send({t:'settings',settings:{deckTap:e.target.value}});
+$('setPlay').onchange=e=>send({t:'settings',settings:{playTo:e.target.value||null}});
+$('setChips').onchange=e=>send({t:'settings',settings:{startChips:Math.max(0,Math.floor(+e.target.value||0))}});
+$('setDiscard').onchange=e=>send({t:'settings',settings:{discard:e.target.value||null}});
+$('tools').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||!S) return;
+  if(b.dataset.add){
+    const n=S.zones.filter(z=>/^Spelare/.test(z.name)).length+1,z=ZONE_KINDS[b.dataset.add](n),k=S.zones.length%5,id=newId('z');
+    send({t:'zone',zone:{...z,newId:id,x:Math.round(BW/2-z.w/2+k*26-50),y:Math.round(BH/2-z.h/2+k*22-40)}});
+    if(b.dataset.add==='discard'&&!S.settings?.discard) send({t:'settings',settings:{discard:id}});
+    toast('Dra platsen dit du vill ha den');
+  }else if(b.dataset.chip){
+    const i=Object.keys(CHIPS).indexOf(b.dataset.chip);
+    send({t:'chipAdd',color:b.dataset.chip,count:5,x:300+i*72,y:BH/2-22});
+  }else if(b.dataset.felt) send({t:'theme',theme:{felt:b.dataset.felt}});
+  else if(b.dataset.back) send({t:'theme',theme:{back:b.dataset.back}});
+  else if(b.dataset.face) send({t:'theme',theme:{face:b.dataset.face}});
+  else if(b.dataset.dk){const d=clamp(S.decks+ +b.dataset.dk,1,8);if(d!==S.decks)send({t:'deckCfg',decks:d,jokers:S.jokers})}
+  else if(b.dataset.edit) openActionEditor(S.actions.find(a=>a.id===b.dataset.edit));
+  else if(b.dataset.up){const i=S.actions.findIndex(a=>a.id===b.dataset.up);if(i>0){const a=S.actions.slice();[a[i-1],a[i]]=[a[i],a[i-1]];send({t:'actions',actions:a})}}
+});
+$('actAdd').onclick=()=>openActionEditor(null);
+$('jokers').onchange=e=>send({t:'deckCfg',decks:S.decks,jokers:e.target.checked});
+/* ---------- publish to Community (with preview) ---------- */
+const PUB_EMOJIS=['🃏','🂡','♠️','♥️','♦️','♣️','🎲','🎯','🏆','👑','🐟','🦊','🐸','🦄','🌈','⭐','🔥','💎','🍀','🎉','🧩','⚔️','🚀','🍕'];
+let pubEmoji='🃏';
+function pubData(){return{name:$('pName').value.trim(),desc:$('pDesc').value.trim(),rules:$('pRules').value.trim(),emoji:pubEmoji,min:+$('pMin').value,max:+$('pMax').value,kids:$('pKids').checked,public:$('pPublic').checked}}
+function renderPubPreview(){
+  const d=pubData();
+  if(d.max<d.min){$('pMax').value=d.min;d.max=d.min}
+  $('pEmojis').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.e===pubEmoji));
+  const g={id:'preview',name:d.name||'Ditt spel',desc:d.desc||'Din beskrivning visas här',emoji:d.emoji,author:myName||'Du',plays:0,min:d.min,max:d.max,kids:d.kids,public:d.public,theme:S.theme,zones:S.zones,chips:S.chips};
+  $('pPreview').innerHTML=tile(g,{noStar:true});
+  $('pCheck').textContent=d.name.length<3?'✏️ Ge spelet ett namn med minst 3 bokstäver.':d.public?'✅ Spelet syns i Community för alla.':'🔒 Spelet syns bara för dig.';
+}
+$('tPublish').onclick=()=>{
+  const m=S.meta||{},custom=m.templateId&&!m.templateId.startsWith('b-');
+  $('pName').value=custom?m.name:'';$('pDesc').value=custom?m.desc||'':'';$('pRules').value=m.rules||'';
+  pubEmoji=custom&&m.emoji?m.emoji:'🃏';
+  $('pEmojis').innerHTML=PUB_EMOJIS.map(e=>`<button type="button" data-e="${e}" aria-label="Ikon ${e}">${e}</button>`).join('');
+  const opts=[1,2,3,4,5,6,7,8].map(n=>`<option value="${n}">${n}</option>`).join('');
+  $('pMin').innerHTML=opts;$('pMax').innerHTML=opts;$('pMin').value=1;$('pMax').value=Math.max(2,S.zones.filter(z=>z.seat).length||4);
+  renderPubPreview();$('dPublish').returnValue='';$('dPublish').showModal();
+};
+$('pEmojis').onclick=e=>{const b=e.target.closest('[data-e]');if(!b)return;pubEmoji=b.dataset.e;renderPubPreview()};
+['pName','pDesc','pMin','pMax','pKids','pPublic','pRules'].forEach(id=>$(id).addEventListener('input',renderPubPreview));
+$('dPublish').addEventListener('close',()=>{
+  if($('dPublish').returnValue!=='ok') return;
+  const d=pubData();
+  if(d.name.length<3){toast('Ge spelet ett namn med minst 3 bokstäver');setTimeout(()=>$('dPublish').showModal(),50);return}
+  send({t:'publish',...d});
+});
+$('tSwitch').onclick=()=>{send({t:'listTemplates'});renderGameSwitch();$('dGames').showModal()};
+$('gClose').onclick=()=>$('dGames').close();
+function renderGameSwitch(){if(room) $('gGrid').innerHTML=allGames().filter(g=>g.builtin||g.public||g.mine).map(g=>tile(g,{noStar:true})).join('')}
+
+/* ---------- game button editor ---------- */
+let editAct=null;
+function openActionEditor(a){
+  editAct=a?JSON.parse(JSON.stringify(a)):{id:newId('a'),label:'',emoji:'⭐',steps:[]};
+  $('aEmoji').value=editAct.emoji;$('aLabel').value=editAct.label;
+  $('aDel').classList.toggle('hide',!a);
+  $('aPresets').innerHTML=PRESETS.map((p,i)=>`<button type="button" data-preset="${i}" data-tip="${esc(p.emoji+' '+p.label)}|${esc(p.tip)}">${p.emoji} ${p.label}</button>`).join('');
+  $('aAddStep').innerHTML='<option value="">＋ Lägg till ett steg…</option>'+Object.entries(STEP_INFO).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+  renderSteps();$('dAction').returnValue='';$('dAction').showModal();
+}
+function sel(name,val,opts){return `<select data-f="${name}">${opts.map(([v,t])=>`<option value="${esc(v)}" ${String(val)===String(v)?'selected':''}>${esc(t)}</option>`).join('')}</select>`}
+function zoneOpts(extra){return extra.concat(S.zones.filter(z=>!z.deck).map(z=>[z.id,z.name]))}
+function renderSteps(){
+  $('aPresetsBox').classList.toggle('hide',editAct.steps.length>0);
+  $('aSteps').innerHTML=editAct.steps.map((s,i)=>{
+    let body='';
+    switch(s.k){
+      case 'collect':body='🔄 Samla ihop alla kort och blanda';break;
+      case 'shuffle':body='🔀 Blanda leken';break;
+      case 'deal':body=`🃏 Ge ${sel('n',s.n,[...Array.from({length:13},(_,i)=>[i+1,i+1]),['all','alla']])} kort till ${sel('to',s.to,zoneOpts([['hands','allas händer'],['me','min hand'],['seats','alla spelarplatser'],['mySeat','min plats']]))}
+        ${sel('face',s.face,[['down','🙈 dolda'],['up','👀 synliga']])} <label><input type="checkbox" data-f="lastUp" ${s.lastUp?'checked':''}> sista synligt</label>`;break;
+      case 'flip':body=`👀 Vänd upp alla kort på ${sel('zone',s.zone,zoneOpts([['','välj plats…']]))}`;break;
+      case 'drawTo':body=`🎩 Dra kort till ${sel('zone',s.zone,zoneOpts([['','välj plats…'],['mySeat','min plats']]))} tills summan är minst <input type="number" data-f="target" min="1" max="40" value="${s.target}">`;break;
+      case 'moveAll':body=`📦 Flytta alla kort från ${sel('from',s.from,zoneOpts([['','välj plats…'],['mySeat','min plats']]))} till ${sel('to',s.to,zoneOpts([['deck','leken'],['me','min hand'],['mySeat','min plats']]))}
+        <label><input type="checkbox" data-f="keepTop" ${s.keepTop?'checked':''}> behåll översta</label>`;break;
+      case 'next':body='▶️ Turen går vidare till nästa spelare';break;
+      case 'turnFirst':body='1️⃣ Turen börjar om från första spelaren';break;
+      case 'chips':body=`💰 Ge varje spelare marker för <input type="number" data-f="amount" min="1" max="100000" step="10" value="${s.amount}" style="width:90px"> <label><input type="checkbox" data-f="replace" ${s.replace?'checked':''}> byt ut gamla</label>`;break;
+    }
+    return `<div class="step" data-i="${i}"><span>${body}</span><span class="x"><button type="button" data-mv="-1" title="Flytta upp">↑</button><button type="button" data-rm title="Ta bort steget">✕</button></span></div>`;
+  }).join('');
+}
+$('aSteps').addEventListener('change',e=>{
+  const i=+e.target.closest('.step').dataset.i,f=e.target.dataset.f,s=editAct.steps[i];if(!f) return;
+  s[f]=e.target.type==='checkbox'?e.target.checked:f==='n'?(e.target.value==='all'?'all':+e.target.value):f==='target'||f==='amount'?+e.target.value:e.target.value;
+});
+$('aSteps').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b) return;
+  const i=+b.closest('.step').dataset.i;
+  if(b.hasAttribute('data-rm')) editAct.steps.splice(i,1);
+  else if(b.dataset.mv&&i>0) [editAct.steps[i-1],editAct.steps[i]]=[editAct.steps[i],editAct.steps[i-1]];
+  renderSteps();
+});
+$('aAddStep').onchange=e=>{const k=e.target.value;if(!k)return;editAct.steps.push(STEP_INFO[k].make());e.target.value='';renderSteps()};
+$('aPresets').onclick=e=>{const b=e.target.closest('[data-preset]');if(!b)return;const p=PRESETS[+b.dataset.preset];
+  editAct.steps=JSON.parse(JSON.stringify(p.steps));if(!$('aLabel').value){$('aLabel').value=p.label;$('aEmoji').value=p.emoji}renderSteps()};
+$('dAction').addEventListener('close',()=>{
+  const rv=$('dAction').returnValue,list=(S.actions||[]).slice();
+  if(rv==='delete'){send({t:'actions',actions:list.filter(a=>a.id!==editAct.id)});return}
+  if(rv!=='ok') return;
+  editAct.label=$('aLabel').value.trim()||'Knapp';editAct.emoji=$('aEmoji').value.trim()||'⭐';
+  const bad=editAct.steps.find(s=>(s.k==='flip'||s.k==='drawTo')&&!s.zone||s.k==='moveAll'&&!s.from);
+  if(bad) toast('Ett steg saknar plats och hoppades över');
+  const i=list.findIndex(a=>a.id===editAct.id);
+  if(i>=0) list[i]=editAct; else list.push(editAct);
+  send({t:'actions',actions:list});
+});
+
+$('gSkip').onclick=closeGuide;
+$('gNext').onclick=()=>{if(guideStep>=GUIDE().length-1)return closeGuide();guideStep++;renderGuide()};
+
+/* ---------- language picker ---------- */
+$('lLang').value=LANG;
+$('lLang').onchange=e=>{setLang(e.target.value,true);reconnect();renderLanding()};
+
+/* ---------- go ---------- */
+(async()=>{
+  await platformInit();
+  if(isCGBuild()) document.body.classList.add('cg');
+  if(!hasServer()) document.body.classList.add('noserver');
+  setLang(LANG);$('lLang').value=LANG;applyIcons();
+  platformLoaded();
+  route();
+})();
+</script>
+</body>
+</html>

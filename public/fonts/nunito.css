@@ -1,0 +1,8 @@
+/* Nunito (SIL Open Font License 1.1) – bundled so the game loads no fonts from other sites. */
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 500 900;
+  font-display: swap;
+  src: url(nunito-latin.woff2) format('woff2');
+}
