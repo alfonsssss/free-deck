@@ -413,7 +413,7 @@ function deckInvite() {
   toast(dt('connecting'));
   DK.local = JSON.stringify(DK.st); // my own table comes back when I leave
   DK.inviteAfter = true;
-  enterRoom(randomCode(), 'deck', false);
+  enterRoom(randomCode(), 'deck', false).then(ok => { if (ok === false) { DK.inviteAfter = false; DK.local = null; } });
 }
 // the server sent the shared table (on joining, or after someone else changed it)
 function deckOnline(m) {

@@ -479,7 +479,7 @@ body.tools #trash{display:block}
 <dialog id="dName"><form method="dialog">
   <h3 data-i18n="whatName"></h3>
   <input name="name" class="field" maxlength="20" required data-i18n-ph="yourName" autocomplete="nickname">
-  <div class="row"><button class="btn primary" value="ok" data-i18n="go"></button></div>
+  <div class="row"><button class="btn ghost" value="back" formnovalidate data-i18n="back"></button><button class="btn primary" value="ok" data-i18n="go"></button></div>
 </form></dialog>
 
 <dialog id="dIntro"><form method="dialog">
@@ -749,17 +749,17 @@ function showLanding(){
   $('game').classList.add('hide');$('eng').classList.add('hide');$('landing').classList.remove('hide');
   $('lName').value=myName;cgGameplay(false);cgRoom(null);reconnect();renderLanding();
 }
+// resolves true with a name, false if the player pressed Back (or Esc) – then nothing is opened
 function askName(){
   return new Promise(res=>{
-    const d=$('dName'),f=d.querySelector('form');f.name.value=myName;
-    d.addEventListener('cancel',e=>e.preventDefault(),{once:true});
-    d.onclose=()=>{setName(f.name.value||t('yourName'));res()};d.showModal();
+    const d=$('dName'),f=d.querySelector('form');f.name.value=myName;d.returnValue='';
+    d.onclose=()=>{if(d.returnValue!=='ok'){res(false);return}setName(f.name.value||t('yourName'));res(true)};d.showModal();
   });
 }
 let pendingTpl=null, toolsOnJoin=false, firstState=true;
 async function enterRoom(code,tplId,withTools,fromUrl){
   if(CG.username) setName(CG.username); // CrazyGames username is shown in the game
-  if(!myName&&code) await askName();     // only friends need to see a name; alone you are "You"
+  if(!myName&&code&&!(await askName())){sfx('click');if(fromUrl){navTo('/');showLanding()}return false} // Back: stay where you were
   localRoom=!code;                         // no room code = a solo table in the browser
   room=code||'LOCAL';pendingTpl=tplId;toolsOnJoin=withTools;firstState=true;S=null;clearTable();
   if(!fromUrl&&!localRoom) navTo('?rum='+code);
@@ -838,7 +838,7 @@ function oldTableAsDeck(g){
 }
 function playSolo(id){store.set('localStorage','kortbord-last',id);enterRoom(null,id,false)}
 // "Invite" at a solo table: move the same game to the server so friends can join
-function goOnline(){const id=EV&&EV.meta.id;if(!hasServer()||!id)return;const code=randomCode();enterRoom(code,id,false).then(()=>setTimeout(()=>copyInvite($('eInvite')),600))}
+function goOnline(){const id=EV&&EV.meta.id;if(!hasServer()||!id)return;const code=randomCode();enterRoom(code,id,false).then(ok=>ok!==false&&setTimeout(()=>copyInvite($('eInvite')),600))}
 document.addEventListener('click',e=>{
   const tl=e.target.closest('.tile');if(!tl||tl.closest('#pPreview')) return;
   const g=allGames().find(o=>o.id===tl.dataset.id);if(!g) return;
