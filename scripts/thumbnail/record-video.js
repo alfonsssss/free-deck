@@ -3,18 +3,18 @@
 const { chromium } = require('playwright-core');
 const fs = require('fs'), path = require('path');
 const mode = process.argv[2] || 'landscape', out = process.argv[3] || '.';
-const size = mode === 'portrait' ? { width: 1080, height: 1920 } : { width: 1920, height: 1080 };
-const view = mode === 'portrait' ? { width: 540, height: 960 } : { width: 1920, height: 1080 };
+const size = mode === 'portrait' ? { width: 1080, height: 1920 } : mode === 'p23' ? { width: 1080, height: 1620 } : { width: 1920, height: 1080 };
+const view = mode === 'portrait' ? { width: 540, height: 960 } : mode === 'p23' ? { width: 540, height: 810 } : { width: 1920, height: 1080 };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 (async () => {
   const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required', '--window-size=1200,2100'] });
-  const ctx = await browser.newContext(mode === 'portrait' ? { viewport: null } : { viewport: view, deviceScaleFactor: size.width / view.width, hasTouch: false });
+  const ctx = await browser.newContext(mode !== 'landscape' ? { viewport: null } : { viewport: view, deviceScaleFactor: size.width / view.width, hasTouch: false });
   const page = await ctx.newPage();
   // frames straight from Chrome (screencast), turned into an mp4 with ffmpeg afterwards
   const frames = []; const fdir = path.join(out, 'frames-' + mode); fs.rmSync(fdir, { recursive: true, force: true }); fs.mkdirSync(fdir, { recursive: true });
   const cdp = await ctx.newCDPSession(page);
-  if (mode === 'portrait') await cdp.send('Emulation.setDeviceMetricsOverride', { width: view.width, height: view.height, deviceScaleFactor: 2, mobile: false, scale: 1 }); // a phone screen, drawn sharp at 1080×1920
+  if (mode !== 'landscape') await cdp.send('Emulation.setDeviceMetricsOverride', { width: view.width, height: view.height, deviceScaleFactor: 2, mobile: false, scale: 1 }); // a phone screen, drawn sharp at 1080×1920
   cdp.on('Page.screencastFrame', async f => { const n = frames.length; const file = path.join(fdir, String(n).padStart(5, '0') + '.jpg'); fs.writeFileSync(file, Buffer.from(f.data, 'base64')); frames.push({ file, t: f.metadata.timestamp }); try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch (e) {} });
   await page.addInitScript(() => { try { localStorage.setItem('kortbord-deckhelp', '1'); localStorage.setItem('kortbord-guide2', '1'); localStorage.setItem('kortbord-intro', '1'); localStorage.setItem('kortbord-lang', 'en'); localStorage.setItem('kortbord-name', 'Alex'); } catch (e) {} });
   const t0 = Date.now();
