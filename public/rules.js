@@ -29,8 +29,8 @@ const pickLang = (x, lang) => (x && typeof x === 'object' ? x[lang] || x.en || x
 
 const BOT_NAMES = ['Robo-Rut', 'Data-Dan', 'Bot-Bea', 'Pixel-Per', 'Chip-Cia', 'Kod-Kalle', 'Bit-Britt', 'Logik-Leo'];
 const BOT_COLOR = '#9aa7b8';
-const BOT_DELAY = [750, 1150], AWAY_DELAY = 2500; // people who dropped out get a moment to come back
-const NEXT_ROUND_MS = 1500, NEXT_GAME_MS = 3000; // the next round starts by itself after the result has been shown
+const BOT_DELAY = [1100, 1700], AWAY_DELAY = 2500; // people who dropped out get a moment to come back
+const NEXT_ROUND_MS = 3200, NEXT_GAME_MS = 5000; // the next round starts by itself after the result has been shown
 const TURN_MS = 30000; // with other people at the table, nobody can stall the game: the computer moves for you after this long (engines may set a shorter idle(G))
 
 let send = () => {};
@@ -251,8 +251,8 @@ const meta = { id: 'g-blackjack', emoji: '🂡', min: 1, max: 5, fill: 1, kids: 
   name: { sv: 'Blackjack', en: 'Blackjack' },
   desc: { sv: '21 mot dealern. Satsa, ta kort eller stå – dealern spelar själv.', en: '21 against the dealer. Bet, hit or stand – the dealer plays automatically.' },
   rules: {
-    sv: 'Mål: få närmare 21 än dealern – utan att gå över.\n\n1. Välj hur mycket du vill satsa.\n2. Du får 2 kort. Dealern visar ett kort.\n3. "Ta kort" ger dig ett kort till. "Stå" betyder att du är nöjd.\n4. "Dubbla": dubbla insatsen och få exakt ett kort till.\n5. Dealern drar tills hen har minst 17.\n\nKlädda kort = 10. Ess = 1 eller 11. Över 21 = tjock 💥\nBlackjack (21 på två kort) ger 1,5 gånger insatsen.\nMarkerna är bara på låtsas.',
-    en: 'Goal: get closer to 21 than the dealer – without going over.\n\n1. Choose how much to bet.\n2. You get 2 cards. The dealer shows one card.\n3. "Hit" gives you another card. "Stand" means you are happy.\n4. "Double": double your bet and get exactly one more card.\n5. The dealer draws until reaching at least 17.\n\nFace cards = 10. Aces = 1 or 11. Over 21 = bust 💥\nBlackjack (21 with two cards) pays 1.5 times the bet.\nThe chips are just for fun.' } };
+    sv: 'Mål: få närmare 21 än dealern – utan att gå över.\n\n1. Välj hur mycket du vill satsa.\n2. Du får 2 kort. Dealern visar ett kort.\n3. "Ta kort" ger dig ett kort till. "Stå" betyder att du är nöjd.\n4. "Dubbla": dubbla insatsen och få exakt ett kort till.\n5. "Dela": har du två lika kort kan du dela dem till två händer.\n6. Dealern drar tills hen har minst 17.\n\nKlädda kort = 10. Ess = 1 eller 11. Över 21 = tjock 💥\nBlackjack (21 på två kort) ger 1,5 gånger insatsen.\nMarkerna är bara på låtsas.',
+    en: 'Goal: get closer to 21 than the dealer – without going over.\n\n1. Choose how much to bet.\n2. You get 2 cards. The dealer shows one card.\n3. "Hit" gives you another card. "Stand" means you are happy.\n4. "Double": double your bet and get exactly one more card.\n5. "Split": with two cards of the same value you can split them into two hands.\n6. The dealer draws until reaching at least 17.\n\nFace cards = 10. Aces = 1 or 11. Over 21 = bust 💥\nBlackjack (21 with two cards) pays 1.5 times the bet.\nThe chips are just for fun.' } };
 add({
   sv: { 'bj.newChips': '{a} fick {n} nya marker', 'bj.chooseBet': 'Välj hur mycket du vill satsa.', 'bj.reveal': 'Dealern vänder sitt kort…', 'bj.bj': 'Blackjack! 🎉', 'bj.dealerBJ': 'Dealern har blackjack!',
     'bj.betDone': 'Du har redan satsat – väntar på de andra.', 'bj.onlyChips': 'Du har bara {n} marker.', 'bj.doubleTwo': 'Du kan bara dubbla på dina två första kort.', 'bj.doubleChips': 'Du har inte tillräckligt med marker för att dubbla.',
@@ -261,7 +261,9 @@ add({
     'bj.rPush': 'Lika ({v}) – fick tillbaka {b}', 'bj.rLose': 'Förlorade {b} ({v} mot {d})', 'bj.has': '{t} · har {n}', 'bj.tDealerBust': 'Dealern blev tjock! 🎉', 'bj.tDealer': 'Dealern fick {d}',
     'bj.bet': 'Satsa {n}', 'bj.hit': 'Ta kort', 'bj.stand': 'Stå', 'bj.double': 'Dubbla', 'bj.hBet': 'Hur mycket vill du satsa? Du har {n} marker.', 'bj.hWaitBets': 'Väntar på att alla ska satsa…',
     'bj.hTurn': 'Du har {v}. Vill du ta ett kort till eller stå?', 'bj.hDealer': 'Dealern spelar…', 'bj.betOk': '✅ Satsat', 'bj.betting': 'Satsar…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
-    'bj.yourCards': 'Dina kort · {v}' },
+    'bj.yourCards': 'Dina kort · {v}', 'bj.split': 'Dela', 'bj.noSplit': 'Du kan bara dela två lika kort.', 'bj.splitMsg': '{a} delade handen', 'bj.hTurnN': 'Hand {i} av {n}: du har {v}. Ta kort eller stå?',
+    'bj.yourHandN': 'Hand {i} av {n} · {v}', 'bj.rWon': '{a} vann {n}', 'bj.rLost': '{a} förlorade {n}', 'bj.rEven': '{a} fick tillbaka insatsen', 'bj.paren': '({t})', 'bj.pBust': 'tjock på {v}', 'bj.pBJ': 'blackjack',
+    'bj.pDealerBJ': 'dealern hade blackjack', 'bj.pVs': '{v} mot {d}', 'bj.pPush': 'lika på {v}', 'bj.busted': 'tjock' },
   en: { 'bj.newChips': '{a} got {n} new chips', 'bj.chooseBet': 'Choose how much to bet.', 'bj.reveal': 'The dealer turns over the hidden card…', 'bj.bj': 'Blackjack! 🎉', 'bj.dealerBJ': 'The dealer has blackjack!',
     'bj.betDone': 'You have already bet – waiting for the others.', 'bj.onlyChips': 'You only have {n} chips.', 'bj.doubleTwo': 'You can only double on your first two cards.', 'bj.doubleChips': 'You don\'t have enough chips to double.',
     'bj.bust': 'Bust {v} 💥', 'bj.stands': 'Stands on {v}', 'bj.took': '{a} took a card', 'bj.tookDouble': '{a} took a card and doubled', 'bj.standMsg': '{a} stands on {v}', 'bj.draws': 'The dealer draws… {v}',
@@ -269,7 +271,9 @@ add({
     'bj.rPush': 'Push ({v}) – got {b} back', 'bj.rLose': 'Lost {b} ({v} vs {d})', 'bj.has': '{t} · has {n}', 'bj.tDealerBust': 'The dealer went bust! 🎉', 'bj.tDealer': 'The dealer got {d}',
     'bj.bet': 'Bet {n}', 'bj.hit': 'Hit', 'bj.stand': 'Stand', 'bj.double': 'Double', 'bj.hBet': 'How much do you want to bet? You have {n} chips.', 'bj.hWaitBets': 'Waiting for everyone to bet…',
     'bj.hTurn': 'You have {v}. Take another card or stand?', 'bj.hDealer': 'The dealer is playing…', 'bj.betOk': '✅ Bet placed', 'bj.betting': 'Betting…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
-    'bj.yourCards': 'Your cards · {v}' },
+    'bj.yourCards': 'Your cards · {v}', 'bj.split': 'Split', 'bj.noSplit': 'You can only split two cards of the same value.', 'bj.splitMsg': '{a} split the hand', 'bj.hTurnN': 'Hand {i} of {n}: you have {v}. Hit or stand?',
+    'bj.yourHandN': 'Hand {i} of {n} · {v}', 'bj.rWon': '{a} won {n}', 'bj.rLost': '{a} lost {n}', 'bj.rEven': '{a} got the bet back', 'bj.paren': '({t})', 'bj.pBust': 'bust on {v}', 'bj.pBJ': 'blackjack',
+    'bj.pDealerBJ': 'the dealer had blackjack', 'bj.pVs': '{v} vs {d}', 'bj.pPush': 'push on {v}', 'bj.busted': 'bust' },
 });
 
 function value(cards) {
@@ -284,10 +288,13 @@ function start(n, prev) {
   const chips = prev && prev.chips && prev.chips.length === n ? prev.chips.slice() : Array(n).fill(START);
   const note = [];
   chips.forEach((c, s) => { if (c < BETS[0]) { chips[s] = START; note.push(M('bj.newChips', { a: seat(s), n: START })); } });
-  return { n, chips, bets: Array(n).fill(0), hands: Array.from({ length: n }, () => []), done: Array(n).fill(false), status: Array(n).fill(''),
+  // every seat can hold several hands after a split: sp[s] = [{ cards, bet, done, status }], hi[s] = the hand being played
+  return { n, chips, bets: Array(n).fill(0), sp: Array.from({ length: n }, () => []), hi: Array(n).fill(0), done: Array(n).fill(false),
     dealer: [], hole: true, deck: makeDeck(2), phase: 'bet', turn: null, msg: note.length ? note : M('bj.chooseBet'), result: null, lastBet: prev?.lastBet || Array(n).fill(25) };
 }
 const draw = G => { if (!G.deck.length) G.deck = makeDeck(2); return G.deck.pop(); };
+const cur = (G, s) => G.sp[s][G.hi[s]];
+const cval = c => (c.r === 'A' ? 11 : ['J', 'Q', 'K', '10'].includes(c.r) ? 10 : +c.r);
 function waiting(G) {
   if (G.phase === 'bet') return G.bets.map((b, s) => (b ? -1 : s)).filter(s => s >= 0);
   if (G.phase === 'play' && G.turn != null) return [G.turn];
@@ -298,17 +305,29 @@ function nextTurn(G) {
   G.turn = s < 0 ? null : s;
   if (s < 0) { G.phase = 'dealer'; G.hole = false; G.msg = M('bj.reveal'); }
 }
+// the current hand is finished: go on to the seat's next hand, or the next seat
+function handDone(G, s) {
+  const next = G.sp[s].findIndex((h, i) => i > G.hi[s] && !h.done);
+  if (next >= 0) { G.hi[s] = next; const h = cur(G, s); if (h.cards.length < 2) h.cards.push(draw(G)); if (value(h.cards).t === 21 || h.aces) finishHand(G, s); return; }
+  G.done[s] = true; nextTurn(G);
+}
+function finishHand(G, s) {
+  const h = cur(G, s), v = value(h.cards).t;
+  h.done = true; h.status = v > 21 ? M('bj.bust', { v }) : M('bj.stands', { v });
+  handDone(G, s);
+}
 function deal(G) {
-  for (let s = 0; s < G.n; s++) G.hands[s] = [draw(G)];
+  for (let s = 0; s < G.n; s++) { G.sp[s] = [{ cards: [draw(G)], bet: G.bets[s], done: false, status: '' }]; G.hi[s] = 0; }
   G.dealer = [draw(G)];
-  for (let s = 0; s < G.n; s++) G.hands[s].push(draw(G));
+  for (let s = 0; s < G.n; s++) G.sp[s][0].cards.push(draw(G));
   G.dealer.push(draw(G));
   G.phase = 'play'; G.hole = true;
-  for (let s = 0; s < G.n; s++) if (isBJ(G.hands[s])) { G.done[s] = true; G.status[s] = M('bj.bj'); }
+  for (let s = 0; s < G.n; s++) if (isBJ(G.sp[s][0].cards)) { G.done[s] = true; G.sp[s][0].done = true; G.sp[s][0].status = M('bj.bj'); }
   if (isBJ(G.dealer)) { G.done.fill(true); G.msg = M('bj.dealerBJ'); }
   else G.msg = '';
   nextTurn(G);
 }
+const canSplit = (G, s) => { const h = cur(G, s); return h && h.cards.length === 2 && cval(h.cards[0]) === cval(h.cards[1]) && G.sp[s].length < 4 && G.chips[s] >= h.bet; };
 function act(G, s, m) {
   if (m.a !== 'btn') return null;
   if (G.phase === 'bet') {
@@ -322,79 +341,99 @@ function act(G, s, m) {
   }
   if (G.phase !== 'play') return M('waitMoment');
   if (s !== G.turn) return M('waitTurn');
-  const h = G.hands[s];
+  const h = cur(G, s);
+  if (m.id === 'split') {
+    if (!canSplit(G, s)) return M('bj.noSplit');
+    G.chips[s] -= h.bet; G.bets[s] += h.bet;
+    const aces = h.cards[0].r === 'A';
+    const second = { cards: [h.cards.pop()], bet: h.bet, done: false, status: '', aces };
+    h.aces = aces; h.cards.push(draw(G));
+    G.sp[s].splice(G.hi[s] + 1, 0, second);
+    G.msg = M('bj.splitMsg', { a: seat(s) });
+    if (aces || value(h.cards).t === 21) finishHand(G, s); // split aces get one card each
+    return null;
+  }
   if (m.id === 'hit' || m.id === 'double') {
     if (m.id === 'double') {
-      if (h.length !== 2) return M('bj.doubleTwo');
-      if (G.chips[s] < G.bets[s]) return M('bj.doubleChips');
-      G.chips[s] -= G.bets[s]; G.bets[s] *= 2;
+      if (h.cards.length !== 2) return M('bj.doubleTwo');
+      if (G.chips[s] < h.bet) return M('bj.doubleChips');
+      G.chips[s] -= h.bet; G.bets[s] += h.bet; h.bet *= 2;
     }
-    h.push(draw(G));
-    const v = value(h).t;
-    if (v > 21) { G.done[s] = true; G.status[s] = M('bj.bust', { v }); }
-    else if (v === 21 || m.id === 'double') { G.done[s] = true; G.status[s] = M('bj.stands', { v }); }
+    h.cards.push(draw(G));
+    const v = value(h.cards).t;
     G.msg = M(m.id === 'double' ? 'bj.tookDouble' : 'bj.took', { a: seat(s) });
-  } else if (m.id === 'stand') { const v = value(h).t; G.done[s] = true; G.status[s] = M('bj.stands', { v }); G.msg = M('bj.standMsg', { a: seat(s), v }); }
-  else return null;
-  if (G.done[s]) nextTurn(G);
+    if (v >= 21 || m.id === 'double') finishHand(G, s);
+  } else if (m.id === 'stand') { const v = value(h.cards).t; G.msg = M('bj.standMsg', { a: seat(s), v }); finishHand(G, s); }
   return null;
 }
 function auto(G) {
   if (G.phase !== 'dealer') return null;
-  const allBust = G.hands.every(h => value(h).t > 21);
-  return { ms: 900, key: !allBust && value(G.dealer).t < 17 ? 'draw' : 'settle' };
+  const allBust = G.sp.every(hs => hs.every(h => value(h.cards).t > 21));
+  return { ms: 1300, key: !allBust && value(G.dealer).t < 17 ? 'draw' : 'settle' };
 }
 function step(G, key) {
   if (key === 'draw') { G.dealer.push(draw(G)); G.msg = M('bj.draws', { v: value(G.dealer).t }); return; }
   const d = value(G.dealer).t, dBJ = isBJ(G.dealer);
-  const lines = G.hands.map((h, s) => {
-    const v = value(h).t, b = G.bets[s];
-    let win = 0, text;
-    if (v > 21) text = M('bj.rBust', { v, b });
-    else if (isBJ(h) && !dBJ) { win = Math.floor(b * 2.5); text = M('bj.rBJ', { w: win - b }); }
-    else if (dBJ && !isBJ(h)) text = M('bj.rDealerBJ', { b });
-    else if (d > 21) { win = b * 2; text = M('bj.rWinBust', { b, v }); }
-    else if (v > d) { win = b * 2; text = M('bj.rWin', { b, v, d }); }
-    else if (v === d) { win = b; text = M('bj.rPush', { v, b }); }
-    else text = M('bj.rLose', { b, v, d });
-    G.chips[s] += win;
-    return { seat: s, win: win > b, text: M('bj.has', { t: text, n: G.chips[s] }) };
+  const lines = [];
+  G.sp.forEach((hs, s) => {
+    let net = 0; const parts = [];
+    for (const h of hs) {
+      const v = value(h.cards).t, b = h.bet, bj = isBJ(h.cards) && hs.length === 1;
+      let win = 0;
+      if (v > 21) parts.push(M('bj.pBust', { v }));
+      else if (bj && !dBJ) { win = Math.floor(b * 2.5); parts.push(M('bj.pBJ')); }
+      else if (dBJ && !bj) parts.push(M('bj.pDealerBJ'));
+      else if (d > 21 || v > d) { win = b * 2; parts.push(M('bj.pVs', { v, d: d > 21 ? M('bj.busted') : d })); }
+      else if (v === d) { win = b; parts.push(M('bj.pPush', { v })); }
+      else parts.push(M('bj.pVs', { v, d }));
+      G.chips[s] += win; net += win - b;
+    }
+    const text = net > 0 ? M('bj.rWon', { a: seat(s), n: net }) : net < 0 ? M('bj.rLost', { a: seat(s), n: -net }) : M('bj.rEven', { a: seat(s) });
+    lines.push({ seat: s, win: net > 0, text: [text, M('bj.paren', { t: parts.length > 1 ? M('and', { a: parts[0], b: parts[1] }) : parts[0] })] });
   });
   G.phase = 'over';
-  G.result = { final: false, title: d > 21 ? M('bj.tDealerBust') : M('bj.tDealer', { d }), lines };
+  G.result = { final: false, compact: true, title: d > 21 ? M('bj.tDealerBust') : M('bj.tDealer', { d }), lines };
 }
 function view(G, s) {
   const me = s >= 0 ? s : -1, myTurn = G.phase === 'play' && s === G.turn;
   const buttons = [];
   if (G.phase === 'bet' && me >= 0 && !G.bets[me]) {
-    BETS.filter(b => b <= G.chips[me]).forEach(b => buttons.push({ id: 'bet' + b, label: M('bj.bet', { n: b }), icon: 'coins', primary: b === G.lastBet[me] }));
+    BETS.filter(b => b <= G.chips[me]).forEach(b => buttons.push({ id: 'bet' + b, label: String(b), chip: b, primary: b === G.lastBet[me] }));
   }
-  if (myTurn) {
-    buttons.push({ id: 'hit', label: M('bj.hit'), icon: 'plus', primary: value(G.hands[me]).t < 17 });
-    buttons.push({ id: 'stand', label: M('bj.stand'), icon: 'hand', primary: value(G.hands[me]).t >= 17 });
-    if (G.hands[me].length === 2 && G.chips[me] >= G.bets[me]) buttons.push({ id: 'double', label: M('bj.double'), icon: 'double' });
+  const mine = me >= 0 ? cur(G, me) : null;
+  if (myTurn && mine) {
+    const v = value(mine.cards).t;
+    buttons.push({ id: 'hit', label: M('bj.hit'), icon: 'plus', tone: 'good', primary: v < 17 });
+    buttons.push({ id: 'stand', label: M('bj.stand'), icon: 'hand', tone: 'warn', primary: v >= 17 });
+    if (mine.cards.length === 2 && G.chips[me] >= mine.bet) buttons.push({ id: 'double', label: M('bj.double'), icon: 'double', tone: 'blue' });
+    if (canSplit(G, me)) buttons.push({ id: 'split', label: M('bj.split'), icon: 'spread', tone: 'blue' });
   }
   const dv = value(G.hole ? G.dealer.slice(0, 1) : G.dealer).t;
   let hint;
   if (G.phase === 'bet') hint = me >= 0 && !G.bets[me] ? M('bj.hBet', { n: G.chips[me] }) : M('bj.hWaitBets');
-  else if (myTurn) hint = M('bj.hTurn', { v: value(G.hands[me]).t });
+  else if (myTurn && mine) hint = G.sp[me].length > 1 ? M('bj.hTurnN', { v: value(mine.cards).t, i: G.hi[me] + 1, n: G.sp[me].length }) : M('bj.hTurn', { v: value(mine.cards).t });
   else if (G.phase === 'play') hint = M('waitFor');
   else hint = G.phase === 'dealer' ? M('bj.hDealer') : M('roundOver');
+  const label = i => { const hs = G.sp[i]; if (!hs.length) return G.phase === 'bet' ? (G.bets[i] ? M('bj.betOk') : M('bj.betting')) : '';
+    if (hs.length === 1) return hs[0].status || String(value(hs[0].cards).t);
+    return hs.map(h => String(value(h.cards).t)).join(' | '); };
+  // my hand at the bottom: the hand I'm playing (after a split), otherwise my only hand
+  const show = mine || (me >= 0 && G.sp[me][0]);
   return {
     turn: G.phase === 'play' ? G.turn : null, hint, msg: G.msg,
-    seats: G.hands.map((h, i) => ({ chips: G.chips[i], bet: G.bets[i], shown: h.map(pub),
-      label: G.status[i] || (h.length ? String(value(h).t) : G.phase === 'bet' ? (G.bets[i] ? M('bj.betOk') : M('bj.betting')) : '') })),
+    seats: G.sp.map((hs, i) => ({ chips: G.chips[i], bet: G.bets[i], shown: hs.flatMap(h => h.cards.map(pub)), label: label(i) })),
     center: [{ id: 'dealer', label: G.dealer.length ? M(G.hole ? 'bj.dealerV2' : 'bj.dealerV', { v: dv }) : M('bj.dealer'), layout: 'fan', row: 0,
       cards: G.dealer.map((c, i) => ({ c: G.hole && i === 1 ? null : pub(c) })) }],
-    hand: me >= 0 && G.hands[me].length ? G.hands[me].map(c => ({ ...pub(c), ok: true })) : null,
-    handLabel: me >= 0 && G.hands[me].length ? M('bj.yourCards', { v: value(G.hands[me]).t }) : '',
+    hand: show && show.cards.length ? show.cards.map(c => ({ ...pub(c), ok: true })) : null,
+    handLabel: show && show.cards.length ? (G.sp[me].length > 1 ? M('bj.yourHandN', { v: value(show.cards).t, i: G.hi[me] + 1, n: G.sp[me].length }) : M('bj.yourCards', { v: value(show.cards).t })) : '',
     handTap: false, buttons,
   };
 }
 function bot(G, s) {
   if (G.phase === 'bet') { const b = BETS.filter(x => x <= G.chips[s]); return { a: 'btn', id: 'bet' + (b.includes(G.lastBet[s]) ? G.lastBet[s] : b[Math.min(1, b.length - 1)]) }; }
-  const v = value(G.hands[s]), up = value(G.dealer.slice(0, 1)).t;
-  if (G.hands[s].length === 2 && (v.t === 10 || v.t === 11) && up < 10 && G.chips[s] >= G.bets[s]) return { a: 'btn', id: 'double' };
+  const h = cur(G, s), v = value(h.cards), up = value(G.dealer.slice(0, 1)).t;
+  if (canSplit(G, s) && ['A', '8'].includes(h.cards[0].r)) return { a: 'btn', id: 'split' };
+  if (h.cards.length === 2 && (v.t === 10 || v.t === 11) && up < 10 && G.chips[s] >= h.bet) return { a: 'btn', id: 'double' };
   const hit = v.t <= 11 || (v.soft && v.t <= 17) || (v.t <= 16 && up >= 7);
   return { a: 'btn', id: hit ? 'hit' : 'stand' };
 }
@@ -851,7 +890,7 @@ function act(G, s, m) {
   if (G.trick.length === 4) G.phase = 'trick'; else G.turn = (G.turn + 1) % 4;
   return null;
 }
-function auto(G) { return G.phase === 'trick' ? { ms: 1300, key: 'trick' } : null; }
+function auto(G) { return G.phase === 'trick' ? { ms: 1700, key: 'trick' } : null; }
 function step(G) {
   const ls = leadSuit(G);
   const win = G.trick.filter(t => t.card.s === ls).sort((a, b) => rv(b.card.r) - rv(a.card.r))[0].seat;
@@ -1020,7 +1059,7 @@ function act(G, s, m) {
   if (G.ready[0] && G.ready[1]) G.phase = 'resolve';
   return null;
 }
-function auto(G) { return G.phase === 'resolve' ? { ms: 1100, key: 'resolve' } : null; }
+function auto(G) { return G.phase === 'resolve' ? { ms: 1400, key: 'resolve' } : null; }
 function step(G) {
   const a = G.battle[0][G.battle[0].length - 1], b = G.battle[1][G.battle[1].length - 1];
   G.battles++;
@@ -1356,7 +1395,7 @@ function nextStreet(G) {
   if (movers.length <= 1) { G.phase = 'runout'; G.turn = null; return; }
   G.turn = nextFrom(G, G.dealer, s => canAct(G, s));
 }
-function auto(G) { return G.phase === 'runout' ? { ms: 1000, key: 'runout' } : null; }
+function auto(G) { return G.phase === 'runout' ? { ms: 1500, key: 'runout' } : null; }
 function step(G) {
   if (G.phase !== 'runout') return;
   live(G).forEach(s => (G.show[s] = true)); // all-in: cards are shown while the board runs out

@@ -74,9 +74,9 @@ function showEngine(v) {
 function ecard(c, extra = '', attrs = '') {
   if (!c) return `<div class="ec back ${extra}" ${attrs}></div>`;
   const isNew = c.id && !evSeenIds.has(c.id);
-  const face = ['J', 'Q', 'K'].includes(c.r) ? c.r + c.s : c.s;
+  const face = ['J', 'Q', 'K'].includes(c.r) ? `<b class="fl">${c.r}</b>${suitSVG(c.s)}` : suitSVG(c.s);
   return `<div class="ec${c.red ? ' red' : ''}${isNew ? ' deal-in' : ''} ${extra}" data-cid="${esc(c.id || '')}" ${attrs} aria-label="${esc(c.r + ' ' + c.s)}">
-    <span class="tl">${esc(c.r)}<b>${c.s}</b></span><span class="mid">${face}</span></div>`;
+    <span class="tl">${esc(c.r)}${suitSVG(c.s)}</span><span class="mid${['J', 'Q', 'K'].includes(c.r) ? ' face' : ''}">${face}</span></div>`;
 }
 function seatPos(i, n, me, W, H, ow, oh) {
   const rel = ((i - (me >= 0 ? me : 0)) % n + n) % n;
@@ -172,7 +172,10 @@ function renderEngine() {
   const hint = v.hint || '';
   $('eHint').textContent = myTurn ? (/^(Din tur|Your turn)/.test(hint) ? hint : t('yourTurn') + ' ' + hint)
     : waitTurn && !/(Väntar|Waiting)/.test(hint) ? `${t('waitingFor', { name: v.turnName })} ${hint}` : hint;
-  $('eButtons').innerHTML = (v.buttons || []).map(b => `<button class="ebtn${b.primary ? ' primary' : ''}" data-btn="${esc(b.id)}" data-lobby="${v.phase === 'lobby' ? 1 : ''}"><span class="ic">${icOrText(b.icon, esc)}</span>${esc(b.label)}</button>`).join('');
+  const chips = (v.buttons || []).filter(b => b.chip), rest = (v.buttons || []).filter(b => !b.chip);
+  $('eButtons').classList.toggle('haschips', chips.length > 0);
+  $('eButtons').innerHTML = (chips.length ? `<div class="chiprow">${chips.map(b => `<button class="betchip c${b.chip}${b.primary ? ' on' : ''}" data-btn="${esc(b.id)}" aria-label="${esc(b.label)}"><span>${esc(b.label)}</span></button>`).join('')}</div>` : '') +
+    rest.map(b => `<button class="ebtn t-${b.tone || BTN_TONE[b.id] || 'plain'}${b.primary ? ' primary' : ''}" data-btn="${esc(b.id)}" data-lobby="${v.phase === 'lobby' ? 1 : ''}"><span class="ic">${icOrText(b.icon, esc)}</span>${esc(b.label)}</button>`).join('');
   tickIdle();
 
   engRenderHand(v, hw);
@@ -220,28 +223,29 @@ function engRenderResult(v) {
   const r = v.result, key = v.round + r.title;
   // countdown to the next round (the server starts it by itself)
   if (key !== evResultKey || !evNextAt) evNextAt = r.nextIn != null ? Date.now() + r.nextIn : 0;
+  // a short line on the table – no full screen: "You won 50" + what happened
+  const mine = r.lines.find(l => l.seat === v.me && v.me >= 0);
+  const head = mine && mine.text ? mine.text : r.title;
+  const subs = [mine && mine.text ? r.title : '', r.note, ...r.lines.filter(l => l !== mine && l.text).slice(0, 3).map(l => (l.name && !l.text.includes(l.name) ? l.name + ': ' : '') + l.text)].filter(Boolean);
+  const tone = mine ? (mine.win ? 'win' : /lost|förlorade|bust|tjock/i.test(mine.text) ? 'lose' : '') : '';
   R.classList.remove('hide');
-  R.innerHTML = `<div class="rcard"><h2>${esc(r.title)}</h2>${r.note ? `<p class="note">${esc(r.note)}</p>` : ''}
-    <div class="rlines">${r.lines.map(l => `<div class="rline${l.win ? ' win' : ''}">${l.name ? `<i style="background:${l.color || '#ddd'}">${esc(l.name[0])}</i>` : `<i>${ic('user')}</i>`}
-      <div><div>${l.win ? ic('trophy') + ' ' : ''}${esc(l.name || '')}</div><div class="t">${esc(l.text)}</div></div></div>`).join('')}</div>
-    <div class="rcount" id="rCount"></div>
-    <div class="racts">${v.meta.solo ? '' : `<button class="rlink" data-res="lobby">${ic('users')}${esc(t('changePlayers'))}</button>`}
-      <button class="rlink" data-res="home">${ic('home')}${esc(t('toStart'))}</button></div></div>`;
+  R.innerHTML = `<div class="rbar ${tone}">${mine && mine.win ? ic('trophy') : ''}<b>${esc(head)}</b>${subs.map(x => `<small>${esc(x)}</small>`).join('')}<div class="rcount" id="rCount"></div></div>`;
   tickCountdown(r.final);
   clearInterval(evTick); evTick = setInterval(() => tickCountdown(r.final), 250);
   if (key !== evResultKey) {
     evResultKey = key;
-    const iWon = r.lines.some(l => l.win && (l.name === v.you || l.seat === -1));
+    const iWon = r.lines.some(l => l.win && (l.seat === v.me || l.seat === -1));
     if (iWon) cgHappy();
-    if (iWon || r.final) confetti(['♠', '♥', '♦', '♣']); sfx(iWon ? 'win' : 'pop');
+    if (iWon && r.final) confetti(['♠', '♥', '♦', '♣']);
+    sfx(iWon ? 'win' : 'pop');
   }
 }
 function tickCountdown(final) {
   const el = $('rCount'); if (!el) return;
   if (!evNextAt) { el.textContent = ''; return; }
   const n = Math.max(0, Math.ceil((evNextAt - Date.now()) / 1000));
-  el.textContent = t(final ? 'newGameIn' : 'nextRoundIn', { n });
-  const bar = Math.max(0, Math.min(1, (evNextAt - Date.now()) / (final ? 3000 : 1500)));
+  el.textContent = ''; el.title = t(final ? 'newGameIn' : 'nextRoundIn', { n });
+  const bar = Math.max(0, Math.min(1, (evNextAt - Date.now()) / (final ? 5000 : 3200)));
   el.style.setProperty('--left', bar);
 }
 // "the computer moves for you in 8 s" when other people are waiting on me
@@ -261,6 +265,9 @@ function confetti(set) {
   box.innerHTML = Array.from({ length: 36 }, (_, i) => { const sy = set[i % set.length]; return `<span style="left:${Math.random() * 100}%;animation-delay:${Math.random() * .8}s;color:${sy === '♥' || sy === '♦' ? '#e0443a' : '#fff'}">${suitSVG(sy)}</span>`; }).join('');
   document.body.appendChild(box); setTimeout(() => box.remove(), 3600);
 }
+
+// colour of a button by what it does
+const BTN_TONE = { fold: 'bad', call: 'good', check: 'good', raise: 'warn', allin: 'hot', hit: 'good', stand: 'warn', double: 'blue', split: 'blue', start: 'good', addBot: 'plain', draw: 'good', pass: 'warn', fish: 'blue', meld: 'good', resign: 'plain', flip: 'good', restart: 'plain', tip: 'blue' };
 
 /* ---------- chess board ---------- */
 let evChessSel = -1, evChessKey = '';

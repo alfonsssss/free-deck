@@ -829,6 +829,13 @@ $('lQuick').onclick=()=>{const g=quickGame();if(g)playSolo(g.id)};
 $('lDeck').onclick=()=>{sfx('shuffle');deckOpen()};
 $('lJoin').onsubmit=e=>{e.preventDefault();const c=$('lCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(c)enterRoom(c,null,false);else{$('lCode').focus();toast(t('writeCode'))}};
 let rulesOnStart=null;
+// a game made with the old table builder → how it starts on the new table (its spots become piles, the deck holds the cards)
+function oldTableAsDeck(g){
+  const zs=(g.zones||[]).filter(z=>z.deck);const W=BW,H=BH;
+  const piles=zs.map(z=>({x:Math.min(1,Math.max(0,(z.x+z.w/2)/W)),y:Math.min(1,Math.max(0,(z.y+z.h/2)/H)),n:0,face:'down',rest:true}));
+  if(!piles.length)piles.push({x:.5,y:.42,n:0,face:'down',rest:true});
+  return {id:g.id,name:g.name,desc:g.desc,rules:g.rules,setup:{piles,hand:0}};
+}
 function playSolo(id){store.set('localStorage','kortbord-last',id);enterRoom(null,id,false)}
 // "Invite" at a solo table: move the same game to the server so friends can join
 function goOnline(){const id=EV&&EV.meta.id;if(!hasServer()||!id)return;const code=randomCode();enterRoom(code,id,false).then(()=>setTimeout(()=>copyInvite($('eInvite')),600))}
@@ -846,6 +853,8 @@ document.addEventListener('click',e=>{
     if(room){ send({t:'switchGame',id:g.id});$('dGames').close();setTools(false);if(g.rules&&!g.engine) setTimeout(()=>showRules(g.name,g.rules),350); }
     else if(g.engine) playSolo(g.id);
     else if(g.kind==='deck') deckPlayGame(g);
+    else if(g.id==='b-free') deckOpen();
+    else if(!g.engine) deckPlayGame(oldTableAsDeck(g)); // games from the old table builder open on the new Free Deck table
     else{rulesOnStart=g.rules&&!g.engine?g:null;enterRoom(randomCode(),g.id,false)}
   }
 });

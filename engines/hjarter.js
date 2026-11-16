@@ -61,7 +61,7 @@ function act(G, s, m) {
   if (G.trick.length === 4) G.phase = 'trick'; else G.turn = (G.turn + 1) % 4;
   return null;
 }
-function auto(G) { return G.phase === 'trick' ? { ms: 1300, key: 'trick' } : null; }
+function auto(G) { return G.phase === 'trick' ? { ms: 1700, key: 'trick' } : null; }
 function step(G) {
   const ls = leadSuit(G);
   const win = G.trick.filter(t => t.card.s === ls).sort((a, b) => rv(b.card.r) - rv(a.card.r))[0].seat;

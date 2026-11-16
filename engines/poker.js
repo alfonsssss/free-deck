@@ -164,7 +164,7 @@ function nextStreet(G) {
   if (movers.length <= 1) { G.phase = 'runout'; G.turn = null; return; }
   G.turn = nextFrom(G, G.dealer, s => canAct(G, s));
 }
-function auto(G) { return G.phase === 'runout' ? { ms: 1000, key: 'runout' } : null; }
+function auto(G) { return G.phase === 'runout' ? { ms: 1500, key: 'runout' } : null; }
 function step(G) {
   if (G.phase !== 'runout') return;
   live(G).forEach(s => (G.show[s] = true)); // all-in: cards are shown while the board runs out

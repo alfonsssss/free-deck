@@ -20,8 +20,8 @@ const pickLang = (x, lang) => (x && typeof x === 'object' ? x[lang] || x.en || x
 
 const BOT_NAMES = ['Robo-Rut', 'Data-Dan', 'Bot-Bea', 'Pixel-Per', 'Chip-Cia', 'Kod-Kalle', 'Bit-Britt', 'Logik-Leo'];
 const BOT_COLOR = '#9aa7b8';
-const BOT_DELAY = [750, 1150], AWAY_DELAY = 2500; // people who dropped out get a moment to come back
-const NEXT_ROUND_MS = 1500, NEXT_GAME_MS = 3000; // the next round starts by itself after the result has been shown
+const BOT_DELAY = [1100, 1700], AWAY_DELAY = 2500; // people who dropped out get a moment to come back
+const NEXT_ROUND_MS = 3200, NEXT_GAME_MS = 5000; // the next round starts by itself after the result has been shown
 const TURN_MS = 30000; // with other people at the table, nobody can stall the game: the computer moves for you after this long (engines may set a shorter idle(G))
 
 let send = () => {};

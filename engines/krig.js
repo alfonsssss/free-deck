@@ -37,7 +37,7 @@ function act(G, s, m) {
   if (G.ready[0] && G.ready[1]) G.phase = 'resolve';
   return null;
 }
-function auto(G) { return G.phase === 'resolve' ? { ms: 1100, key: 'resolve' } : null; }
+function auto(G) { return G.phase === 'resolve' ? { ms: 1400, key: 'resolve' } : null; }
 function step(G) {
   const a = G.battle[0][G.battle[0].length - 1], b = G.battle[1][G.battle[1].length - 1];
   G.battles++;
