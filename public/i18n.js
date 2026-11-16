@@ -12,10 +12,10 @@ const I18N = {
     newGame: 'Nytt spel', playAgain: 'Spela igen', changePlayers: 'Ändra spelare', toStart: 'Till startsidan', waitYourTurn: 'Vänta på din tur – det är {name}s tur.', notNow: 'Det går inte just nu.',
     raiseTitle: '⬆️ Hur mycket?', less: '➖ Mindre', more: '➕ Mer', qMin: 'Minsta', qHalf: 'Halva potten', qPot: 'Hela potten', qAll: '🔥 Allt', raiseTo: '⬆️ {label} till {n}', cancel: 'Avbryt',
     skip: 'Hoppa över', next: 'Nästa →', startPlaying: '🎉 Börja spela', gotIt: 'Uppfattat!', whatName: '👋 Vad heter du?', yourName: 'Ditt namn', go: 'Kör!', loading: 'Laddar…',
-    heroTitle: 'Spela kort med vänner – var ni än är.', heroText: 'Välj ett spel, bjud in en vän och kör. Är du ensam spelar datorn med dig.',
-    haveCode: 'Har du en rumskod?', join: 'Gå med', writeCode: 'Skriv rumskoden du har fått', favorites: '⭐ Mina favoriter', chooseGame: '🎴 Välj ett spel', play: 'Spela', plays: '▶ {n} spelningar',
+    heroTitle: 'En kortlek, direkt i webbläsaren.', heroText: 'Blanda, dela ut och spela vilket kortspel du vill – själv eller med vänner.',
+    haveCode: 'Har du en rumskod?', join: 'Gå med', writeCode: 'Skriv rumskoden du har fått', favorites: '⭐ Mina favoriter', chooseGame: 'Färdiga spel', play: 'Spela', plays: '▶ {n} spelningar',
     players: '👥 {n} spelare', kids: '👶 För barn', classic: 'Klassiker', favEmpty: 'Tryck på ☆ på ett spel så hamnar det här.', favSaved: '⭐ Sparad bland dina favoriter', favRemoved: 'Borttagen från favoriter',
-    heroTitleSolo: 'Klassiska kortspel – igång på sekunder.', connLost: 'Tappade anslutningen – försöker igen…', room: 'Rum {code}', playNow: 'Spela {name}', heroTextSolo: 'Klassiska kortspel mot smarta datorspelare. Inget konto, inga väntetider – välj ett spel och kör.',
+    openDeck: 'Öppna en kortlek', heroTitleSolo: 'En kortlek, direkt i webbläsaren.', connLost: 'Tappade anslutningen – försöker igen…', room: 'Rum {code}', playNow: 'Spela {name}', heroTextSolo: 'Blanda, dela ut och spela vilket kortspel du vill.',
     tabGames: 'Spel', createOwn: 'Skapa eget spel', createTip: 'Skapa eget spel|Börja med ett tomt bord och en kortlek. Lägg till platser, marker och knappar – och publicera i Community.',
     myGames: '🎨 Spel jag har gjort', by: 'av {name}', onlyYou: 'Bara du', favorite: 'Favorit', favOnTip: 'Spara som favorit|Spelet hamnar under ⭐ Mina favoriter.', favOffTip: 'Ta bort favorit|Spelet försvinner från Mina favoriter.',
     delTip: 'Ta bort|Tar bort ditt spel för alltid.', reportTip: 'Rapportera|Tycker du att spelet är olämpligt? Tryck här så tittar vi på det.',
@@ -36,10 +36,10 @@ const I18N = {
     newGame: 'New game', playAgain: 'Play again', changePlayers: 'Change players', toStart: 'Back to start', waitYourTurn: 'Please wait – it is {name}\'s turn.', notNow: 'You can\'t do that right now.',
     raiseTitle: '⬆️ How much?', less: '➖ Less', more: '➕ More', qMin: 'Minimum', qHalf: 'Half the pot', qPot: 'Whole pot', qAll: '🔥 Everything', raiseTo: '⬆️ {label} to {n}', cancel: 'Cancel',
     skip: 'Skip', next: 'Next →', startPlaying: '🎉 Start playing', gotIt: 'Got it!', whatName: '👋 What is your name?', yourName: 'Your name', go: 'Let\'s go!', loading: 'Loading…',
-    heroTitle: 'Play cards with friends – wherever you are.', heroText: 'Pick a game, invite a friend and play. On your own? The computer plays with you.',
-    haveCode: 'Got a room code?', join: 'Join', writeCode: 'Type the room code you were given', favorites: '⭐ My favourites', chooseGame: '🎴 Choose a game', play: 'Play', plays: '▶ {n} plays',
+    heroTitle: 'A deck of cards, right in your browser.', heroText: 'Shuffle, deal and play any card game you know – on your own or with friends.',
+    haveCode: 'Got a room code?', join: 'Join', writeCode: 'Type the room code you were given', favorites: '⭐ My favourites', chooseGame: 'Ready-made games', play: 'Play', plays: '▶ {n} plays',
     players: '👥 {n} players', kids: '👶 Kid friendly', classic: 'Classic', favEmpty: 'Tap ☆ on a game to keep it here.', favSaved: '⭐ Saved to your favourites', favRemoved: 'Removed from favourites',
-    heroTitleSolo: 'Classic card games – playing in seconds.', connLost: 'Connection lost – trying again…', room: 'Room {code}', playNow: 'Play {name}', heroTextSolo: 'Classic card games against smart computer players. No sign-up, no waiting – pick a game and play.',
+    openDeck: 'Open a deck of cards', heroTitleSolo: 'A deck of cards, right in your browser.', connLost: 'Connection lost – trying again…', room: 'Room {code}', playNow: 'Play {name}', heroTextSolo: 'Shuffle, deal and play any card game you know.',
     tabGames: 'Games', createOwn: 'Create your own game', createTip: 'Create your own game|Start with an empty table and a deck. Add seats, chips and buttons – and publish it to the Community.',
     myGames: '🎨 Games I made', by: 'by {name}', onlyYou: 'Only you', favorite: 'Favourite', favOnTip: 'Save as favourite|The game shows up under ⭐ My favourites.', favOffTip: 'Remove favourite|The game disappears from My favourites.',
     delTip: 'Delete|Deletes your game for good.', reportTip: 'Report|Think this game is inappropriate? Tap here and we will take a look.',
@@ -57,7 +57,8 @@ let LANG = 'en';
 const NUM_LOCALE = () => (LANG === 'sv' ? 'sv-SE' : 'en-US');
 function t(key, p = {}) {
   const s = (I18N[LANG] && I18N[LANG][key]) ?? I18N.en[key] ?? key;
-  return typeof s === 'string' ? s.replace(/\{(\w+)\}/g, (m, k) => (k in p ? (typeof p[k] === 'number' ? p[k].toLocaleString(NUM_LOCALE()) : p[k]) : m)) : s;
+  const out = typeof s === 'string' ? s.replace(/\{(\w+)\}/g, (m, k) => (k in p ? (typeof p[k] === 'number' ? p[k].toLocaleString(NUM_LOCALE()) : p[k]) : m)) : s;
+  return typeof deEmoji === 'function' ? (Array.isArray(out) ? out.map(r => r.map((x, i) => (i ? deEmoji(x) : x))) : deEmoji(out)) : out; // no emojis in the interface
 }
 const fmt = n => Number(n || 0).toLocaleString(NUM_LOCALE());
 function detectLang(sdkLocale) {

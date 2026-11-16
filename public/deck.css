@@ -1,0 +1,105 @@
+/* =========================================================
+   Free Deck – the digital deck of cards (deck.js)
+   ========================================================= */
+#deck{position:fixed;inset:0;z-index:50;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;
+  background:radial-gradient(ellipse at 50% 40%,#3a9f68 0%,#22794b 45%,#14583a 80%,#0e432b 100%);
+  --cw:80px;--ch:112px;--top:58px;--bar:64px;--handH:120px}
+#deck::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.1;
+  background-image:repeating-radial-gradient(circle at 30% 20%,rgba(255,255,255,.55) 0 1px,transparent 1px 3px)}
+#deck .dtop{position:absolute;left:0;right:0;top:0;height:var(--top);display:flex;align-items:center;gap:8px;padding:0 10px;z-index:3000;
+  padding-top:env(safe-area-inset-top)}
+#deck .dtop .title{flex:1;font-weight:900;font-size:19px;display:flex;align-items:center;gap:8px;letter-spacing:-.2px;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+#deck .dtop .title .suit{width:20px;height:20px}
+#deck .dbtn{min-width:44px;height:44px;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  font-weight:800;font-size:15px;padding:0 12px;transition:transform .1s,background .15s}
+#deck .dbtn:hover{background:rgba(0,0,0,.38)}
+#deck .dbtn:active{transform:scale(.94)}
+#deck .dbtn .svgic{width:22px;height:22px}
+#deck .dbtn.invite{background:#fff;color:#16583a}
+@media (max-width:520px){#deck .dbtn .dl{display:none}#deck .dbtn{padding:0}}
+
+/* toolbar above the hand */
+#deck .dbar{position:absolute;left:0;right:0;bottom:var(--handH);height:var(--bar);display:flex;align-items:center;justify-content:center;gap:10px;z-index:2500;pointer-events:none}
+#deck .dbar .dtool{pointer-events:auto;height:50px;padding:0 18px;border-radius:999px;background:#fff;color:#1f2433;font-weight:900;font-size:16px;display:inline-flex;align-items:center;gap:8px;
+  box-shadow:0 4px 0 rgba(0,0,0,.25),0 8px 20px rgba(0,0,0,.2);transition:transform .1s}
+#deck .dbar .dtool:active{transform:translateY(2px) scale(.97);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+#deck .dbar .dtool .svgic{width:22px;height:22px}
+#deck .dbar .dtool.main{background:#ffb02e;color:#3a2600}
+#deck .dbar .dtool:disabled{opacity:.45}
+@media (max-width:520px){#deck .dbar{gap:6px}#deck .dbar .dtool{height:48px;padding:0 12px;font-size:14px;gap:5px}#deck .dbar .dtool .svgic{width:20px;height:20px}}
+@media (max-width:340px){#deck .dbar .dtool .dl{display:none}#deck .dbar .dtool{width:52px;padding:0;justify-content:center}}
+
+/* my hand */
+#deck .dhand{position:absolute;left:0;right:0;bottom:0;height:var(--handH);z-index:2000;
+  background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.28) 30%,rgba(0,0,0,.42));border-top:2px dashed rgba(255,255,255,.18);transition:background .15s}
+#deck .dhand.over{background:linear-gradient(180deg,rgba(255,208,102,.15),rgba(255,208,102,.32));border-top-color:#ffd066}
+#deck .dhand .hl{position:absolute;left:0;right:0;top:6px;text-align:center;font-size:13px;font-weight:800;opacity:.75;pointer-events:none}
+
+/* cards */
+.dc{position:absolute;left:0;top:0;width:var(--cw);height:var(--ch);will-change:transform;transition:transform .28s cubic-bezier(.2,.8,.3,1);perspective:800px;cursor:grab}
+.dc.nt{transition:none}
+.dc .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .32s cubic-bezier(.3,.7,.3,1)}
+.dc.down .in{transform:rotateY(180deg)}
+.dc .f,.dc .b{position:absolute;inset:0;border-radius:calc(var(--cw)*.1);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  box-shadow:0 1px 2px rgba(0,0,0,.35),0 3px 8px rgba(0,0,0,.18)}
+.dc .f{background:#fffdf7;color:#1c1f2a;box-shadow:inset 0 0 0 1px #e3dccd,0 1px 2px rgba(0,0,0,.35),0 3px 8px rgba(0,0,0,.18)}
+.dc.red .f{color:#d4302b}
+.dc .b{transform:rotateY(180deg);background:#fff;padding:calc(var(--cw)*.06)}
+.dc .b::after{content:"";position:absolute;inset:calc(var(--cw)*.06);border-radius:calc(var(--cw)*.06);
+  background:repeating-linear-gradient(45deg,#c0392b 0 calc(var(--cw)*.05),#a52a1f calc(var(--cw)*.05) calc(var(--cw)*.1));
+  box-shadow:inset 0 0 0 calc(var(--cw)*.03) #f0c25a}
+.dc .cr{position:absolute;display:flex;flex-direction:column;align-items:center;font-weight:900;line-height:.9;font-size:calc(var(--cw)*.27);letter-spacing:-.04em}
+.dc .cr .suit{width:calc(var(--cw)*.2);height:calc(var(--cw)*.2);margin-top:calc(var(--cw)*.02)}
+.dc .cr.tl{left:calc(var(--cw)*.07);top:calc(var(--cw)*.07)}
+.dc .cr.br{right:calc(var(--cw)*.07);bottom:calc(var(--cw)*.07);transform:rotate(180deg)}
+.dc .mid{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.dc .mid .suit{width:calc(var(--cw)*.5);height:calc(var(--cw)*.5)}
+.dc .mid.face{font-weight:900;font-size:calc(var(--cw)*.62);letter-spacing:-.05em}
+.dc .mid.face .suit{position:absolute;width:calc(var(--cw)*.22);height:calc(var(--cw)*.22);transform:translate(calc(var(--cw)*.2),calc(var(--cw)*.3))}
+.dc.lift{cursor:grabbing;transition:none}
+.dc.lift .f,.dc.lift .b{box-shadow:0 14px 28px rgba(0,0,0,.4),0 4px 8px rgba(0,0,0,.25)}
+.dc.hand.raised{filter:drop-shadow(0 0 0 #ffd066)}
+.dc.target .f,.dc.target .b{box-shadow:0 0 0 3px #ffd066,0 8px 18px rgba(0,0,0,.35)}
+@keyframes dshake{0%,100%{translate:0 0}20%{translate:-6px -2px}40%{translate:5px 2px}60%{translate:-4px 1px}80%{translate:3px -1px}}
+.dc.shuffling{animation:dshake .55s ease-in-out}
+@keyframes dhold{0%{scale:1}50%{scale:1.08}100%{scale:1.04}}
+.dc.held{animation:dhold .25s ease-out forwards}
+
+/* pile count – drag it to move the whole pile */
+.dcount{position:absolute;left:0;top:0;z-index:1900;min-width:30px;height:26px;border-radius:999px;background:#1f2433;color:#fff;font-weight:900;font-size:13px;
+  display:flex;align-items:center;justify-content:center;gap:3px;padding:0 8px;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:grab;transition:transform .28s cubic-bezier(.2,.8,.3,1);touch-action:none}
+.dcount .svgic{width:12px;height:12px;opacity:.7}
+.dcount.nt{transition:none}
+
+/* first-time tips */
+#deck .dtips{position:absolute;left:50%;top:calc(var(--top) + 8px);transform:translateX(-50%);z-index:2600;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:min(94vw,560px);pointer-events:none;transition:opacity .4s}
+#deck .dtips span{background:rgba(0,0,0,.45);border-radius:999px;padding:7px 12px;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+#deck .dtips span .svgic{width:15px;height:15px}
+#deck .dtips.gone{opacity:0}
+
+/* sheets: deal, pile menu */
+.dsheet{position:fixed;inset:0;z-index:9000;background:rgba(10,20,15,.45);display:flex;align-items:flex-end;justify-content:center;animation:dfade .15s}
+@keyframes dfade{from{opacity:0}}
+.dsheet .dsc{background:#fff;color:#1f2433;width:min(520px,100%);border-radius:24px 24px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.3);animation:dup .2s cubic-bezier(.2,.8,.3,1)}
+@media (min-width:640px){.dsheet{align-items:center}.dsheet .dsc{border-radius:24px}}
+@keyframes dup{from{transform:translateY(40px);opacity:0}}
+.dsheet h3{margin:0 0 12px;font-size:21px;font-weight:900;display:flex;align-items:center;justify-content:space-between}
+.dsheet h3 button{width:40px;height:40px;border-radius:12px;background:#f3eee4;display:inline-flex;align-items:center;justify-content:center}
+.dsheet .q{font-weight:800;color:#6c7488;font-size:13px;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px}
+.dsheet .chips{display:flex;flex-wrap:wrap;gap:8px}
+.dsheet .chips button{min-width:52px;height:48px;padding:0 14px;border-radius:14px;background:#f3eee4;font-weight:900;font-size:17px}
+.dsheet .chips button.on{background:#1f8a52;color:#fff}
+.dsheet .go{margin-top:18px;width:100%;height:56px;border-radius:999px;background:#ffb02e;color:#3a2600;font-weight:900;font-size:18px;box-shadow:0 4px 0 #c98410;display:flex;align-items:center;justify-content:center;gap:8px}
+.dsheet .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dsheet .menu button{height:64px;border-radius:16px;background:#f3eee4;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.dsheet .menu button .svgic{width:22px;height:22px}
+.dsheet .help li{margin:8px 0;font-weight:700;display:flex;gap:10px;align-items:flex-start}
+.dsheet .help{list-style:none;padding:0;margin:0}
+.dsheet .help b{display:inline-flex;width:30px;height:30px;border-radius:10px;background:#e8f5ee;color:#1f8a52;align-items:center;justify-content:center;flex:none}
+.dsheet .help .svgic{width:18px;height:18px}
+#deck .dpeers{display:flex;gap:6px;align-items:center}
+#deck .dpeer{position:relative;display:inline-flex;align-items:center}
+#deck .dpeer i{width:36px;height:36px;border-radius:50%;background:var(--c);color:#fff;font-style:normal;font-weight:900;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+#deck .dpeer b{position:absolute;right:-8px;bottom:-6px;background:#1f2433;color:#fff;border-radius:999px;font-size:11px;padding:1px 6px;display:flex;align-items:center;gap:2px}
+#deck .dpeer b .svgic{width:10px;height:10px}
+body.noserver #deck .needs-server{display:none}

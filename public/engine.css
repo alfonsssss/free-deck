@@ -215,3 +215,20 @@
 .eidle{text-align:center;font-weight:800;font-size:14px;background:rgba(0,0,0,.35);color:#ffe6a8;max-height:0;overflow:hidden;transition:max-height .2s}
 .eidle.on{max-height:30px;padding:0 10px 6px}
 .racts{flex-direction:row;justify-content:center;flex-wrap:wrap;gap:4px}
+
+/* real symbols instead of emojis */
+.gbadge{display:inline-flex;align-items:center;justify-content:center;gap:1px;width:1.5em;height:2em;border-radius:.28em;background:#fffdf7;color:#1c1f2a;font-weight:900;font-size:1em;line-height:1;
+  box-shadow:inset 0 0 0 1px #e3dccd,0 2px 4px rgba(0,0,0,.25);vertical-align:middle;flex:none}
+.gbadge.red{color:#d4302b}
+.gbadge b{font-size:.8em;letter-spacing:-.05em}
+.gbadge .suit{width:.95em;height:.95em}
+.gbadge.two{flex-direction:column;gap:0}
+.gbadge.two b{font-size:.75em}.gbadge.two .suit{width:.7em;height:.7em}
+.gbadge .svgic{width:1em;height:1em}
+.suit{display:inline-block;vertical-align:-.12em}
+.confetti span .suit{width:26px;height:26px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.eseat .info .svgic,.pot .svgic,.rline .svgic{width:1em;height:1em;vertical-align:-.15em}
+.eseat .av .svgic{width:55%;height:55%}
+.rline i .svgic{width:60%;height:60%}
+.prev .gbadge svg{position:static;inset:auto;width:.95em;height:.95em}
+.prev .gbadge.two svg{width:.7em;height:.7em}

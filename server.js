@@ -638,6 +638,29 @@ const server = http.createServer((req, res) => {
 });
 
 engineRoom.init({ send });
+
+/* ---------------- Free Deck rooms: friends share one table ----------------
+   The table itself lives in the players' browsers (public/deck.js). The server keeps the latest
+   version and passes every change on to the others. Each change carries a version number;
+   the newest one wins. */
+function deckPeers(r) {
+  const players = [...r.players.values()].filter(p => p.conns > 0).map(p => ({ pid: p.pid, name: p.name, color: p.color }));
+  for (const c of r.clients) send(c, { t: 'deckPeers', players, you: c.pid });
+}
+function deckJoin(r, ws, m) {
+  if (!r.deck && m.st && typeof m.st === 'object') { r.deck = m.st; r.deckV = 1; } // the first one brings the table
+  send(ws, { t: 'deck', st: r.deck, v: r.deckV, by: null });
+  deckPeers(r);
+}
+function deckMsg(r, ws, m) {
+  if (m.t === 'deck' && m.st && typeof m.st === 'object' && Array.isArray(m.st.piles)) {
+    r.deck = m.st; r.deckV = (r.deckV || 0) + 1;
+    for (const c of r.clients) if (c !== ws) send(c, { t: 'deck', st: r.deck, v: r.deckV, by: ws.pid, fx: str(m.fx, 12) });
+    send(ws, { t: 'deckAck', v: r.deckV });
+  } else if (m.t === 'deckDrag') { // show the others what I am dragging, live
+    for (const c of r.clients) if (c !== ws) send(c, { t: 'deckDrag', by: ws.pid, ids: Array.isArray(m.ids) ? m.ids.slice(0, 52).map(x => str(x, 8)) : [], x: +m.x || 0, y: +m.y || 0, end: !!m.end });
+  }
+}
 const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });
 wss.on('connection', ws => {
   let r = null;
@@ -661,21 +684,23 @@ wss.on('connection', ws => {
         r.clients.add(ws);
         if (fresh && m.want) { // the first person decides which game the room plays
           const want = str(m.want, 40);
-          if (engineRoom.engines[want]) engineRoom.setup(r, want);
+          if (want === 'deck') { r.mode = 'deck'; r.deck = null; r.deckV = 0; }
+          else if (engineRoom.engines[want]) engineRoom.setup(r, want);
           else { const t = findTpl(want); if (t) { applyTemplate(r.S, t); countSandboxPlay(r, true); } }
         }
         if (r.mode === 'engine') { engineRoom.join(r, ws.pid); engineRoom.broadcast(r); engineRoom.schedule(r); }
+        else if (r.mode === 'deck') deckJoin(r, ws, m);
         else broadcast(r);
         return;
       }
-      if (r.mode === 'engine') engineRoom.handle(r, ws, m); else handle(r, ws, m);
+      if (r.mode === 'engine') engineRoom.handle(r, ws, m); else if (r.mode === 'deck') deckMsg(r, ws, m); else handle(r, ws, m);
     } catch (e) { console.error('message failed', m && m.t, e); }
   });
   ws.on('close', () => {
     if (!r) return;
     r.clients.delete(ws);
     const p = r.players.get(ws.pid); if (p) p.conns--;
-    if (r.mode === 'engine') engineRoom.left(r); else broadcast(r);
+    if (r.mode === 'engine') engineRoom.left(r); else if (r.mode === 'deck') deckPeers(r); else broadcast(r);
     if (!r.clients.size) r.cleanup = setTimeout(() => { stopRun(r); clearTimeout(r.botT); clearTimeout(r.autoT); rooms.delete(r.code); }, 60 * 60 * 1000);
   });
 });

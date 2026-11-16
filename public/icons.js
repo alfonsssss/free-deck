@@ -46,7 +46,26 @@ const ICONS = {
   dots: '<path d="M5 12h.01M12 12h.01M19 12h.01"/>',
   leave: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
   pencil: '<path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+  sound: '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+  soundoff: '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/>',
+  flip: '<rect x="3" y="5" width="8" height="14" rx="1.5"/><rect x="13" y="5" width="8" height="14" rx="1.5"/><path d="M7 2.5c3-1.5 7-1.5 10 0M15.5 1.5 17 2.5l-1 1.4"/>',
+  spread: '<rect x="2" y="7" width="7" height="11" rx="1.5"/><rect x="8.5" y="6" width="7" height="11" rx="1.5"/><rect x="15" y="5" width="7" height="11" rx="1.5"/>',
+  gather: '<rect x="7" y="6" width="10" height="14" rx="1.5"/><path d="M3 4l3 3M21 4l-3 3M12 2v3"/>',
+  deal: '<rect x="9" y="3" width="6" height="9" rx="1"/><path d="M12 14v3M7 16l-2 3M17 16l2 3"/><rect x="2" y="19" width="5" height="3" rx=".8"/><rect x="9.5" y="19" width="5" height="3" rx=".8"/><rect x="17" y="19" width="5" height="3" rx=".8"/>',
+  star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5v4h-5z"/>',
+  down: '<path d="M12 4v14M6 12l6 6 6-6"/>',
+  help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .8c0 1.7-2.5 2.3-2.5 4M12 17.5h.01"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
 };
+// card suits, filled (real symbols that look the same on every phone – never emoji)
+const SUIT_PATH = {
+  '♠': 'M12 2.2C9.4 5.6 4.3 8.6 4.3 13a4.1 4.1 0 0 0 6.9 3V18c0 1.6-.9 2.8-2.7 3.8h7c-1.8-1-2.7-2.2-2.7-3.8V16a4.1 4.1 0 0 0 6.9-3c0-4.4-5.1-7.4-7.7-10.8z',
+  '♥': 'M12 21.2S3.5 15.8 3.5 9.7A4.6 4.6 0 0 1 12 7.1a4.6 4.6 0 0 1 8.5 2.6c0 6.1-8.5 11.5-8.5 11.5z',
+  '♦': 'M12 2 19.2 12 12 22 4.8 12z',
+  '♣': 'M12 2.4a4.3 4.3 0 0 0-3.6 6.7 4.3 4.3 0 1 0 2.8 6.2V18c0 1.6-.9 2.8-2.7 3.8h7c-1.8-1-2.7-2.2-2.7-3.8v-2.7a4.3 4.3 0 1 0 2.8-6.2A4.3 4.3 0 0 0 12 2.4z',
+};
+const suitSVG = (s, cls = '') => `<svg class="suit ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${SUIT_PATH[s] || ''}"/></svg>`;
 function ic(name, cls = '') {
   const p = ICONS[name];
   if (!p) return '';
@@ -57,4 +76,22 @@ function ic(name, cls = '') {
 const icOrText = (s, esc) => (ICONS[s] ? ic(s) : esc(s || ''));
 function applyIcons(root = document) {
   root.querySelectorAll('i[data-ic]').forEach(el => { if (!el.firstChild) el.innerHTML = ic(el.dataset.ic); });
+}
+
+// emojis in texts from the rules → removed (suits stay, shown as plain symbols, never as emoji)
+const EMOJI_RE = /(?![♠♥♦♣])[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}][\u{FE0F}\u{20E3}\u{200D}\p{Extended_Pictographic}]*|\u{FE0F}/gu;
+const deEmoji = s => (typeof s === 'string' ? s.replace(EMOJI_RE, '').replace(/([♠♥♦♣])/g, '$1︎').replace(/\s{2,}/g, ' ').trim() : s);
+function deEmojiDeep(o) {
+  if (typeof o === 'string') return deEmoji(o);
+  if (Array.isArray(o)) return o.map(deEmojiDeep);
+  if (o && typeof o === 'object') { const r = {}; for (const k in o) r[k] = k === 's' || k === 'id' || k === 'color' ? o[k] : deEmojiDeep(o[k]); return r; }
+  return o;
+}
+// a little card-shaped badge per built-in game (instead of an emoji)
+const GAME_BADGE = { 'g-blackjack': ['21', ''], 'g-poker': ['', '♠'], 'g-vandatta': ['8', '♣'], 'g-rummy': ['', '♦'], 'g-hjarter': ['', '♥'], 'g-patiens': ['K', '♥'], 'g-finnsisjon': ['fish', ''], 'g-krig': ['A', '♠'], 'g-chess': ['chess', ''] };
+function gameBadge(id, cls = '') {
+  const [txt, suit] = GAME_BADGE[id] || ['', '♠'];
+  const red = suit === '♥' || suit === '♦';
+  const inner = txt === 'fish' ? ic('fish') : txt === 'chess' ? (typeof CHESS_GLYPH !== 'undefined' ? CHESS_GLYPH : '♞') : `${txt ? `<b>${txt}</b>` : ''}${suit ? suitSVG(suit) : ''}`;
+  return `<span class="gbadge${red ? ' red' : ''}${txt && suit ? ' two' : ''} ${cls}">${inner}</span>`;
 }

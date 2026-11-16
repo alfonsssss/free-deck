@@ -6,6 +6,7 @@
 <title>Free Deck</title>
 <link rel="stylesheet" href="fonts/nunito.css">
 <link rel="stylesheet" href="engine.css">
+<link rel="stylesheet" href="deck.css">
 <script src="config.js"></script>
 <style>
 :root{
@@ -146,6 +147,7 @@ dialog.wide{width:min(900px,calc(100vw - 32px))}
 .filters select.field{max-width:220px}
 .grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
 .eprev{display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden}
+.eprev .gbadge.big{font-size:42px;box-shadow:inset 0 0 0 1px #e3dccd,0 8px 18px rgba(0,0,0,.35)}
 .eprev .bigemo{font-size:64px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
 .eprev .fan3{display:flex}
 .eprev .fan3 i{width:38px;height:54px;border-radius:6px;background:#fff;margin-left:-14px;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;font-size:14px;box-shadow:0 3px 8px rgba(0,0,0,.3);color:#1f2433}
@@ -168,9 +170,11 @@ dialog.wide{width:min(900px,calc(100vw - 32px))}
 body.noserver .web-only{display:none!important} /* Community, own games, names: need the server */
 body.cg #lFavSec,body.cg .tile .star{display:none}
 body.noserver .needs-server{display:none!important}
+.hero .btn.quick2{min-height:58px;padding:0 24px;font-size:17px;background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
 .hero .btn.quick{min-height:58px;padding:0 28px;font-size:19px;background:var(--sun);color:#3a2600;box-shadow:0 5px 0 #c98410}
 .tile{cursor:pointer}
 @media (max-width:640px){
+  .hero .btn.quick2{width:100%}
   .lwrap{padding:12px 12px 40px}
   .lhead{gap:8px}.logo{font-size:21px}
   .hero{margin:12px 0 6px;padding:20px 18px;border-radius:22px}
@@ -181,7 +185,7 @@ body.noserver .needs-server{display:none!important}
   .grid{grid-template-columns:1fr 1fr;gap:10px}
   .tile .tdesc,.tile .chips2,.tile .tmeta{display:none}
   .tbody{padding:8px 10px 10px}.tname{font-size:15px}
-  .eprev .bigemo{font-size:40px}.eprev .fan3 i{width:28px;height:40px;font-size:11px}
+  .eprev .bigemo{font-size:40px}.eprev .gbadge.big{font-size:30px}.eprev .fan3 i{width:28px;height:40px;font-size:11px}
   .tacts{margin-top:4px}.tacts .btn.primary{min-height:42px;font-size:15px}
 }
 .langbox select{border:0;outline:none;background:#f6f1e7;border-radius:999px;padding:8px 10px;font-weight:800}
@@ -371,9 +375,10 @@ body.tools #trash{display:block}
       <h1 id="lHeroTitle" data-i18n="heroTitle"></h1>
       <p id="lHeroText" data-i18n="heroText"></p>
       <div class="heroActs">
-        <button id="lQuick" class="btn primary big quick"><i data-ic="play"></i> <span id="lQuickTxt"></span></button>
+        <button id="lDeck" class="btn primary big quick"><i data-ic="cards"></i> <span data-i18n="openDeck"></span></button>
+        <button id="lQuick" class="btn big quick2"><i data-ic="play"></i> <span id="lQuickTxt"></span></button>
         <form id="lJoin" class="join needs-server"><input id="lCode" maxlength="8" data-i18n-ph="haveCode" autocomplete="off" aria-label="Room code"><button data-i18n="join"></button></form>
-        <button id="lCreate" class="btn big web-only" data-i18n-tip="createTip"><i data-ic="plus"></i> <span data-i18n="createOwn"></span></button>
+        <button id="lCreate" class="btn big web-only hide" data-i18n-tip="createTip"><i data-ic="plus"></i> <span data-i18n="createOwn"></span></button>
       </div>
       <div class="deco" aria-hidden="true"><span>A♠</span><span>K♥</span><span></span></div>
     </section>
@@ -584,9 +589,11 @@ body.tools #trash{display:block}
 <script src="i18n-ui.js"></script>
 <script src="platform.js"></script>
 <script src="icons.js"></script>
+<script src="sound.js"></script>
 <script src="rules.js"></script>
 <script src="local.js"></script>
 <script src="engine.js"></script>
+<script src="deck.js"></script>
 <script>
 /* =========================================================
    Constants
@@ -716,6 +723,8 @@ function onMessage(m){
   else if(m.t==='fx') m.ids.forEach(id=>{const l=els.get(id)?.firstChild;if(l){l.classList.remove('shake');void l.offsetWidth;l.classList.add('shake')}});
   else if(m.t==='templates'){games=m.list;engGames=m.engines||engGames;renderLanding();renderGameSwitch()}
   else if(m.t==='eng') showEngine(m.v);
+  else if(m.t==='deck') deckOnline(m);
+  else if(m.t==='deckPeers') deckPeersMsg(m);
   else if(m.t==='nope') toast(m.msg);
   else if(m.t==='published'){if(!favorites.includes(m.id)){favorites.unshift(m.id);saveFavs()}
     toast(m.public?`🎉 "${m.name}" är sparat och delat med alla!`:`💾 "${m.name}" är sparat bland dina spel.`)}
@@ -734,6 +743,7 @@ function route(){
 function goHome(){ navTo('/'); showLanding(); }
 window.addEventListener('popstate',route);
 function showLanding(){
+  if(typeof DK!=='undefined'&&DK.open) deckClose();
   room=null;localRoom=false;clearTable();setTools(false);pendingTpl=null;
   EV=null;evSeenIds.clear();evResultKey='';$('eResult')&&$('eResult').classList.add('hide');
   $('game').classList.add('hide');$('eng').classList.add('hide');$('landing').classList.remove('hide');
@@ -754,7 +764,7 @@ async function enterRoom(code,tplId,withTools,fromUrl){
   room=code||'LOCAL';pendingTpl=tplId;toolsOnJoin=withTools;firstState=true;S=null;clearTable();
   if(!fromUrl&&!localRoom) navTo('?rum='+code);
   $('landing').classList.add('hide');$('eng').classList.add('hide');
-  if(!(tplId||'').startsWith('g-')) $('game').classList.remove('hide'); // rule games show their own table when it arrives
+  if(!(tplId||'').startsWith('g-')&&tplId!=='deck') $('game').classList.remove('hide'); // rule games show their own table when it arrives
   $('gname').textContent=t('loading');$('groom').textContent=localRoom?'':t('room',{code});$('actions').innerHTML='';
   geom();reconnect();
 }
@@ -772,13 +782,13 @@ const playersText=g=>t('players',{n:g.min===g.max?String(g.min):`${g.min}–${g.
 function tile(g,opts={}){
   const fav=favorites.includes(g.id);
   const prev=g.engine||opts.preview===false
-    ?`<div class="prev eprev" style="background:${FELT_CSS[g.theme?.felt]||FELT_CSS.green}"><span class="bigemo">${esc(g.emoji||'🃏')}</span><span class="fan3"><i>A♠</i><i class="r">K♥</i><i>Q♣</i></span>`
+    ?`<div class="prev eprev" style="background:${FELT_CSS[g.theme?.felt]||FELT_CSS.green}">${g.engine?gameBadge(g.id,'big'):`<span class="bigemo">${esc(g.emoji||'')}</span>`}`
     :`<div class="prev" style="background:${FELT_CSS[g.theme?.felt]||FELT_CSS.green}">${previewSVG(g)}`;
   const chips=[`<span>${playersText(g)}</span>`,g.kids?`<span class="kids">${esc(t('kids'))}</span>`:'',g.public||g.builtin?'':`<span>🔒 ${esc(t('onlyYou'))}</span>`].join('');
   return `<div class="tile" data-id="${esc(g.id)}">
     ${prev}${opts.noStar?'':`<button class="star${fav?' on':''}" data-star data-tip="${esc(t(fav?'favOffTip':'favOnTip'))}" aria-label="${esc(t('favorite'))}">${fav?'★':'☆'}</button>`}</div>
     <div class="tbody">
-      <div class="tname"><span>${esc(g.emoji||'🃏')}</span>${esc(g.name)}</div>
+      <div class="tname">${g.engine?'':`<span>${esc(g.emoji||'')}</span>`}${esc(g.name)}</div>
       <div class="tdesc">${esc(g.desc)}</div>
       <div class="tmeta">${g.builtin?esc(t('classic')):esc(t('by',{name:g.author}))}${g.plays==null?'':' · '}${g.plays==null?'':`<span class="tplays">${esc(t('plays',{n:g.plays}))}</span>`}</div>
       <div class="chips2">${chips}</div>
@@ -814,6 +824,7 @@ $('lName').onchange=e=>setName(e.target.value);
 $('lCreate').onclick=()=>enterRoom(randomCode(),'b-free',true);
 const quickGame=()=>{const last=store.get('localStorage','kortbord-last');return engGames.find(g=>g.id===last)||engGames.find(g=>g.id==='g-blackjack')||engGames[0]};
 $('lQuick').onclick=()=>{const g=quickGame();if(g)playSolo(g.id)};
+$('lDeck').onclick=()=>{sfx('shuffle');deckOpen()};
 $('lJoin').onsubmit=e=>{e.preventDefault();const c=$('lCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(c)enterRoom(c,null,false);else{$('lCode').focus();toast(t('writeCode'))}};
 let rulesOnStart=null;
 function playSolo(id){store.set('localStorage','kortbord-last',id);enterRoom(null,id,false)}

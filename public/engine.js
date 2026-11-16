@@ -57,6 +57,8 @@ async function copyInvite(btn) {
 
 function showEngine(v) {
   engInit();
+  v = deEmojiDeep(v); // the rules' texts may contain emojis – we show plain text and real symbols
+  engSounds(v);
   $('landing').classList.add('hide'); $('game').classList.add('hide'); $('eng').classList.remove('hide');
   if (evDrag) { evPending = v; return; } // don't redraw under a finger that is dragging
   const firstTime = !EV;
@@ -88,7 +90,7 @@ function renderEngine() {
   const T = $('eTable'), W = T.clientWidth, H = T.clientHeight;
   const solo = v.layout === 'solitaire';
   T.classList.toggle('solitaire', solo);
-  $('eTitle').textContent = `${v.meta.emoji} ${v.meta.name}`;
+  $('eTitle').innerHTML = `${gameBadge(v.meta.id)} ${esc(v.meta.name)}`;
   $('eCode').textContent = v.code;
   $('eCode').parentElement.classList.toggle('hide', localRoom);
   $('eInvite').classList.toggle('hide', localRoom && !hasServer());
@@ -111,14 +113,14 @@ function renderEngine() {
     const style = `left:${p.x}px;top:${p.y}px`;
     if (s && s.me && compact && v.hand && v.phase === 'game') return ''; // small window: my hand + the orange bar already show my info
     if (!s) return v.phase === 'lobby' ? `<div class="eseat empty" style="${style}"><button class="sit" data-sit="${i}">${esc(t('sitHere'))}</button></div>` : '';
-    const info = [s.cards != null ? `🂠 ${s.cards}` : '', s.chips != null ? `💰 ${fmt(s.chips)}` : '', s.score != null && s.chips == null ? `⭐ ${s.score}` : ''].filter(Boolean).join(' · ');
+    const info = [s.cards != null ? `${ic('card')} ${s.cards}` : '', s.chips != null ? `${ic('coins')} ${fmt(s.chips)}` : '', s.score != null && s.chips == null ? `${ic('star')} ${s.score}` : ''].filter(Boolean).join(' · ');
     const shown = (s.shown || []).length && !(s.me && v.hand) ? `<div class="shown">${s.shown.map(c => ecard(c)).join('')}</div>` : ''; // my own cards are shown big in the hand
     const label = s.label ? `<div class="st${/Tjock|Lade sig|Slut|Bust|Folded|Out of/.test(s.label) ? ' bad' : ''}">${esc(s.label)}</div>` : '';
-    const bet = s.bet ? `<div class="info">${esc(t('bet'))}: 💰 ${fmt(s.bet)}</div>` : '';
+    const bet = s.bet ? `<div class="info">${esc(t('bet'))}: ${ic('coins')} ${fmt(s.bet)}</div>` : '';
     const take = v.phase === 'game' && s.bot && v.me < 0 ? `<button class="sit" data-sit="${i}">${esc(t('takeSeat'))}</button>` : '';
     const x = v.phase === 'lobby' && s.bot ? `<button class="x" data-rmbot="${i}" aria-label="${esc(t('removeBot'))}">✕</button>` : '';
     return `<div class="eseat${s.me ? ' me' : ''}${s.bot ? ' bot' : ''}${s.away ? ' away' : ''}${v.turn === i ? ' turn' : ''}${s.tap ? ' tap' : ''}" style="${style}" ${s.tap ? `data-seat="${i}"` : ''}>
-      ${x}<div class="av" style="--c:${s.color}">${s.bot ? '🤖' : esc((s.name || '?')[0].toUpperCase())}${s.dealer ? '<span class="dealer">D</span>' : ''}</div>
+      ${x}<div class="av" style="--c:${s.color}">${s.bot ? ic('bot') : esc((s.name || '?')[0].toUpperCase())}${s.dealer ? '<span class="dealer">D</span>' : ''}</div>
       <div class="nm">${s.me ? esc(t('you')) : esc(s.name)}</div>${info ? `<div class="info">${info}</div>` : ''}${bet}${label}
       ${s.away ? `<div class="awaytxt">${esc(t('away'))}</div>` : ''}${shown}${take}</div>`;
   }).join('');
@@ -146,7 +148,7 @@ function renderEngine() {
     v.center.forEach(p => (rows[p.row || 0] = rows[p.row || 0] || []).push(p));
     const msgNow = [v.priv, v.msg].filter(Boolean).join(' · ');
     C.innerHTML = Object.keys(rows).sort().map(r => `<div class="erow">${rows[r].map(p => pileHTML(p, v, solo, cw)).join('')}</div>`).join('') +
-      (v.pot ? `<div class="pot">${esc(t('pot'))}: 💰 ${fmt(v.pot)}</div>` : '') +
+      (v.pot ? `<div class="pot">${esc(t('pot'))}: ${ic('coins')} ${fmt(v.pot)}</div>` : '') +
       (msgNow && !solo ? `<div class="emsg2${msgNow !== evMsgKey ? ' fresh' : ''}">${esc(msgNow)}</div>` : '');
   }
 
@@ -165,8 +167,8 @@ function renderEngine() {
 
   // hint + buttons
   const hint = v.hint || '';
-  $('eHint').textContent = myTurn ? (/^(Din tur|Your turn)/.test(hint) ? '🎯 ' + hint : t('yourTurn') + ' ' + hint)
-    : waitTurn && !/(Väntar|Waiting)/.test(hint) ? `${t('waitingFor', { name: v.turnName })} ${hint}` : (waitTurn ? '⏳ ' : '') + hint;
+  $('eHint').textContent = myTurn ? (/^(Din tur|Your turn)/.test(hint) ? hint : t('yourTurn') + ' ' + hint)
+    : waitTurn && !/(Väntar|Waiting)/.test(hint) ? `${t('waitingFor', { name: v.turnName })} ${hint}` : hint;
   $('eButtons').innerHTML = (v.buttons || []).map(b => `<button class="ebtn${b.primary ? ' primary' : ''}" data-btn="${esc(b.id)}" data-lobby="${v.phase === 'lobby' ? 1 : ''}"><span class="ic">${icOrText(b.icon, esc)}</span>${esc(b.label)}</button>`).join('');
   tickIdle();
 
@@ -217,8 +219,8 @@ function engRenderResult(v) {
   if (key !== evResultKey || !evNextAt) evNextAt = r.nextIn != null ? Date.now() + r.nextIn : 0;
   R.classList.remove('hide');
   R.innerHTML = `<div class="rcard"><h2>${esc(r.title)}</h2>${r.note ? `<p class="note">${esc(r.note)}</p>` : ''}
-    <div class="rlines">${r.lines.map(l => `<div class="rline${l.win ? ' win' : ''}">${l.name ? `<i style="background:${l.color || '#ddd'}">${esc(l.name[0])}</i>` : '<i>🧩</i>'}
-      <div><div>${l.win ? '🏆 ' : ''}${esc(l.name || '')}</div><div class="t">${esc(l.text)}</div></div></div>`).join('')}</div>
+    <div class="rlines">${r.lines.map(l => `<div class="rline${l.win ? ' win' : ''}">${l.name ? `<i style="background:${l.color || '#ddd'}">${esc(l.name[0])}</i>` : `<i>${ic('user')}</i>`}
+      <div><div>${l.win ? ic('trophy') + ' ' : ''}${esc(l.name || '')}</div><div class="t">${esc(l.text)}</div></div></div>`).join('')}</div>
     <div class="rcount" id="rCount"></div>
     <div class="racts">${v.meta.solo ? '' : `<button class="rlink" data-res="lobby">${ic('users')}${esc(t('changePlayers'))}</button>`}
       <button class="rlink" data-res="home">${ic('home')}${esc(t('toStart'))}</button></div></div>`;
@@ -228,7 +230,7 @@ function engRenderResult(v) {
     evResultKey = key;
     const iWon = r.lines.some(l => l.win && (l.name === v.you || l.seat === -1));
     if (iWon) cgHappy();
-    if (iWon || r.final) confetti(iWon ? ['🎉', '⭐', '🏆', '🃏', '✨'] : ['🃏', '✨']);
+    if (iWon || r.final) confetti(['♠', '♥', '♦', '♣']); sfx(iWon ? 'win' : 'pop');
   }
 }
 function tickCountdown(final) {
@@ -253,8 +255,21 @@ function tickIdle() {
 }
 function confetti(set) {
   const box = document.createElement('div'); box.className = 'confetti';
-  box.innerHTML = Array.from({ length: 36 }, (_, i) => `<span style="left:${Math.random() * 100}%;animation-delay:${Math.random() * .8}s">${set[i % set.length]}</span>`).join('');
+  box.innerHTML = Array.from({ length: 36 }, (_, i) => { const sy = set[i % set.length]; return `<span style="left:${Math.random() * 100}%;animation-delay:${Math.random() * .8}s;color:${sy === '♥' || sy === '♦' ? '#e0443a' : '#fff'}">${suitSVG(sy)}</span>`; }).join('');
   document.body.appendChild(box); setTimeout(() => box.remove(), 3600);
+}
+
+/* ---------- sounds ---------- */
+let evSndRound = -1, evSndTurn = null;
+function engSounds(v) {
+  if (v.phase !== 'game') return;
+  const ids = [...(v.hand || []), ...(v.center || []).flatMap(c => c.cards || []), ...(v.seats || []).flatMap(s => (s && s.shown) || [])].map(c => c && c.id).filter(Boolean);
+  const fresh = ids.filter(id => !evSeenIds.has(id)).length;
+  if (v.round !== evSndRound) { evSndRound = v.round; if (fresh > 3) sfx('shuffle'); }
+  else if (fresh) sfx(fresh > 1 ? 'deal' : 'place');
+  const mine = v.turn != null && v.turn === v.me && !v.result;
+  if (mine && evSndTurn !== v.round + ':' + v.turn) sfx('pop');
+  evSndTurn = mine ? v.round + ':' + v.turn : null;
 }
 
 /* ---------- input: taps ---------- */
@@ -269,6 +284,7 @@ function engClick(e) {
   if (res) { const a = res.dataset.res; if (a === 'home') return goHome(); return send({ t: 'btn', id: a }); }
   const b = t.closest('[data-btn]');
   if (b) {
+    sfx('click');
     if (b.dataset.lobby) return send({ t: 'btn', id: b.dataset.btn });
     const def = (v.buttons || []).find(x => x.id === b.dataset.btn);
     if (def && def.raise) return openRaise(def);
@@ -329,7 +345,7 @@ function engUp(e) {
 function openRaise(b) {
   const R = b.raise, d = $('dRaise'), inp = $('rRange');
   inp.min = R.min; inp.max = R.max; inp.step = R.step || 10; inp.value = R.min;
-  const show = () => { $('rAmount').textContent = '💰 ' + fmt(+inp.value); $('rOk').textContent = t('raiseTo', { label: b.label, n: fmt(+inp.value) }); };
+  const show = () => { $('rAmount').textContent = fmt(+inp.value); $('rOk').textContent = t('raiseTo', { label: b.label, n: fmt(+inp.value) }); };
   inp.oninput = show;
   const set = x => { inp.value = Math.max(R.min, Math.min(R.max, Math.round(x / (R.step || 10)) * (R.step || 10))); show(); };
   $('rMinus').onclick = () => set(+inp.value - (R.step || 10) * 2);

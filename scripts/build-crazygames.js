@@ -9,7 +9,7 @@ const ROOT = path.join(__dirname, '..');
 const SRC = path.join(ROOT, 'public');
 const OUT = path.join(ROOT, 'dist', 'crazygames');
 const ZIP = path.join(ROOT, 'dist', 'free-deck-crazygames.zip');
-const FILES = ['index.html', 'engine.js', 'engine.css', 'i18n.js', 'i18n-ui.js', 'platform.js', 'icons.js', 'rules.js', 'local.js', 'fonts/nunito.css', 'fonts/nunito-latin.woff2'];
+const FILES = ['index.html', 'engine.js', 'engine.css', 'i18n.js', 'i18n-ui.js', 'platform.js', 'icons.js', 'sound.js', 'deck.js', 'deck.css', 'rules.js', 'local.js', 'fonts/nunito.css', 'fonts/nunito-latin.woff2'];
 const SDK = '<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>';
 
 require('./build-rules'); // the game rules, so games against the computer run in the browser
