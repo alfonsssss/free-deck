@@ -57,7 +57,7 @@ const findTpl = id => BUILTINS.find(t => t.id === id) || templates.find(t => t.i
 function tplView(t, ws, counts) {
   return { id: t.id, name: t.name, emoji: t.emoji || '🃏', desc: t.desc || '', rules: t.rules || '', author: t.author,
     builtin: !!t.builtin, public: !!t.public, plays: counts.get(t.id) || 0, created: t.created || 0, theme: t.theme,
-    min: t.min || 1, max: t.max || 8, kids: !!t.kids,
+    min: t.min || 1, max: t.max || 8, kids: !!t.kids, kind: t.kind || 'table', setup: t.setup,
     mine: !t.builtin && !!ws.authorHash && t.authorHash === ws.authorHash,
     zones: t.zones.map(z => ({ x: z.x, y: z.y, w: z.w, h: z.h, deck: !!z.deck, seat: !!z.seat })),
     chips: (t.chips || []).map(c => ({ x: c.x, y: c.y, color: c.color })) };
@@ -594,6 +594,21 @@ function handle(r, ws, m) {
 function handleCommon(r, ws, m) {
   switch (m.t) {
     case 'listTemplates': sendLists(ws); return true;
+    case 'publishDeck': { // a game made on the Free Deck table: how the table starts + rules
+      const name = str(m.name, 40).trim(), desc = str(m.desc, 200).trim(), rules = str(m.rules, 3000).trim();
+      if (name.length < 3 || !ws.authorHash) { send(ws, { t: 'error', msg: 'Ge spelet ett namn med minst 3 bokstäver.' }); return true; }
+      const bad = moderate(name, desc, rules); if (bad) { send(ws, { t: 'error', msg: bad }); return true; }
+      if (templates.filter(t => t.authorHash === ws.authorHash).length >= 50) { send(ws, { t: 'error', msg: 'Du har för många spel. Ta bort något först.' }); return true; }
+      const su = m.setup && typeof m.setup === 'object' ? m.setup : {};
+      const piles = (Array.isArray(su.piles) ? su.piles : []).slice(0, 52).map(p => ({ x: clamp(num(p.x, .5), 0, 1), y: clamp(num(p.y, .5), 0, 1), n: clamp(Math.floor(num(p.n, 1)), 0, 52), face: ['up', 'down', 'top'].includes(p.face) ? p.face : 'down', rest: !!p.rest }));
+      const setup = { piles, hand: clamp(Math.floor(num(su.hand, 0)), 0, 26), rest: !!su.rest };
+      const min = clamp(Math.floor(num(m.min, 1)), 1, 8), max = clamp(Math.floor(num(m.max, 4)), min, 8);
+      const t = { v: 5, kind: 'deck', id: 't' + rid(), name, emoji: '', desc, rules, min, max, kids: !!m.kids, author: str(m.author, 20).trim() || 'Player',
+        authorHash: ws.authorHash, public: !!m.public, created: Date.now(), setup, zones: [], chips: [], actions: [], theme: defaultTheme(), settings: defaultSettings(), decks: 1, jokers: false };
+      db.saveGame(t); templates = db.allGames();
+      send(ws, { t: 'published', id: t.id, public: t.public, name: t.name }); sendLists(ws);
+      return true;
+    }
     case 'deleteTemplate':
       if (ws.authorHash && db.deleteGame(str(m.id, 40), ws.authorHash)) templates = db.allGames();
       sendLists(ws); return true;

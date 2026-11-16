@@ -5,16 +5,16 @@
    State: { piles:[{id,x,y,cards:[{id,s,r,up}]}], hand:[{id,s,r}] }  (x,y = 0..1 of the table)
    Uses: ic(), suitSVG() (icons.js), sfx() (sound.js), t()/LANG (i18n.js), cgGameplay() (platform.js)
    ========================================================= */
-const DK = { st: null, hist: [], els: new Map(), counts: new Map(), drag: null, me: 'me', online: false, peers: [], local: null, W: 0, H: 0, cw: 80, ch: 112, top: 58, bar: 64, handH: 120, open: false, seq: 0, tipsLeft: 4 };
+const DK = { game: null, creating: false, st: null, hist: [], els: new Map(), counts: new Map(), drag: null, me: 'me', online: false, peers: [], local: null, W: 0, H: 0, cw: 80, ch: 112, top: 58, bar: 64, handH: 120, open: false, seq: 0, tipsLeft: 4 };
 const DK_SUITS = ['♠', '♥', '♦', '♣'], DK_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const DK_TXT = {
-  en: { invite: 'Invite', linkCopied: 'Link copied – send it to your friends!', joined: '{name} joined the table', connecting: 'Opening the table for friends…', title: 'Free Deck', shuffle: 'Shuffle', deal: 'Deal', gather: 'Collect', undo: 'Undo', hand: 'Your hand – drag cards here', handN: 'Your hand · {n}',
+  en: { rules: 'Rules', newRound: 'New round', createHint: 'Set up the table the way your game starts – then press Publish', publish: 'Publish', pubTitle: 'Publish your game', gName: 'Name', gDesc: 'Short description', gRules: 'How do you play?', gRulesPh: 'Explain the rules in plain words…', gPlayers: 'Players', gKids: 'Kid friendly', gPublic: 'Show in Community', gNamePh: 'e.g. Friday poker', gDescPh: 'e.g. Quick and fun for the whole family', pubGo: 'Publish', pubNeedName: 'Give your game a name (at least 3 letters)', pubOffline: 'Publishing needs a connection to the server – try again in a moment', invite: 'Invite', linkCopied: 'Link copied – send it to your friends!', joined: '{name} joined the table', connecting: 'Opening the table for friends…', title: 'Free Deck', shuffle: 'Shuffle', deal: 'Deal', gather: 'Collect', undo: 'Undo', hand: 'Your hand – drag cards here', handN: 'Your hand · {n}',
     tipDrag: 'Drag cards anywhere', tipTap: 'Tap to flip', tipHand: 'Drag down into your hand', tipHold: 'Hold a pile for more',
     dealTitle: 'Deal cards', howMany: 'How many cards each?', toWho: 'To', myHand: 'My hand', piles: '{n} piles', faceQ: 'Cards are', faceDown: 'Face down', faceUp: 'Face up', dealGo: 'Deal',
     pileTitle: 'Pile of {n}', flipAll: 'Flip pile', shufflePile: 'Shuffle', spread: 'Spread out', takeAll: 'Take into hand', gatherHere: 'Stack it up', home: 'Home',
     help: 'How it works', help1: 'Drag a card to move it. Drop it on another card to make a pile.', help2: 'Tap a card to turn it over.', help3: 'Drag cards down to your hand – only you see them. Drag them back up to play.',
     help4: 'Hold a pile for more: flip, shuffle, spread out.', help5: 'Drag the number on a pile to move the whole pile.', gotIt: 'Got it!', empty: 'No cards left in that pile', newDeck: 'Fresh deck shuffled' },
-  sv: { invite: 'Bjud in', linkCopied: 'Länken är kopierad – skicka den till dina vänner!', joined: '{name} kom till bordet', connecting: 'Öppnar bordet för vänner…', title: 'Free Deck', shuffle: 'Blanda', deal: 'Dela ut', gather: 'Samla', undo: 'Ångra', hand: 'Din hand – dra kort hit', handN: 'Din hand · {n}',
+  sv: { rules: 'Regler', newRound: 'Ny runda', createHint: 'Lägg upp bordet som ditt spel börjar – tryck sedan Publicera', publish: 'Publicera', pubTitle: 'Publicera ditt spel', gName: 'Namn', gDesc: 'Kort beskrivning', gRules: 'Hur spelar man?', gRulesPh: 'Förklara reglerna med vanliga ord…', gPlayers: 'Spelare', gKids: 'Passar barn', gPublic: 'Visa i Community', gNamePh: 't.ex. Fredagspoker', gDescPh: 't.ex. Snabbt och roligt för hela familjen', pubGo: 'Publicera', pubNeedName: 'Ge spelet ett namn (minst 3 bokstäver)', pubOffline: 'Publicering kräver anslutning till servern – försök igen strax', invite: 'Bjud in', linkCopied: 'Länken är kopierad – skicka den till dina vänner!', joined: '{name} kom till bordet', connecting: 'Öppnar bordet för vänner…', title: 'Free Deck', shuffle: 'Blanda', deal: 'Dela ut', gather: 'Samla', undo: 'Ångra', hand: 'Din hand – dra kort hit', handN: 'Din hand · {n}',
     tipDrag: 'Dra korten vart du vill', tipTap: 'Tryck för att vända', tipHand: 'Dra ner till handen', tipHold: 'Håll på en hög för mer',
     dealTitle: 'Dela ut', howMany: 'Hur många kort var?', toWho: 'Till', myHand: 'Min hand', piles: '{n} högar', faceQ: 'Korten ska vara', faceDown: 'Nedvända', faceUp: 'Uppvända', dealGo: 'Dela ut',
     pileTitle: 'Hög med {n}', flipAll: 'Vänd högen', shufflePile: 'Blanda', spread: 'Bred ut', takeAll: 'Ta till handen', gatherHere: 'Lägg ihop', home: 'Hem',
@@ -33,8 +33,9 @@ function dkFreshState() {
 }
 
 /* ---------- open / close ---------- */
-function deckOpen() {
+function deckOpen(keep) {
   deckInit();
+  if (!keep && (DK.game || DK.creating)) { DK.game = null; DK.creating = false; DK.st = null; } // plain deck
   if (!DK.st) { try { DK.st = JSON.parse(localStorage.getItem('kortbord-deck')); } catch (e) {} if (!DK.st || !DK.st.piles) DK.st = dkFreshState(); dkFix(DK.st); }
   DK.open = true; $('deck').classList.remove('hide'); document.body.classList.add('indeck');
   ['landing', 'game', 'eng'].forEach(id => $(id) && $(id).classList.add('hide'));
@@ -56,12 +57,15 @@ function deckInit() {
   el.innerHTML = `
     <header class="dtop">
       <button class="dbtn" data-dk="home" aria-label="Home">${ic('home')}</button>
-      <div class="title">${suitSVG('♠')}<span data-dkt="title"></span></div>
+      <div class="title">${suitSVG('♠')}<span id="dkTitle"></span></div>
       <div class="dpeers" id="dkPeers"></div>
+      <button class="dbtn hide" data-dk="rules" id="dkRulesBtn">${ic('book')}<span class="dl" data-dkt="rules"></span></button>
+      <button class="dbtn invite hide" data-dk="publish" id="dkPubBtn">${ic('upload')}<span class="dl" data-dkt="publish"></span></button>
       <button class="dbtn invite needs-server" data-dk="invite">${ic('link')}<span class="dl" data-dkt="invite"></span></button>
       <button class="dbtn" data-dk="help" aria-label="Help">${ic('help')}</button>
       <button class="dbtn" data-dk="mute" data-mute aria-label="Sound">${ic(SFX.muted ? 'soundoff' : 'sound')}</button>
     </header>
+    <div class="dcreate hide" id="dkCreate">${ic('pencil')}<span data-dkt="createHint"></span></div>
     <div class="dtips" id="dkTips"><span>${ic('hand')}<b data-dkt="tipDrag"></b></span><span>${ic('flip')}<b data-dkt="tipTap"></b></span><span>${ic('down')}<b data-dkt="tipHand"></b></span></div>
     <div id="dkTable"></div>
     <div class="dbar">
@@ -80,9 +84,11 @@ function deckInit() {
     else if (a === 'mute') { sfxMute(!SFX.muted); sfx('pop'); }
     else if (a === 'help') deckHelp();
     else if (a === 'invite') deckInvite();
+    else if (a === 'rules') deckRules();
+    else if (a === 'publish') deckPublishSheet();
     else if (a === 'shuffle') deckShuffleMain();
     else if (a === 'deal') deckDealSheet();
-    else if (a === 'gather') deckGather();
+    else if (a === 'gather') { if (DK.game && DK.game.setup) deckNewRound(); else deckGather(); }
     else if (a === 'undo') deckUndo();
   });
   el.addEventListener('pointerdown', deckDown);
@@ -93,6 +99,12 @@ function deckInit() {
 }
 function deckTexts() {
   document.querySelectorAll('#deck [data-dkt]').forEach(e => (e.textContent = dt(e.dataset.dkt)));
+  $('dkTitle').textContent = DK.game ? DK.game.name : dt('title');
+  $('dkRulesBtn').classList.toggle('hide', !(DK.game && DK.game.rules));
+  $('dkPubBtn').classList.toggle('hide', !DK.creating || !hasServer());
+  $('dkCreate').classList.toggle('hide', !DK.creating);
+  $('dkTips').classList.toggle('hide', DK.creating);
+  const g = document.querySelector('#deck [data-dk="gather"] .dl'); if (g) g.textContent = DK.game && DK.game.setup ? dt('newRound') : dt('gather');
   const u = document.querySelector('#deck [data-dk="undo"]'); if (u) u.setAttribute('aria-label', dt('undo'));
 }
 
@@ -191,7 +203,7 @@ function deckSnap() { DK.hist.push(JSON.stringify(DK.st)); if (DK.hist.length > 
 function deckCommit(fx) {
   DK.st.piles = DK.st.piles.filter(p => p.cards.length);
   if (DK.online) send({ t: 'deck', st: DK.st, fx: fx || '' }); // friends at the table see it at once
-  else { try { localStorage.setItem('kortbord-deck', JSON.stringify(DK.st)); } catch (e) {} }
+  else if (!DK.game && !DK.creating) { try { localStorage.setItem('kortbord-deck', JSON.stringify(DK.st)); } catch (e) {} } // my own table is kept for next time
   deckRender();
 }
 function deckUndo() {
@@ -409,7 +421,7 @@ function deckOnline(m) {
     DK.online = true; DK.me = me;
     if (!DK.local) DK.local = DK.st ? JSON.stringify(DK.st) : null;
     DK.hist = [];
-    deckOpen();
+    deckOpen(true);
   }
   if (m.st) {
     const before = DK.st;
@@ -433,4 +445,76 @@ function deckOffline() {
   DK.online = false; DK.peers = [];
   let st = null; try { st = JSON.parse(DK.local || 'null'); } catch (e) {}
   DK.me = 'me'; DK.st = dkFix(st || dkFreshState()); DK.local = null; DK.hist = [];
+}
+
+/* ---------- games made by players (Community) ---------- */
+// a fresh table laid out the way the game starts
+function dkFromSetup(setup, players) {
+  const cards = dkFreshState().piles[0].cards, st = { piles: [], hands: {} };
+  const take = () => cards.pop();
+  const piles = (setup.piles || []).map(p => ({ id: dkId(), x: p.x, y: p.y, cards: [], src: p }));
+  for (const pid of players) { st.hands[pid] = []; for (let i = 0; i < (setup.hand || 0) && cards.length; i++) { const c = take(); st.hands[pid].push({ id: c.id, s: c.s, r: c.r }); } }
+  for (const p of piles) if (!p.src.rest) for (let i = 0; i < p.src.n && cards.length; i++) p.cards.push(take());
+  const rest = piles.find(p => p.src.rest) || (cards.length ? (piles.push({ id: dkId(), x: 0.5, y: 0.42, cards: [], src: { face: 'down' } }), piles[piles.length - 1]) : null);
+  if (rest) while (cards.length) rest.cards.push(take());
+  for (const p of piles) { p.cards.forEach((c, i) => (c.up = p.src.face === 'up' || (p.src.face === 'top' && i === p.cards.length - 1))); delete p.src; st.piles.push(p); }
+  return st;
+}
+function deckPlayGame(g) {
+  DK.game = g; DK.creating = false; DK.hist = [];
+  DK.st = dkFromSetup(g.setup || {}, [DK.me]);
+  deckOpen(true); sfx('shuffle');
+  if (g.rules) setTimeout(deckRules, 500);
+}
+function deckNewRound() {
+  deckSnap();
+  const players = DK.online ? DK.peers.map(p => p.pid) : [DK.me];
+  DK.st = dkFromSetup(DK.game.setup, players.length ? players : [DK.me]);
+  sfx('shuffle'); deckCommit('shuffle');
+}
+function deckCreate() {
+  DK.game = null; DK.creating = true; DK.hist = [];
+  DK.st = dkFreshState(); dkFix(DK.st);
+  deckOpen(true); sfx('shuffle');
+}
+function deckRules() {
+  const g = DK.game; if (!g) return;
+  deckSheet(`${dkHead(esc(g.name))}<p style="white-space:pre-wrap;line-height:1.5;margin:0;max-height:55vh;overflow:auto">${esc(g.rules || g.desc || '')}</p><button class="go" data-close>${esc(t('gotIt'))}</button>`);
+}
+// what the table looks like now → how the game starts
+function dkCaptureSetup() {
+  const piles = DK.st.piles.map(p => { const up = p.cards.filter(c => c.up).length, top = p.cards[p.cards.length - 1];
+    return { x: +p.x.toFixed(3), y: +p.y.toFixed(3), n: p.cards.length, face: up === p.cards.length ? 'up' : up === 1 && top.up ? 'top' : 'down' }; });
+  const big = piles.reduce((b, p, i) => (p.n > (b < 0 ? -1 : piles[b].n) ? i : b), -1);
+  if (big >= 0) piles[big].rest = true; // the biggest pile gets whatever is left after dealing
+  return { piles, hand: dkHand().length };
+}
+function deckPublishSheet() {
+  const o = { name: '', desc: '', rules: '', min: 2, max: 4, kids: true, public: true };
+  const chips = (key, vals) => `<div class="chips" data-key="${key}">${vals.map(v => `<button data-v="${v}" class="${o[key] === v ? 'on' : ''}">${v}</button>`).join('')}</div>`;
+  const sh = deckSheet(`${dkHead(esc(dt('pubTitle')))}
+    <div class="q">${esc(dt('gName'))}</div><input class="dfield" id="pgName" maxlength="40" placeholder="${esc(dt('gNamePh'))}">
+    <div class="q">${esc(dt('gDesc'))}</div><input class="dfield" id="pgDesc" maxlength="200" placeholder="${esc(dt('gDescPh'))}">
+    <div class="q">${esc(dt('gRules'))}</div><textarea class="dfield" id="pgRules" rows="4" maxlength="3000" placeholder="${esc(dt('gRulesPh'))}"></textarea>
+    <div class="q">${esc(dt('gPlayers'))}</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${chips('min', [1, 2, 3, 4])}<span>–</span>${chips('max', [2, 4, 6, 8])}</div>
+    <label class="dsw"><input type="checkbox" id="pgKids" checked> ${esc(dt('gKids'))}</label>
+    <label class="dsw"><input type="checkbox" id="pgPublic" checked> ${esc(dt('gPublic'))}</label>
+    <button class="go" data-pub>${ic('upload')} ${esc(dt('pubGo'))}</button>`, e => {
+    const b = e.target.closest('[data-v]');
+    if (b) { const k = b.parentElement.dataset.key; o[k] = +b.dataset.v; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); sfx('click'); }
+    if (!e.target.closest('[data-pub]')) return;
+    const name = $('pgName').value.trim();
+    if (name.length < 3) { toast(dt('pubNeedName')); sfx('error'); $('pgName').focus(); return; }
+    if (!ws || ws.readyState !== 1 || ws instanceof LocalSocket) { toast(dt('pubOffline')); sfx('error'); return; }
+    send({ t: 'publishDeck', name, desc: $('pgDesc').value.trim(), rules: $('pgRules').value.trim(), min: o.min, max: Math.max(o.min, o.max), kids: $('pgKids').checked, public: $('pgPublic').checked,
+      author: myName || (typeof CG !== 'undefined' && CG.username) || '', setup: dkCaptureSetup() });
+    DK.pubPending = { name, rules: $('pgRules').value.trim(), desc: $('pgDesc').value.trim(), setup: dkCaptureSetup() };
+    deckCloseSheet(); sfx('win');
+  });
+  sh.querySelector('.dsc').style.maxHeight = '92vh'; sh.querySelector('.dsc').style.overflow = 'auto';
+}
+// the server saved it: keep playing it as the published game
+function deckPublished(m) {
+  if (!DK.pubPending) return;
+  DK.game = { id: m.id, ...DK.pubPending }; DK.pubPending = null; DK.creating = false; deckTexts();
 }

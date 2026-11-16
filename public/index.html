@@ -726,7 +726,7 @@ function onMessage(m){
   else if(m.t==='deck') deckOnline(m);
   else if(m.t==='deckPeers') deckPeersMsg(m);
   else if(m.t==='nope') toast(m.msg);
-  else if(m.t==='published'){if(!favorites.includes(m.id)){favorites.unshift(m.id);saveFavs()}
+  else if(m.t==='published'){if(typeof deckPublished==='function') deckPublished(m);if(!favorites.includes(m.id)){favorites.unshift(m.id);saveFavs()}
     toast(m.public?`🎉 "${m.name}" är sparat och delat med alla!`:`💾 "${m.name}" är sparat bland dina spel.`)}
   else if(m.t==='error') toast(m.msg);
 }
@@ -773,6 +773,8 @@ async function enterRoom(code,tplId,withTools,fromUrl){
    Start page
    ========================================================= */
 function previewSVG(g){
+  if(g.kind==='deck'){const ps=(g.setup&&g.setup.piles)||[];const W=BW,H=BH,cw=W*.09,ch=cw*1.4;
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${ps.map(p=>{const x=W*(.08+.84*p.x)-cw/2,y=H*(.1+.8*p.y)-ch/2,up=p.face!=='down';return `<rect x="${x+4}" y="${y+4}" width="${cw}" height="${ch}" rx="10" fill="rgba(0,0,0,.25)"/><rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="10" fill="${up?'#fffdf7':'#c0392b'}" stroke="#fff" stroke-width="6"/>`}).join('')}</svg>`}
   const z=g.zones.map(z=>`<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="16" fill="${z.deck?'rgba(255,255,255,.3)':'rgba(255,255,255,.1)'}" stroke="rgba(255,255,255,.6)" stroke-width="5" ${z.deck?'':'stroke-dasharray="14 10"'}/>`).join('');
   const c=(g.chips||[]).map(c=>`<circle cx="${c.x+22}" cy="${c.y+22}" r="20" fill="${(CHIPS[c.color]||CHIPS.red).bg}" stroke="#fff" stroke-width="4" stroke-dasharray="7 5"/>`).join('');
   return `<svg viewBox="0 0 ${BW} ${BH}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${z}${c}</svg>`;
@@ -819,7 +821,7 @@ function renderLanding(){
 }
 $('lTabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;lTab=b.dataset.tab;renderLanding();if(lTab==='community')send({t:'listTemplates'})};
 ['cSearch','cPlayers','cKids'].forEach(id=>$(id).addEventListener('input',renderLanding));
-$('cCreate').onclick=()=>{enterRoom(randomCode(),'b-free',true);setTimeout(()=>toast('Bygg ditt bord – tryck sedan 📣 Publicera i verktygen'),1200)};
+$('cCreate').onclick=()=>{sfx('click');deckCreate()};
 $('lName').onchange=e=>setName(e.target.value);
 $('lCreate').onclick=()=>enterRoom(randomCode(),'b-free',true);
 const quickGame=()=>{const last=store.get('localStorage','kortbord-last');return engGames.find(g=>g.id===last)||engGames.find(g=>g.id==='g-blackjack')||engGames[0]};
@@ -843,6 +845,7 @@ document.addEventListener('click',e=>{
   }else if(e.target.closest('[data-play]')||(!e.target.closest('button')&&tl.closest('#lGames,#lFavs,#lMine,#cPopular,#cNew'))){
     if(room){ send({t:'switchGame',id:g.id});$('dGames').close();setTools(false);if(g.rules&&!g.engine) setTimeout(()=>showRules(g.name,g.rules),350); }
     else if(g.engine) playSolo(g.id);
+    else if(g.kind==='deck') deckPlayGame(g);
     else{rulesOnStart=g.rules&&!g.engine?g:null;enterRoom(randomCode(),g.id,false)}
   }
 });
