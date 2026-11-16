@@ -8,17 +8,22 @@ const view = mode === 'portrait' ? { width: 540, height: 960 } : { width: 1920, 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
-  const ctx = await browser.newContext({ viewport: view, deviceScaleFactor: size.width / view.width, hasTouch: false });
+  const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required', '--window-size=1200,2100'] });
+  const ctx = await browser.newContext(mode === 'portrait' ? { viewport: null } : { viewport: view, deviceScaleFactor: size.width / view.width, hasTouch: false });
   const page = await ctx.newPage();
   // frames straight from Chrome (screencast), turned into an mp4 with ffmpeg afterwards
   const frames = []; const fdir = path.join(out, 'frames-' + mode); fs.rmSync(fdir, { recursive: true, force: true }); fs.mkdirSync(fdir, { recursive: true });
   const cdp = await ctx.newCDPSession(page);
+  if (mode === 'portrait') await cdp.send('Emulation.setDeviceMetricsOverride', { width: view.width, height: view.height, deviceScaleFactor: 2, mobile: false, scale: 1 }); // a phone screen, drawn sharp at 1080×1920
   cdp.on('Page.screencastFrame', async f => { const n = frames.length; const file = path.join(fdir, String(n).padStart(5, '0') + '.jpg'); fs.writeFileSync(file, Buffer.from(f.data, 'base64')); frames.push({ file, t: f.metadata.timestamp }); try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch (e) {} });
   await page.addInitScript(() => { try { localStorage.setItem('kortbord-deckhelp', '1'); localStorage.setItem('kortbord-guide2', '1'); localStorage.setItem('kortbord-intro', '1'); localStorage.setItem('kortbord-lang', 'en'); localStorage.setItem('kortbord-name', 'Alex'); } catch (e) {} });
   const t0 = Date.now();
   await page.goto('http://localhost:5190/', { waitUntil: 'networkidle' });
-  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 90, maxWidth: size.width, maxHeight: size.height, everyNthFrame: 1 });
+  let shooting = false; // screenshot loop disturbs input; screencast + sharp upscaling instead
+  if (shooting) { // full-resolution screenshots in a loop (the screencast is only half size on a 2x screen)
+    const cdp2 = cdp;
+    (async () => { while (shooting) { try { const r = await cdp2.send('Page.captureScreenshot', { format: 'jpeg', quality: 85, optimizeForSpeed: true }); const n = frames.length; const file = path.join(fdir, String(n).padStart(5, '0') + '.jpg'); fs.writeFileSync(file, Buffer.from(r.data, 'base64')); frames.push({ file, t: Date.now() / 1000 }); await sleep(30); } catch (e) { break; } } })();
+  } else await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 90, maxWidth: size.width, maxHeight: size.height, everyNthFrame: 1 });
   await sleep(500);
   const box = async sel => { const el = await page.waitForSelector(sel, { state: 'visible', timeout: 8000 }); const b = await el.boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, b }; };
   const glide = async (x, y, steps = 18) => page.mouse.move(x, y, { steps });
@@ -70,7 +75,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await drag(await sq(62), await sq(45), 22); await sleep(2300); // Ng1-f3
   await drag(await sq(61), await sq(34), 22); await sleep(2200); // Bf1-c4
   console.log('recorded', Math.round((Date.now() - t0) / 1000), 's');
-  await sleep(300); await cdp.send('Page.stopScreencast');
+  await sleep(300); if (shooting) { shooting = false; await sleep(400); } else await cdp.send('Page.stopScreencast');
   await ctx.close(); await browser.close();
   // a concat list with how long each frame stays on screen
   const lines = []; frames.forEach((f, i) => { const next = frames[i + 1]; lines.push(`file '${f.file}'`, `duration ${next ? Math.max(0.001, next.t - f.t).toFixed(4) : 0.5}`); });
