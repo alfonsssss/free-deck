@@ -87,6 +87,8 @@ function cgGameplay(on) {
 function cgRoom(code, joinable) {
   if (!CG.sdk) return;
   try { if (code) CG.sdk.game.updateRoom({ roomId: code, isJoinable: !!joinable, inviteParams: { room: code } }); else CG.sdk.game.leftRoom(); } catch (e) {}
+  // CrazyGames' own "Invite" button next to the game, while friends can still join
+  try { if (code && joinable) CG.sdk.game.showInviteButton({ room: code }); else CG.sdk.game.hideInviteButton(); } catch (e) {}
 }
 function cgHappy() { try { CG.sdk && CG.sdk.game.happytime(); } catch (e) {} }
 const cgInstant = () => { try { return !!(CG.sdk && CG.sdk.game.isInstantMultiplayer); } catch (e) { return false; } };

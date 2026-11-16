@@ -476,12 +476,12 @@ function deckHelp() {
 }
 
 /* ---------- playing together (the server passes the table on to everyone in the room) ---------- */
-function deckInvite() {
+function deckInvite(opts) {
   if (!hasServer()) return;
   if (DK.online) { copyInvite(document.querySelector('#deck [data-dk="invite"]')); return; }
-  toast(dt('connecting'));
+  if (!opts || !opts.quiet) toast(dt('connecting'));
   DK.local = JSON.stringify(DK.st); // my own table comes back when I leave
-  DK.inviteAfter = true;
+  DK.inviteAfter = !opts || !opts.quiet;
   enterRoom(randomCode(), 'deck', false).then(ok => { if (ok === false) { DK.inviteAfter = false; DK.local = null; } });
 }
 // the server sent the shared table (on joining, or after someone else changed it)
@@ -502,6 +502,7 @@ function deckOnline(m) {
     DK.st = st; send({ t: 'deck', st: DK.st, fx: '' });
   }
   deckRender();
+  if (DK.cgRoom !== room) { DK.cgRoom = room; cgRoom(room, true); } // friends can join the table at any time
   if (DK.inviteAfter) { DK.inviteAfter = false; setTimeout(() => copyInvite(document.querySelector('#deck [data-dk="invite"]')), 300); }
 }
 function deckPeersMsg(m) {
@@ -511,7 +512,7 @@ function deckPeersMsg(m) {
   deckRender();
 }
 function deckOffline() {
-  DK.online = false; DK.peers = [];
+  DK.online = false; DK.peers = []; DK.cgRoom = null; cgRoom(null);
   let st = null; try { st = JSON.parse(DK.local || 'null'); } catch (e) {}
   DK.me = 'me'; DK.st = dkFix(st || dkFreshState()); DK.local = null; DK.hist = [];
 }

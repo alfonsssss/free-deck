@@ -757,7 +757,7 @@ function onMessage(m){
 function route(){
   const code=invitedRoom();
   if(code) enterRoom(code,null,false,true);
-  else if(cgInstant()&&hasServer()) enterRoom(randomCode(),'g-vandatta',false,true); // CrazyGames "instant multiplayer": straight into a room
+  else if(cgInstant()&&hasServer()){showLanding();deckOpen();deckInvite({quiet:true})} // CrazyGames "instant multiplayer": the party leader gets a shared table at once, friends join with the invite button
   else showLanding();
 }
 function goHome(){ const wasPlaying=!!room||(typeof DK!=='undefined'&&DK.open); navTo('/'); showLanding(); if(wasPlaying) cgMidgame(); } // a natural break: maybe a short ad
