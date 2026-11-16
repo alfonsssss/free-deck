@@ -118,6 +118,23 @@ dialog.wide{width:min(900px,calc(100vw - 32px))}
 .hero .deco span:nth-child(2){transform:rotate(-4deg);color:#e0443a}
 .hero .deco span:nth-child(3){transform:rotate(12deg) translateY(10px);background:repeating-linear-gradient(45deg,#c0392b 0 8px,#a93226 8px 16px);border:6px solid #fff}
 @media (max-width:900px){.hero .deco{display:none}}
+.hero{display:grid;grid-template-columns:1fr auto;column-gap:20px;align-items:center}
+.hero>h1,.hero>p,.hero>.heroActs{grid-column:1}
+.herodeck{grid-column:2;grid-row:1/4;position:relative;width:250px;height:220px;cursor:pointer;background:none;border:0}
+.herodeck .hc{position:absolute;left:50%;top:50%;width:112px;height:157px;margin:-78px 0 0 -56px;border-radius:12px;background:#fffdf7;color:#1c1f2a;
+  box-shadow:inset 0 0 0 1px #e3dccd,0 10px 24px rgba(0,0,0,.3);transform-origin:50% 130%;transition:transform .35s cubic-bezier(.2,.8,.3,1.2)}
+.herodeck .hc.red{color:#d4302b}
+.herodeck .hc b{position:absolute;left:9px;top:8px;display:flex;flex-direction:column;align-items:center;font-size:26px;font-weight:900;line-height:.9}
+.herodeck .hc b .suit{width:20px;height:20px;margin-top:2px}
+.herodeck .hc>.suit{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-20px 0 0 -22px}
+.herodeck .c1{background:#fff;transform:rotate(-24deg) translateX(-26px)}
+.herodeck .c1::after{content:"";position:absolute;inset:7px;border-radius:8px;background:repeating-linear-gradient(45deg,#c0392b 0 6px,#a52a1f 6px 12px);box-shadow:inset 0 0 0 3px #f0c25a}
+.herodeck .c2{transform:rotate(-8deg) translateX(-8px)}.herodeck .c3{transform:rotate(8deg) translateX(8px)}.herodeck .c4{transform:rotate(24deg) translateX(26px)}
+.herodeck:hover .c1{transform:rotate(-30deg) translateX(-38px)}.herodeck:hover .c2{transform:rotate(-11deg) translateX(-12px) translateY(-6px)}
+.herodeck:hover .c3{transform:rotate(11deg) translateX(12px) translateY(-6px)}.herodeck:hover .c4{transform:rotate(30deg) translateX(38px)}
+.hero h1{font-size:clamp(30px,5.4vw,52px)}
+@media (max-width:640px){.hero{grid-template-columns:1fr}.herodeck{grid-column:1;grid-row:auto;order:-1;width:100%;height:150px;margin:-6px 0 4px}
+  .herodeck .hc{width:84px;height:118px;margin:-59px 0 0 -42px}.herodeck .hc b{font-size:20px}.herodeck .hc>.suit{width:38px;height:38px;margin:-14px 0 0 -16px}}
 @media (max-width:640px){.hero{padding:24px}}
 .sechead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:30px 0 14px}
 .sechead h2{margin:0;font-size:22px;font-weight:900}
@@ -376,11 +393,11 @@ body.tools #trash{display:block}
       <p id="lHeroText" data-i18n="heroText"></p>
       <div class="heroActs">
         <button id="lDeck" class="btn primary big quick"><i data-ic="cards"></i> <span data-i18n="openDeck"></span></button>
-        <button id="lQuick" class="btn big quick2"><i data-ic="play"></i> <span id="lQuickTxt"></span></button>
+        <button id="lQuick" class="btn big quick2"><i data-ic="grid"></i> <span data-i18n="findGames"></span></button>
         <form id="lJoin" class="join needs-server"><input id="lCode" maxlength="8" data-i18n-ph="haveCode" autocomplete="off" aria-label="Room code"><button data-i18n="join"></button></form>
         <button id="lCreate" class="btn big web-only hide" data-i18n-tip="createTip"><i data-ic="plus"></i> <span data-i18n="createOwn"></span></button>
       </div>
-      <div class="deco" aria-hidden="true"><span>A♠</span><span>K♥</span><span></span></div>
+      <button class="herodeck" id="lDeckArt" aria-label="Open a deck of cards"><span class="hc c1"></span><span class="hc c2"></span><span class="hc c3"></span><span class="hc c4"></span></button>
     </section>
     <div id="lFavSec"><div class="sechead"><h2 data-i18n="favorites"></h2></div><div id="lFavs" class="grid"></div></div>
     <div class="sechead"><h2 data-i18n="chooseGame"></h2></div>
@@ -801,7 +818,7 @@ function tile(g,opts={}){
 let lTab='spel';
 function renderLanding(){
   if($('landing').classList.contains('hide')) return;
-  const qg=quickGame();$('lQuick').disabled=!qg;$('lQuickTxt').textContent=qg?t('playNow',{name:qg.name}):t('loading');
+
   $('lHeroText').textContent=t(hasServer()?'heroText':'heroTextSolo');
   $('lHeroTitle').textContent=t(hasServer()?'heroTitle':'heroTitleSolo');
   document.querySelectorAll('#lTabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===lTab));
@@ -826,7 +843,9 @@ $('cCreate').onclick=()=>{sfx('click');deckCreate()};
 $('lName').onchange=e=>setName(e.target.value);
 $('lCreate').onclick=()=>enterRoom(randomCode(),'b-free',true);
 const quickGame=()=>{const last=store.get('localStorage','kortbord-last');return engGames.find(g=>g.id===last)||engGames.find(g=>g.id==='g-blackjack')||engGames[0]};
-$('lQuick').onclick=()=>{const g=quickGame();if(g)playSolo(g.id)};
+$('lQuick').onclick=()=>{sfx('click');const el=document.querySelector('#lGames');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})};
+$('lDeckArt').onclick=()=>{sfx('shuffle');deckOpen()};
+[['c2','A','♠'],['c3','K','♥'],['c4','Q','♦']].forEach(([c,r,su])=>{const el=document.querySelector('#lDeckArt .'+c);el.classList.toggle('red',su==='♥'||su==='♦');el.innerHTML=`<b>${r}${suitSVG(su)}</b>${suitSVG(su)}`});
 $('lDeck').onclick=()=>{sfx('shuffle');deckOpen()};
 $('lJoin').onsubmit=e=>{e.preventDefault();const c=$('lCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'');if(c)enterRoom(c,null,false);else{$('lCode').focus();toast(t('writeCode'))}};
 let rulesOnStart=null;
