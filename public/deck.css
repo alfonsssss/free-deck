@@ -2,7 +2,7 @@
    Free Deck – the digital deck of cards (deck.js)
    ========================================================= */
 #deck{position:fixed;inset:0;z-index:50;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;color:#fff;
-  background:radial-gradient(ellipse at 50% 40%,#3a9f68 0%,#22794b 45%,#14583a 80%,#0e432b 100%);
+  background:radial-gradient(ellipse at 50% 40%,var(--felt1,#3a9f68) 0%,var(--felt2,#14583a) 90%);
   --cw:80px;--ch:112px;--top:58px;--bar:64px;--handH:120px}
 #deck::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.1;
   background-image:repeating-radial-gradient(circle at 30% 20%,rgba(255,255,255,.55) 0 1px,transparent 1px 3px)}
@@ -46,7 +46,7 @@
 .dc.red .f{color:#d4302b}
 .dc .b{transform:rotateY(180deg);background:#fff;padding:calc(var(--cw)*.06)}
 .dc .b::after{content:"";position:absolute;inset:calc(var(--cw)*.06);border-radius:calc(var(--cw)*.06);
-  background:repeating-linear-gradient(45deg,#c0392b 0 calc(var(--cw)*.05),#a52a1f calc(var(--cw)*.05) calc(var(--cw)*.1));
+  background:repeating-linear-gradient(45deg,var(--back1,#c0392b) 0 calc(var(--cw)*.05),var(--back2,#a52a1f) calc(var(--cw)*.05) calc(var(--cw)*.1));
   box-shadow:inset 0 0 0 calc(var(--cw)*.03) #f0c25a}
 .dc .cr{position:absolute;display:flex;flex-direction:column;align-items:center;font-weight:900;line-height:.9;font-size:calc(var(--cw)*.27);letter-spacing:-.04em}
 .dc .cr .suit{width:calc(var(--cw)*.2);height:calc(var(--cw)*.2);margin-top:calc(var(--cw)*.02)}
@@ -109,3 +109,35 @@ body.noserver #deck .needs-server{display:none}
 .dsheet .dfield:focus{border-color:#1f8a52;background:#fff}
 .dsheet .dsw{display:flex;align-items:center;gap:10px;margin-top:14px;font-weight:800}
 .dsheet .dsw input{width:22px;height:22px;accent-color:#1f8a52}
+
+/* design tools: spots, players, the game's buttons */
+.dzone{position:absolute;left:0;top:0;z-index:5;border:3px dashed rgba(255,255,255,.35);border-radius:calc(var(--cw)*.14);background:rgba(255,255,255,.06);pointer-events:none;transition:background .15s,border-color .15s}
+.dzone .zl{position:absolute;left:50%;top:-12px;transform:translateX(-50%);white-space:nowrap;background:rgba(0,0,0,.45);color:#fff;font-weight:900;font-size:12px;padding:3px 10px;border-radius:999px;pointer-events:none}
+.dzone.edit{border-color:rgba(255,208,102,.7)}
+.dzone.edit .zl{pointer-events:auto;cursor:grab;background:#ffb02e;color:#3a2600;font-size:13px;padding:5px 12px;touch-action:none}
+.dzone.target{background:rgba(255,208,102,.22);border-color:#ffd066}
+#deck .dboard{position:absolute;left:0;right:0;top:var(--top);display:flex;gap:6px;justify-content:center;flex-wrap:wrap;z-index:2700;padding:2px 8px}
+#deck .dpl{display:inline-flex;align-items:center;gap:6px;background:rgba(0,0,0,.32);color:#fff;border-radius:999px;padding:3px 12px 3px 3px;font-weight:800;font-size:13px}
+#deck .dpl i{width:28px;height:28px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;border:2px solid #fff}
+#deck .dpl span{display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.14);border-radius:999px;padding:1px 7px}
+#deck .dpl span .svgic{width:13px;height:13px}
+#deck .dpl.turn{background:#ffb02e;color:#3a2600;box-shadow:0 0 0 3px rgba(255,208,102,.45)}
+#deck .dgb{position:absolute;left:0;right:0;bottom:calc(var(--handH) + var(--bar) - 4px);display:flex;gap:8px;justify-content:center;flex-wrap:wrap;z-index:2500;padding:0 8px}
+#deck .dgb .dtool{height:44px;padding:0 16px;border-radius:999px;background:#2f74d8;color:#fff;font-weight:900;font-size:15px;display:inline-flex;align-items:center;gap:6px;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+#deck .dgb .dtool.main{background:#ffb02e;color:#3a2600}
+#deck .dgb .dtool .svgic{width:18px;height:18px}
+.dc .f.joker{display:flex}
+.dc .f.joker .cr{font-size:calc(var(--cw)*.17);line-height:1}
+.dc .mid.jk{flex-direction:column;gap:4px;font-size:calc(var(--cw)*.17);font-weight:900;letter-spacing:.05em}
+.dc .mid.jk .svgic{width:calc(var(--cw)*.42);height:calc(var(--cw)*.42);fill:currentColor}
+.dsheet .dhelp{margin:6px 0 0;color:#6c7488;font-weight:700;font-size:14px}
+.dsheet .lbl2{font-weight:800;color:#6c7488;align-self:center;margin-right:4px;min-width:64px}
+.dsheet .swatch{min-width:40px!important;width:40px;height:40px!important;padding:0!important;border-radius:50%!important;background:var(--sw)!important;box-shadow:inset 0 0 0 3px rgba(255,255,255,.6)}
+.dsheet .swatch.on{box-shadow:0 0 0 3px #1f8a52,inset 0 0 0 3px #fff}
+.dsheet .go.small{height:46px;font-size:16px;margin-top:12px;box-shadow:0 3px 0 #c98410}
+.dsheet .dsc.tall{max-height:90vh;overflow:auto}
+.dsheet .blist{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.dsheet .bitem{display:flex;align-items:center;gap:8px;background:#f3eee4;border-radius:12px;padding:8px 8px 8px 12px}
+.dsheet .bitem b{flex:none}.dsheet .bitem small{flex:1;color:#6c7488;font-weight:700}
+.dsheet .bitem button{width:36px;height:36px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center}
+#deck.hasboard .dcreate{top:calc(var(--top) + 44px)}

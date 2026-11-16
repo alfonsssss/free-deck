@@ -8,13 +8,13 @@
 const DK = { game: null, creating: false, st: null, hist: [], els: new Map(), counts: new Map(), drag: null, me: 'me', online: false, peers: [], local: null, W: 0, H: 0, cw: 80, ch: 112, top: 58, bar: 64, handH: 120, open: false, seq: 0, tipsLeft: 4 };
 const DK_SUITS = ['♠', '♥', '♦', '♣'], DK_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const DK_TXT = {
-  en: { rules: 'Rules', newRound: 'New round', createHint: 'Set up the table the way your game starts – then press Publish', publish: 'Publish', pubTitle: 'Publish your game', gName: 'Name', gDesc: 'Short description', gRules: 'How do you play?', gRulesPh: 'Explain the rules in plain words…', gPlayers: 'Players', gKids: 'Kid friendly', gPublic: 'Show in Community', gNamePh: 'e.g. Friday poker', gDescPh: 'e.g. Quick and fun for the whole family', pubGo: 'Publish', pubNeedName: 'Give your game a name (at least 3 letters)', pubOffline: 'Publishing needs a connection to the server – try again in a moment', invite: 'Invite', linkCopied: 'Link copied – send it to your friends!', joined: '{name} joined the table', connecting: 'Opening the table for friends…', title: 'Free Deck', shuffle: 'Shuffle', deal: 'Deal', gather: 'Collect', undo: 'Undo', hand: 'Your hand – drag cards here', handN: 'Your hand · {n}',
+  en: { toolsLbl: 'Tools', rules: 'Rules', newRound: 'New round', createHint: 'Set up the table the way your game starts – use Tools for spots, buttons and more', publish: 'Publish', pubTitle: 'Publish your game', gName: 'Name', gDesc: 'Short description', gRules: 'How do you play?', gRulesPh: 'Explain the rules in plain words…', gPlayers: 'Players', gKids: 'Kid friendly', gPublic: 'Show in Community', gNamePh: 'e.g. Friday poker', gDescPh: 'e.g. Quick and fun for the whole family', pubGo: 'Publish', pubNeedName: 'Give your game a name (at least 3 letters)', pubOffline: 'Publishing needs a connection to the server – try again in a moment', invite: 'Invite', linkCopied: 'Link copied – send it to your friends!', joined: '{name} joined the table', connecting: 'Opening the table for friends…', title: 'Free Deck', shuffle: 'Shuffle', deal: 'Deal', gather: 'Collect', undo: 'Undo', hand: 'Your hand – drag cards here', handN: 'Your hand · {n}',
     tipDrag: 'Drag cards anywhere', tipTap: 'Tap to flip', tipHand: 'Drag down into your hand', tipHold: 'Hold a pile for more',
     dealTitle: 'Deal cards', howMany: 'How many cards each?', toWho: 'To', myHand: 'My hand', piles: '{n} piles', faceQ: 'Cards are', faceDown: 'Face down', faceUp: 'Face up', dealGo: 'Deal',
     pileTitle: 'Pile of {n}', flipAll: 'Flip pile', shufflePile: 'Shuffle', spread: 'Spread out', takeAll: 'Take into hand', gatherHere: 'Stack it up', home: 'Home',
     help: 'How it works', help1: 'Drag a card to move it. Drop it on another card to make a pile.', help2: 'Tap a card to turn it over.', help3: 'Drag cards down to your hand – only you see them. Drag them back up to play.',
     help4: 'Hold a pile for more: flip, shuffle, spread out.', help5: 'Drag the number on a pile to move the whole pile.', gotIt: 'Got it!', empty: 'No cards left in that pile', newDeck: 'Fresh deck shuffled' },
-  sv: { rules: 'Regler', newRound: 'Ny runda', createHint: 'Lägg upp bordet som ditt spel börjar – tryck sedan Publicera', publish: 'Publicera', pubTitle: 'Publicera ditt spel', gName: 'Namn', gDesc: 'Kort beskrivning', gRules: 'Hur spelar man?', gRulesPh: 'Förklara reglerna med vanliga ord…', gPlayers: 'Spelare', gKids: 'Passar barn', gPublic: 'Visa i Community', gNamePh: 't.ex. Fredagspoker', gDescPh: 't.ex. Snabbt och roligt för hela familjen', pubGo: 'Publicera', pubNeedName: 'Ge spelet ett namn (minst 3 bokstäver)', pubOffline: 'Publicering kräver anslutning till servern – försök igen strax', invite: 'Bjud in', linkCopied: 'Länken är kopierad – skicka den till dina vänner!', joined: '{name} kom till bordet', connecting: 'Öppnar bordet för vänner…', title: 'Free Deck', shuffle: 'Blanda', deal: 'Dela ut', gather: 'Samla', undo: 'Ångra', hand: 'Din hand – dra kort hit', handN: 'Din hand · {n}',
+  sv: { toolsLbl: 'Verktyg', rules: 'Regler', newRound: 'Ny runda', createHint: 'Lägg upp bordet som ditt spel börjar – Verktyg har platser, knappar och mer', publish: 'Publicera', pubTitle: 'Publicera ditt spel', gName: 'Namn', gDesc: 'Kort beskrivning', gRules: 'Hur spelar man?', gRulesPh: 'Förklara reglerna med vanliga ord…', gPlayers: 'Spelare', gKids: 'Passar barn', gPublic: 'Visa i Community', gNamePh: 't.ex. Fredagspoker', gDescPh: 't.ex. Snabbt och roligt för hela familjen', pubGo: 'Publicera', pubNeedName: 'Ge spelet ett namn (minst 3 bokstäver)', pubOffline: 'Publicering kräver anslutning till servern – försök igen strax', invite: 'Bjud in', linkCopied: 'Länken är kopierad – skicka den till dina vänner!', joined: '{name} kom till bordet', connecting: 'Öppnar bordet för vänner…', title: 'Free Deck', shuffle: 'Blanda', deal: 'Dela ut', gather: 'Samla', undo: 'Ångra', hand: 'Din hand – dra kort hit', handN: 'Din hand · {n}',
     tipDrag: 'Dra korten vart du vill', tipTap: 'Tryck för att vända', tipHand: 'Dra ner till handen', tipHold: 'Håll på en hög för mer',
     dealTitle: 'Dela ut', howMany: 'Hur många kort var?', toWho: 'Till', myHand: 'Min hand', piles: '{n} högar', faceQ: 'Korten ska vara', faceDown: 'Nedvända', faceUp: 'Uppvända', dealGo: 'Dela ut',
     pileTitle: 'Hög med {n}', flipAll: 'Vänd högen', shufflePile: 'Blanda', spread: 'Bred ut', takeAll: 'Ta till handen', gatherHere: 'Lägg ihop', home: 'Hem',
@@ -27,9 +27,10 @@ function dkFix(st) { if (!st.hands) st.hands = {}; if (st.hand) { st.hands[DK.me
 const dkHand = () => (DK.st.hands[DK.me] || (DK.st.hands[DK.me] = []));
 const dkId = () => 'p' + (++DK.seq).toString(36) + Math.random().toString(36).slice(2, 5);
 function dkShuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function dkFreshState() {
-  const cards = []; for (const s of DK_SUITS) for (const r of DK_RANKS) cards.push({ id: s + r, s, r, up: false });
-  return { piles: [{ id: dkId(), x: 0.5, y: 0.42, cards: dkShuffle(cards) }], hands: {} };
+function dkFreshState(cfg) {
+  const st = { piles: [{ id: dkId(), x: 0.5, y: 0.42, cards: ddMakeCards(cfg && cfg.deck) }], hands: {} };
+  if (cfg) st.cfg = JSON.parse(JSON.stringify(cfg));
+  return st;
 }
 
 /* ---------- open / close ---------- */
@@ -60,6 +61,7 @@ function deckInit() {
       <div class="title">${suitSVG('♠')}<span id="dkTitle"></span></div>
       <div class="dpeers" id="dkPeers"></div>
       <button class="dbtn hide" data-dk="rules" id="dkRulesBtn">${ic('book')}<span class="dl" data-dkt="rules"></span></button>
+      <button class="dbtn hide" data-dk="tools" id="dkToolsBtn">${ic('tools')}<span class="dl" data-dkt="toolsLbl"></span></button>
       <button class="dbtn invite hide" data-dk="publish" id="dkPubBtn">${ic('upload')}<span class="dl" data-dkt="publish"></span></button>
       <button class="dbtn invite needs-server" data-dk="invite">${ic('link')}<span class="dl" data-dkt="invite"></span></button>
       <button class="dbtn" data-dk="help" aria-label="Help">${ic('help')}</button>
@@ -67,7 +69,9 @@ function deckInit() {
     </header>
     <div class="dcreate hide" id="dkCreate">${ic('pencil')}<span data-dkt="createHint"></span></div>
     <div class="dtips" id="dkTips"><span>${ic('hand')}<b data-dkt="tipDrag"></b></span><span>${ic('flip')}<b data-dkt="tipTap"></b></span><span>${ic('down')}<b data-dkt="tipHand"></b></span></div>
+    <div class="dboard hide" id="dkBoard"></div>
     <div id="dkTable"></div>
+    <div class="dgb hide" id="dkGameBtns"></div>
     <div class="dbar">
       <button class="dtool main" data-dk="shuffle">${ic('shuffle')}<span class="dl" data-dkt="shuffle"></span></button>
       <button class="dtool" data-dk="deal">${ic('deal')}<span class="dl" data-dkt="deal"></span></button>
@@ -77,6 +81,8 @@ function deckInit() {
     <div class="dhand" id="dkHand"><div class="hl" id="dkHandLbl"></div></div>`;
   document.body.appendChild(el);
   el.addEventListener('click', e => {
+    const gb = e.target.closest('[data-gb]'); if (gb) { sfx('click'); ddRunButton(gb.dataset.gb); return; }
+    const pl = e.target.closest('[data-pl]'); if (pl) { sfx('click'); ddPlayerSheet(pl.dataset.pl); return; }
     const b = e.target.closest('[data-dk]'); if (!b) return;
     const a = b.dataset.dk;
     if (a !== 'mute') sfx('click');
@@ -86,6 +92,7 @@ function deckInit() {
     else if (a === 'invite') deckInvite();
     else if (a === 'rules') deckRules();
     else if (a === 'publish') deckPublishSheet();
+    else if (a === 'tools') ddToolsSheet();
     else if (a === 'shuffle') deckShuffleMain();
     else if (a === 'deal') deckDealSheet();
     else if (a === 'gather') { if (DK.game && DK.game.setup) deckNewRound(); else deckGather(); }
@@ -102,6 +109,7 @@ function deckTexts() {
   $('dkTitle').textContent = DK.game ? DK.game.name : dt('title');
   $('dkRulesBtn').classList.toggle('hide', !(DK.game && DK.game.rules));
   $('dkPubBtn').classList.toggle('hide', !DK.creating || !hasServer());
+  $('dkToolsBtn').classList.toggle('hide', !DK.creating);
   $('dkCreate').classList.toggle('hide', !DK.creating);
   $('dkTips').classList.toggle('hide', DK.creating);
   const g = document.querySelector('#deck [data-dk="gather"] .dl'); if (g) g.textContent = DK.game && DK.game.setup ? dt('newRound') : dt('gather');
@@ -121,12 +129,16 @@ function deckLayout() {
   s.setProperty('--cw', DK.cw + 'px'); s.setProperty('--ch', DK.ch + 'px'); s.setProperty('--top', DK.top + 'px'); s.setProperty('--handH', DK.handH + 'px'); s.setProperty('--bar', DK.bar + 'px');
 }
 // table area for pile centres
-const dkArea = () => ({ x0: DK.cw / 2 + 6, x1: DK.W - DK.cw / 2 - 6, y0: DK.top + DK.ch / 2 + 4, y1: DK.H - DK.handH - DK.bar - DK.ch / 2 + 10 });
+function dkArea() {
+  const el = $('deck'), gb = el && el.classList.contains('hasgb') ? 54 : 0, board = el && el.classList.contains('hasboard') ? 46 : 0;
+  return { x0: DK.cw / 2 + 6, x1: DK.W - DK.cw / 2 - 6, y0: DK.top + board + DK.ch / 2 + 4, y1: DK.H - DK.handH - DK.bar - gb - DK.ch / 2 + 10 };
+}
 function dkToPx(x, y) { const a = dkArea(); return { x: a.x0 + x * (a.x1 - a.x0), y: a.y0 + y * (a.y1 - a.y0) }; }
 function dkToNorm(px, py) { const a = dkArea(); return { x: Math.min(1, Math.max(0, (px - a.x0) / (a.x1 - a.x0))), y: Math.min(1, Math.max(0, (py - a.y0) / (a.y1 - a.y0))) }; }
 
 /* ---------- drawing ---------- */
 function dkFace(c) {
+  if (c.r === 'JK') return ddJokerFace(c);
   const red = c.s === '♥' || c.s === '♦', face = 'JQK'.includes(c.r);
   const mid = face ? `<div class="mid face">${c.r}${suitSVG(c.s)}</div>` : `<div class="mid">${suitSVG(c.s)}</div>`;
   return { red, html: `<div class="in"><div class="f"><div class="cr tl">${c.r}${suitSVG(c.s)}</div>${mid}<div class="cr br">${c.r}${suitSVG(c.s)}</div></div><div class="b"></div></div>` };
@@ -152,16 +164,19 @@ const dkTilt = id => { let h = 0; for (const ch of id) h = (h * 31 + ch.charCode
 function deckRender(instant) {
   if (!DK.open) return;
   const st = DK.st, seen = new Set();
+  ddApplyLook(); ddRenderZones();
   let z = 10;
   for (const p of st.piles) {
+    const zone = p.z && ddZone(p.z);
+    if (zone) { p.x = zone.x; p.y = zone.y; }
     const c0 = dkToPx(p.x, p.y), n = p.cards.length;
     p.cards.forEach((c, i) => {
       const el = dkCardEl(c); seen.add(c.id);
       if (DK.drag && DK.drag.ids.includes(c.id)) return;
-      const off = Math.min(i, 14) * 0.35, depth = n - 1 - i;
+      const fan = ddOffset(p, i, n), off = fan ? 0 : Math.min(i, 14) * 0.35, depth = n - 1 - i;
       el.classList.toggle('down', !c.up); el.classList.remove('hand');
-      el.style.display = depth > 16 ? 'none' : ''; // deep cards are hidden under the pile anyway
-      dkPlace(el, c0.x - off * 0.3, c0.y - off, n > 1 ? dkTilt(c.id) : 0, z++, instant);
+      el.style.display = !fan && depth > 16 ? 'none' : ''; // deep cards are hidden under the pile anyway
+      dkPlace(el, c0.x - off * 0.3 + (fan ? fan.dx : 0), c0.y - off + (fan ? fan.dy : 0), n > 1 && !fan ? dkTilt(c.id) : 0, z++, instant);
     });
     z += 2;
   }
@@ -196,6 +211,7 @@ function deckRender(instant) {
   $('dkPeers').innerHTML = DK.online ? DK.peers.filter(p => p.pid !== DK.me).map(p => { const n = (DK.st.hands[p.pid] || []).length;
     return `<span class="dpeer" style="--c:${p.color}" title="${esc(p.name)}"><i>${esc((p.name || '?')[0].toUpperCase())}</i>${n ? `<b>${ic('card')}${n}</b>` : ''}</span>`; }).join('') : '';
   const u = document.querySelector('#deck [data-dk="undo"]'); if (u) u.disabled = !DK.hist.length;
+  ddRenderBoard();
 }
 
 /* ---------- changes ---------- */
@@ -221,12 +237,15 @@ function deckShuffleMain() {
   deckSnap(); dkShuffle(p.cards); p.cards.forEach(c => (c.up = false));
   sfx('shuffle'); deckCommit('shuffle'); dkShakePile(p);
 }
-function deckFresh() { deckSnap(); DK.st = dkFreshState(); sfx('shuffle'); deckCommit(); dkShakePile(DK.st.piles[0]); toast(dt('newDeck')); }
+function deckFresh() { deckSnap(); const cfg = DK.st.cfg, meta = DK.st.meta; DK.st = dkFreshState(cfg); if (meta) DK.st.meta = meta; sfx('shuffle'); deckCommit(); dkShakePile(DK.st.piles[0]); toast(dt('newDeck')); }
 // everything back into one face-down, shuffled deck in the middle
 function deckGather() {
   deckSnap();
   const all = [...DK.st.piles.flatMap(p => p.cards), ...Object.values(DK.st.hands).flat()].map(c => ({ id: c.id, s: c.s, r: c.r, up: false }));
-  DK.st = { piles: [{ id: dkId(), x: 0.5, y: 0.42, cards: dkShuffle(all) }], hands: {} };
+  const cfg = DK.st.cfg, meta = DK.st.meta;
+  const want = cfg ? ddMakeCards(cfg.deck) : null; // after "Use these cards" the deck changes
+  DK.st = { piles: [{ id: dkId(), x: 0.5, y: 0.42, cards: want || dkShuffle(all) }], hands: {} };
+  if (cfg) DK.st.cfg = cfg; if (meta) DK.st.meta = meta;
   sfx('slide'); deckCommit(); setTimeout(() => { sfx('shuffle'); dkShakePile(DK.st.piles[0]); }, 280);
 }
 // deal n cards from the biggest pile, one at a time like a dealer
@@ -259,6 +278,13 @@ function deckDeal(n, to, up) {
 function dkHit(e) { return document.elementsFromPoint(e.clientX, e.clientY).find(x => x.classList && (x.classList.contains('dc') || x.classList.contains('dcount'))); }
 function deckDown(e) {
   if (!DK.open || e.button > 0 || DK.drag) return;
+  const zl = DK.creating && e.target.closest('.dzone.edit .zl');
+  if (zl) { // designing: drag a spot by its name, tap it to change it
+    e.preventDefault();
+    const zid = zl.parentElement.dataset.zone, z = ddZone(zid), c = z && dkToPx(z.x, z.y); if (!z) return;
+    DK.drag = { zone: zid, ids: [], x0: e.clientX, y0: e.clientY, dx: e.clientX - c.x, dy: e.clientY - c.y, moved: false, pid: e.pointerId, hit: zl.parentElement };
+    return;
+  }
   const hit = e.target.closest('.dc,.dcount'); if (!hit || !$('deck').contains(hit)) return;
   e.preventDefault();
   let ids, from, pile = null, whole = false;
@@ -277,6 +303,8 @@ function deckDown(e) {
 }
 function deckMove(e) {
   const d = DK.drag; if (!d || e.pointerId !== d.pid) return;
+  if (d.zone) { if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 7 && !d.moved) return; d.moved = true; e.preventDefault();
+    const z = ddZone(d.zone); if (z) { const n = dkToNorm(e.clientX - d.dx, e.clientY - d.dy); z.x = n.x; z.y = n.y; ddRenderZones(); DK.st.piles.forEach(p => { if (p.z === d.zone) { p.x = n.x; p.y = n.y; } }); deckRender(true); } return; }
   if (!d.moved) {
     if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 7) return;
     d.moved = true; clearTimeout(DK.holdT); sfx('slide');
@@ -298,6 +326,8 @@ function deckMove(e) {
     d.tgt = tgt && tgt.id; d.tgtEl = tgt ? DK.els.get(tgt.cards[tgt.cards.length - 1].id) : null;
     if (d.tgtEl) d.tgtEl.classList.add('target');
   }
+  const zt = overHand || tgt ? null : ddZoneAt(cx, cy);
+  if (d.zt !== (zt && zt.id)) { if (d.ztEl) d.ztEl.classList.remove('target'); d.zt = zt && zt.id; d.ztEl = zt && DK.zels && DK.zels.get(zt.id); if (d.ztEl) d.ztEl.classList.add('target'); }
 }
 function dkDropPile(cx, cy, d) {
   let best = null, bd = DK.cw * 0.6;
@@ -305,7 +335,8 @@ function dkDropPile(cx, cy, d) {
     if (d.whole && p.id === d.pile) continue;
     if (!d.whole && p.id === d.pile && p.cards.length === 1) continue;
     if (d.from === 'pile' && !d.whole && p.id === d.pile) continue;
-    const c = dkToPx(p.x, p.y), dist = Math.hypot(c.x - cx, c.y - cy);
+    const n = p.cards.length, fan = ddOffset(p, n - 1, n), c = dkToPx(p.x, p.y);
+    const dist = Math.min(Math.hypot(c.x - cx, c.y - cy), fan ? Math.hypot(c.x + fan.dx - cx, c.y + fan.dy - cy) : Infinity);
     if (dist < bd) { bd = dist; best = p; }
   }
   return best;
@@ -315,6 +346,12 @@ function deckUp(e) {
   clearTimeout(DK.holdT); DK.drag = null;
   $('dkHand').classList.remove('over');
   if (d.tgtEl) d.tgtEl.classList.remove('target');
+  if (d.ztEl) d.ztEl.classList.remove('target');
+  if (d.zone) { // moving a spot (designing)
+    if (d.moved) { const n = dkToNorm(e.clientX - d.dx, e.clientY - d.dy), z = ddZone(d.zone); if (z) { z.x = n.x; z.y = n.y; } sfx('place'); deckCommit(); }
+    else ddZoneSheet(d.zone);
+    return;
+  }
   (d.els || []).forEach(el => el.classList.remove('lift'));
   if (d.whole) d.hit.classList.remove('nt');
   document.querySelectorAll('#deck .dc.held').forEach(el => el.classList.remove('held'));
@@ -337,7 +374,10 @@ function deckUp(e) {
     sfx('slide');
   } else {
     const tgt = DK.st.piles.find(p => p.id === d.tgt);
-    if (tgt) tgt.cards.push(...cards);
+    const zone = !tgt && ddZoneAt(cx, cy), zpile = zone && DK.st.piles.find(p => p.z === zone.id && p.cards.length);
+    if (tgt) { tgt.cards.push(...cards); ddApplyFace(tgt.z && ddZone(tgt.z), cards); }
+    else if (zpile) { zpile.cards.push(...cards); ddApplyFace(zone, cards); }
+    else if (zone) { ddApplyFace(zone, cards); DK.st.piles.push({ id: dkId(), x: zone.x, y: zone.y, z: zone.id, cards }); }
     else { const n = dkToNorm(cx, cy); DK.st.piles.push({ id: dkId(), x: n.x, y: n.y, cards }); }
     sfx('place');
   }
@@ -450,9 +490,11 @@ function deckOffline() {
 /* ---------- games made by players (Community) ---------- */
 // a fresh table laid out the way the game starts
 function dkFromSetup(setup, players) {
-  const cards = dkFreshState().piles[0].cards, st = { piles: [], hands: {} };
+  const cfg = setup.cfg || null;
+  const cards = ddMakeCards(cfg && cfg.deck), st = { piles: [], hands: {} };
+  if (cfg) { st.cfg = JSON.parse(JSON.stringify(cfg)); st.meta = { chips: {}, score: {}, turn: players[0] || null }; if (cfg.chips) players.forEach(p => (st.meta.chips[p] = cfg.chips)); }
   const take = () => cards.pop();
-  const piles = (setup.piles || []).map(p => ({ id: dkId(), x: p.x, y: p.y, cards: [], src: p }));
+  const piles = (setup.piles || []).map(p => ({ id: dkId(), x: p.x, y: p.y, cards: [], src: p, ...(p.z ? { z: p.z } : {}) }));
   for (const pid of players) { st.hands[pid] = []; for (let i = 0; i < (setup.hand || 0) && cards.length; i++) { const c = take(); st.hands[pid].push({ id: c.id, s: c.s, r: c.r }); } }
   for (const p of piles) if (!p.src.rest) for (let i = 0; i < p.src.n && cards.length; i++) p.cards.push(take());
   const rest = piles.find(p => p.src.rest) || (cards.length ? (piles.push({ id: dkId(), x: 0.5, y: 0.42, cards: [], src: { face: 'down' } }), piles[piles.length - 1]) : null);
@@ -474,7 +516,7 @@ function deckNewRound() {
 }
 function deckCreate() {
   DK.game = null; DK.creating = true; DK.hist = [];
-  DK.st = dkFreshState(); dkFix(DK.st);
+  DK.st = dkFreshState(); dkFix(DK.st); ddCfg();
   deckOpen(true); sfx('shuffle');
 }
 function deckRules() {
@@ -484,10 +526,10 @@ function deckRules() {
 // what the table looks like now → how the game starts
 function dkCaptureSetup() {
   const piles = DK.st.piles.map(p => { const up = p.cards.filter(c => c.up).length, top = p.cards[p.cards.length - 1];
-    return { x: +p.x.toFixed(3), y: +p.y.toFixed(3), n: p.cards.length, face: up === p.cards.length ? 'up' : up === 1 && top.up ? 'top' : 'down' }; });
+    return { x: +p.x.toFixed(3), y: +p.y.toFixed(3), n: p.cards.length, face: up === p.cards.length ? 'up' : up === 1 && top.up ? 'top' : 'down', ...(p.z ? { z: p.z } : {}) }; });
   const big = piles.reduce((b, p, i) => (p.n > (b < 0 ? -1 : piles[b].n) ? i : b), -1);
   if (big >= 0) piles[big].rest = true; // the biggest pile gets whatever is left after dealing
-  return { piles, hand: dkHand().length };
+  return { piles, hand: dkHand().length, cfg: DK.st.cfg || null };
 }
 function deckPublishSheet() {
   const o = { name: '', desc: '', rules: '', min: 2, max: 4, kids: true, public: true };

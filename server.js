@@ -77,6 +77,20 @@ function engineList(lang) {
 const sendLists = ws => send(ws, { t: 'templates', list: listFor(ws), engines: engineList(ws.lang) });
 const cleanLang = l => (String(l || '').toLowerCase().startsWith('sv') ? 'sv' : 'en');
 
+// the designer's settings for a Free Deck game (deck-design.js), checked and trimmed
+function cleanDeckCfg(c) {
+  if (!c || typeof c !== 'object') return null;
+  const one = (v, list, d) => (list.includes(v) ? v : d);
+  const zones = (Array.isArray(c.zones) ? c.zones : []).slice(0, 20).map(z => ({ id: str(z.id, 8), x: clamp(num(z.x, .5), 0, 1), y: clamp(num(z.y, .5), 0, 1), name: str(z.name, 20).trim(),
+    layout: one(z.layout, ['pile', 'row', 'col'], 'pile'), face: one(z.face, ['any', 'up', 'down'], 'any') }));
+  const d = c.deck || {};
+  const buttons = (Array.isArray(c.buttons) ? c.buttons : []).slice(0, 12).map(b => ({ id: str(b.id, 8), label: str(b.label, 20).trim() || 'Button',
+    step: { k: one(b.step && b.step.k, ['dealAll', 'dealSpot', 'flip', 'toDeck', 'collect', 'next'], 'dealAll'), n: clamp(Math.floor(num(b.step && b.step.n, 1)), 1, 13), zone: str(b.step && b.step.zone, 8), face: one(b.step && b.step.face, ['up', 'down'], 'up') } }));
+  return { zones, deck: { decks: clamp(Math.floor(num(d.decks, 1)), 1, 3), jokers: clamp(Math.floor(num(d.jokers, 0)), 0, 4), short: !!d.short },
+    felt: one(c.felt, ['green', 'blue', 'red', 'purple', 'wood', 'night'], 'green'), back: one(c.back, ['red', 'blue', 'green', 'black', 'gold'], 'red'),
+    chips: clamp(Math.floor(num(c.chips, 0)), 0, 100000), score: !!c.score, turns: !!c.turns, buttons };
+}
+
 /* ---------------- Simple content check before publishing ---------------- */
 const BAD_WORDS = ['fan', 'jävla', 'javla', 'jävlar', 'helvete', 'hora', 'fitta', 'kuk', 'knulla', 'knull', 'bög', 'neger', 'nigger', 'fuck', 'fucking', 'shit',
   'bitch', 'cunt', 'dick', 'porn', 'porr', 'nazi', 'nazist', 'hitler', 'slut', 'whore', 'hore', 'cp', 'idiot', 'cancer', 'mongo'];
@@ -600,8 +614,10 @@ function handleCommon(r, ws, m) {
       const bad = moderate(name, desc, rules); if (bad) { send(ws, { t: 'error', msg: bad }); return true; }
       if (templates.filter(t => t.authorHash === ws.authorHash).length >= 50) { send(ws, { t: 'error', msg: 'Du har för många spel. Ta bort något först.' }); return true; }
       const su = m.setup && typeof m.setup === 'object' ? m.setup : {};
-      const piles = (Array.isArray(su.piles) ? su.piles : []).slice(0, 52).map(p => ({ x: clamp(num(p.x, .5), 0, 1), y: clamp(num(p.y, .5), 0, 1), n: clamp(Math.floor(num(p.n, 1)), 0, 52), face: ['up', 'down', 'top'].includes(p.face) ? p.face : 'down', rest: !!p.rest }));
-      const setup = { piles, hand: clamp(Math.floor(num(su.hand, 0)), 0, 26), rest: !!su.rest };
+      const piles = (Array.isArray(su.piles) ? su.piles : []).slice(0, 160).map(p => ({ x: clamp(num(p.x, .5), 0, 1), y: clamp(num(p.y, .5), 0, 1), n: clamp(Math.floor(num(p.n, 1)), 0, 160), face: ['up', 'down', 'top'].includes(p.face) ? p.face : 'down', rest: !!p.rest, ...(p.z ? { z: str(p.z, 8) } : {}) }));
+      const cfg = cleanDeckCfg(su.cfg);
+      const bad2 = cfg && moderate(...cfg.zones.map(z => z.name), ...cfg.buttons.map(b => b.label)); if (bad2) { send(ws, { t: 'error', msg: bad2 }); return true; }
+      const setup = { piles, hand: clamp(Math.floor(num(su.hand, 0)), 0, 26), rest: !!su.rest, cfg };
       const min = clamp(Math.floor(num(m.min, 1)), 1, 8), max = clamp(Math.floor(num(m.max, 4)), min, 8);
       const t = { v: 5, kind: 'deck', id: 't' + rid(), name, emoji: '', desc, rules, min, max, kids: !!m.kids, author: str(m.author, 20).trim() || 'Player',
         authorHash: ws.authorHash, public: !!m.public, created: Date.now(), setup, zones: [], chips: [], actions: [], theme: defaultTheme(), settings: defaultSettings(), decks: 1, jokers: false };

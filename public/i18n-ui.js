@@ -8,7 +8,7 @@ const SV_EN = {
   // start page + Community
   'Community': 'Community', '🌍 Community': '🌍 Community',
   'Spel som andra har skapat. Spela dem, spara dina favoriter – eller gör ett eget och dela med alla!': 'Games made by other players. Play them, save your favourites – or make your own and share it with everyone!',
-  'Skapa och publicera': 'Create your own game', '👥 Alla antal spelare': '👥 Any number of players', '1 spelare': '1 player', '2 spelare': '2 players', '3 spelare': '3 players', '4 eller fler': '4 or more',
+  'Skapa och publicera': 'Design your own game', '👥 Alla antal spelare': '👥 Any number of players', '1 spelare': '1 player', '2 spelare': '2 players', '3 spelare': '3 players', '4 eller fler': '4 or more',
   '👶 För barn': '👶 Kid friendly', '🔥 Populära spel': '🔥 Most played', '✨ Nya spel': '✨ New games', '🔍 Sök spel…': '🔍 Search games…', 'Sök spel': 'Search games', 'Antal spelare': 'Number of players',
   'Inga spel matchar din sökning.': 'No games match your search.', 'Inga spel här än – bli först med att publicera ett! 🎨': 'No games here yet – be the first to publish one! 🎨',
   'Fritt bord': 'Free table', 'Bara en kortlek – spela vad du vill eller bygg ett eget spel!': 'Just a deck of cards – play anything you like or build your own game!',
