@@ -93,7 +93,7 @@ function cleanDeckCfg(c) {
     steps: (Array.isArray(b.steps) ? b.steps : b.step ? [b.step] : []).slice(0, 12).map(cleanStep) }));
   return { zones, deck: { decks: clamp(Math.floor(num(d.decks, 1)), 1, 3), jokers: clamp(Math.floor(num(d.jokers, 0)), 0, 4), short: !!d.short },
     felt: one(c.felt, ['green', 'blue', 'red', 'purple', 'wood', 'night'], 'green'), back: one(c.back, ['red', 'blue', 'green', 'black', 'gold'], 'red'),
-    chips: clamp(Math.floor(num(c.chips, 0)), 0, 100000), score: !!c.score, turns: !!c.turns, buttons };
+    chips: clamp(Math.floor(num(c.chips, 0)), 0, 100000), score: !!c.score, turns: !!c.turns, hideTools: !!c.hideTools, buttons };
 }
 
 /* ---------------- Simple content check before publishing ---------------- */

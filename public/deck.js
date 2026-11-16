@@ -40,7 +40,7 @@ function deckOpen(keep) {
   if (!DK.st) { try { DK.st = JSON.parse(localStorage.getItem('kortbord-deck')); } catch (e) {} if (!DK.st || !DK.st.piles) DK.st = dkFreshState(); dkFix(DK.st); }
   DK.open = true; $('deck').classList.remove('hide'); document.body.classList.add('indeck');
   ['landing', 'game', 'eng'].forEach(id => $(id) && $(id).classList.add('hide'));
-  deckTexts(); deckLayout(); deckRender(true);
+  deckTexts(); deckLayout(); deckRender(true); // layout after texts: a game may hide the standard buttons
   try { cgGameplay(true); } catch (e) {}
   let seen = null; try { seen = localStorage.getItem('kortbord-deckhelp'); } catch (e) {}
   if (!seen) setTimeout(deckHelp, 350);
@@ -77,7 +77,9 @@ function deckInit() {
       <button class="dtool" data-dk="deal">${ic('deal')}<span class="dl" data-dkt="deal"></span></button>
       <button class="dtool" data-dk="gather">${ic('gather')}<span class="dl" data-dkt="gather"></span></button>
       <button class="dtool" data-dk="undo" aria-label="Undo">${ic('undo')}</button>
+      <button class="dtool dhide" data-dk="hidebar" aria-label="Hide buttons">${ic('down')}</button>
     </div>
+    <button class="dshowbar hide" data-dk="showbar" aria-label="Show buttons">${ic('up')}</button>
     <div class="dhand" id="dkHand"><div class="hl" id="dkHandLbl"></div></div>`;
   document.body.appendChild(el);
   el.addEventListener('click', e => {
@@ -97,6 +99,7 @@ function deckInit() {
     else if (a === 'deal') deckDealSheet();
     else if (a === 'gather') { if (DK.game && DK.game.setup) deckNewRound(); else deckGather(); }
     else if (a === 'undo') deckUndo();
+    else if (a === 'hidebar' || a === 'showbar') { DK.barHidden = a === 'hidebar'; try { localStorage.setItem('kortbord-barhidden', DK.barHidden ? '1' : '0'); } catch (err) {} deckLayout(); deckRender(true); }
   });
   el.addEventListener('pointerdown', deckDown);
   window.addEventListener('pointermove', deckMove, { passive: false });
@@ -124,7 +127,12 @@ function deckLayout() {
   DK.cw = Math.round(Math.max(52, Math.min(118, W * 0.17, H * 0.13)));
   DK.ch = Math.round(DK.cw * 1.4);
   DK.handH = Math.round(DK.ch * 0.78 + 26);
-  DK.bar = 66;
+  // the Shuffle / Deal / Collect row can be hidden – by the player, or by the game's designer (Tools)
+  if (DK.barHidden == null) { try { DK.barHidden = localStorage.getItem('kortbord-barhidden') === '1'; } catch (e) { DK.barHidden = false; } }
+  const designerHid = DK.st && DK.st.cfg && DK.st.cfg.hideTools && !DK.creating;
+  const hidden = DK.barHidden || designerHid;
+  DK.bar = hidden ? 30 : 66;
+  const el = $('deck'); el.classList.toggle('barhidden', !!hidden); el.classList.toggle('nobar', !!designerHid);
   const s = $('deck').style;
   s.setProperty('--cw', DK.cw + 'px'); s.setProperty('--ch', DK.ch + 'px'); s.setProperty('--top', DK.top + 'px'); s.setProperty('--handH', DK.handH + 'px'); s.setProperty('--bar', DK.bar + 'px');
 }

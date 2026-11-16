@@ -167,3 +167,9 @@ body.indeck .dgbtn[style*="--bc:#ffb02e"]{color:#3a2600}
 .dsheet .gdots{display:flex;gap:6px;justify-content:center;margin-top:14px}
 .dsheet .gdots i{width:8px;height:8px;border-radius:50%;background:#ddd5c6}
 .dsheet .gdots i.on{background:#1f8a52;width:22px;border-radius:9px}
+/* hide the Shuffle / Deal / Collect row */
+#deck .dbar .dtool.dhide{width:44px;height:44px;padding:0;justify-content:center;background:rgba(0,0,0,.28);color:#fff;box-shadow:none}
+#deck.barhidden .dbar{display:none}
+#deck .dshowbar{position:absolute;right:12px;bottom:calc(var(--handH) + 2px);z-index:2600;width:40px;height:26px;border-radius:999px 999px 0 0;background:rgba(0,0,0,.35);color:#fff;display:flex;align-items:center;justify-content:center}
+#deck .dshowbar .svgic{width:18px;height:18px}
+#deck.barhidden:not(.nobar) .dshowbar{display:flex!important}

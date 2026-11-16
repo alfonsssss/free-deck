@@ -11,7 +11,7 @@
    Game-time numbers (chips, score, turn) live in st.meta.
    ========================================================= */
 const DD_TXT = {
-  en: { theDeck: 'The deck', eachHand: 'Each player\'s hand', turnHand: 'Hand of the player whose turn it is', toWhere: 'To where (choose one or more)', fromWhere: 'From where', topCard: 'Top card', allCards: 'All cards', whichSpots: 'Which spots', howMuch: 'How much',
+  en: { hideTools: 'Hide Shuffle, Deal and Collect for players (only your buttons)', theDeck: 'The deck', eachHand: 'Each player\'s hand', turnHand: 'Hand of the player whose turn it is', toWhere: 'To where (choose one or more)', fromWhere: 'From where', topCard: 'Top card', allCards: 'All cards', whichSpots: 'Which spots', howMuch: 'How much',
     k_deal: 'Deal cards', k_move: 'Move cards', k_flip: 'Flip top card', k_reveal: 'Turn all face up', k_shuffle: 'Shuffle', k_collect: 'Collect all & shuffle', k_next: 'Next player\'s turn', k_chips: 'Chips to everyone', k_score: 'Points',
     sDeal: 'Deal {n} {f} to: {to}', sMoveTop: 'Move the top card from {from} to {to}', sMoveAll: 'Move all cards from {from} to {to}', sFlip: 'Flip the top card on {s}', sReveal: 'Turn all cards face up on {s}', sShuffle: 'Shuffle {s}', sChips: '{n} chips to everyone', sScore: '{n} points',
     editButton: 'Edit button', bLabelPh: 'e.g. Deal a round', whatItDoes: 'What it does, in order', addStep: 'Add a step', saveButton: 'Save button', needStep: 'Add at least one step', isDeck: 'This is the deck (cards are dealt from here)',
@@ -28,7 +28,7 @@ const DD_TXT = {
     spot: 'Spot', spotName: 'Name', layout: 'Cards lie', lPile: 'In a pile', lRow: 'In a row', lCol: 'In a column', faceRule: 'Cards placed here', fAny: 'Stay as they are', fUp: 'Turn face up', fDown: 'Turn face down', del: 'Delete', done: 'Done',
     bDealAll: 'Deal to everyone', bDealSpot: 'Deal to a spot', bFlip: 'Flip top card', bToDeck: 'Back into the deck', bCollect: 'Collect & shuffle', bNext: 'Next player', bLabel: 'Button text', howMany: 'How many cards', toSpot: 'Which spot', faceUp: 'Face up', faceDown: 'Face down',
     needSpot: 'Add a spot first', endTurn: 'End turn', yourTurn: 'Your turn!', turnOf: '{name}\'s turn', chipsOf: 'Chips', scoreOf: 'Score', me: 'You', adjust: 'Change', deckLeft: 'The deck is empty' },
-  sv: { theDeck: 'Leken', eachHand: 'Varje spelares hand', turnHand: 'Handen för den vars tur det är', toWhere: 'Vart (välj en eller flera)', fromWhere: 'Varifrån', topCard: 'Översta kortet', allCards: 'Alla kort', whichSpots: 'Vilka platser', howMuch: 'Hur mycket',
+  sv: { hideTools: 'Dölj Blanda, Dela ut och Samla för spelarna (bara dina knappar)', theDeck: 'Leken', eachHand: 'Varje spelares hand', turnHand: 'Handen för den vars tur det är', toWhere: 'Vart (välj en eller flera)', fromWhere: 'Varifrån', topCard: 'Översta kortet', allCards: 'Alla kort', whichSpots: 'Vilka platser', howMuch: 'Hur mycket',
     k_deal: 'Dela ut kort', k_move: 'Flytta kort', k_flip: 'Vänd översta kortet', k_reveal: 'Vänd upp alla', k_shuffle: 'Blanda', k_collect: 'Samla allt och blanda', k_next: 'Nästa spelares tur', k_chips: 'Marker till alla', k_score: 'Poäng',
     sDeal: 'Dela {n} {f} till: {to}', sMoveTop: 'Flytta översta kortet från {from} till {to}', sMoveAll: 'Flytta alla kort från {from} till {to}', sFlip: 'Vänd översta kortet på {s}', sReveal: 'Vänd upp alla kort på {s}', sShuffle: 'Blanda {s}', sChips: '{n} marker till alla', sScore: '{n} poäng',
     editButton: 'Ändra knapp', bLabelPh: 't.ex. Dela en runda', whatItDoes: 'Vad den gör, i ordning', addStep: 'Lägg till ett steg', saveButton: 'Spara knappen', needStep: 'Lägg till minst ett steg', isDeck: 'Det här är leken (kort delas ut härifrån)',
@@ -359,6 +359,7 @@ function ddToolsSheet() {
     <div class="chips"><span class="lbl2">${esc(ddt('chips'))}</span>${[0, 100, 500, 1000].map(n => chip('chips', n, n ? fmt(n) : esc(ddt('none')), cfg.chips === n)).join('')}</div>
     <label class="dsw"><input type="checkbox" data-tog="score" ${cfg.score ? 'checked' : ''}> ${esc(ddt('score'))}</label>
     <label class="dsw"><input type="checkbox" data-tog="turns" ${cfg.turns ? 'checked' : ''}> ${esc(ddt('turns'))}</label>
+    <label class="dsw"><input type="checkbox" data-tog="hideTools" ${cfg.hideTools ? 'checked' : ''}> ${esc(ddt('hideTools'))}</label>
     <div class="q">${esc(ddt('buttons'))}</div><p class="dhelp">${esc(ddt('buttonsHelp'))}</p>
     <div class="blist">${cfg.buttons.length ? cfg.buttons.map(b => `<div class="bitem" data-editb="${esc(b.id)}"><b>${esc(b.label)}</b><small>${esc(ddSteps(b).map(ddStepText).join(' → '))}</small><button data-delb="${esc(b.id)}" aria-label="${esc(ddt('del'))}">${ic('trash')}</button></div>`).join('') : `<p class="dhelp">${esc(ddt('noButtons'))}</p>`}</div>
     <button class="go small" data-addb>${ic('plus')} ${esc(ddt('addButton'))}</button>`;
@@ -369,7 +370,7 @@ function ddToolsSheet() {
     if (set) { const k = set.dataset.set, v = set.dataset.v; deckSnap();
       if (k === 'decks' || k === 'jokers') cfg.deck[k] = +v; else if (k === 'chips') cfg.chips = +v; else cfg[k] = v;
       sfx('click'); deckCommit(); again(); return; }
-    const tog = t.closest('[data-tog]'); if (tog) { deckSnap(); cfg[tog.dataset.tog] = tog.checked; sfx('click'); deckCommit(); return; }
+    const tog = t.closest('[data-tog]'); if (tog) { deckSnap(); cfg[tog.dataset.tog] = tog.checked; sfx('click'); deckCommit(); deckLayout(); deckRender(true); return; }
     if (t.closest('[data-deck]')) { cfg.deck.short = $('ddShort').checked; deckCloseSheet(); deckGather(); return; }
     const delb = t.closest('[data-delb]'); if (delb) { deckSnap(); cfg.buttons = cfg.buttons.filter(b => b.id !== delb.dataset.delb); sfx('slide'); deckCommit(); again(); return; }
     const eb = t.closest('[data-editb]'); if (eb) { ddButtonSheet(eb.dataset.editb); return; }
