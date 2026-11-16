@@ -259,7 +259,7 @@ add({
     'bj.bust': 'Tjock {v} 💥', 'bj.stands': 'Står på {v}', 'bj.took': '{a} tog ett kort', 'bj.tookDouble': '{a} tog ett kort och dubblade', 'bj.standMsg': '{a} står på {v}', 'bj.draws': 'Dealern drar… {v}',
     'bj.rBust': 'Tjock ({v}) – förlorade {b}', 'bj.rBJ': 'Blackjack! Vann {w}', 'bj.rDealerBJ': 'Dealern hade blackjack – förlorade {b}', 'bj.rWin': 'Vann {b} ({v} mot {d})', 'bj.rWinBust': 'Vann {b} ({v} – dealern blev tjock)',
     'bj.rPush': 'Lika ({v}) – fick tillbaka {b}', 'bj.rLose': 'Förlorade {b} ({v} mot {d})', 'bj.has': '{t} · har {n}', 'bj.tDealerBust': 'Dealern blev tjock! 🎉', 'bj.tDealer': 'Dealern fick {d}',
-    'bj.bet': 'Satsa {n}', 'bj.hit': 'Ta kort', 'bj.stand': 'Stå', 'bj.double': 'Dubbla', 'bj.hBet': 'Hur mycket vill du satsa? Du har {n} marker.', 'bj.hWaitBets': 'Väntar på att alla ska satsa…',
+    'bj.bet': 'Satsa {n}', 'bj.hit': 'Ta kort', 'bj.stand': 'Stå', 'bj.double': 'Dubbla', 'bj.hBet': 'Tryck på markerna för att satsa – du har {n}.', 'bj.hBetting': 'Din insats: {b}. Tryck på fler marker eller Dela ut. Kvar: {n}.', 'bj.clear': 'Rensa', 'bj.deal': 'Dela ut ({n})', 'bj.same': 'Samma igen ({n})', 'bj.hWaitBets': 'Väntar på att alla ska satsa…',
     'bj.hTurn': 'Du har {v}. Vill du ta ett kort till eller stå?', 'bj.hDealer': 'Dealern spelar…', 'bj.betOk': '✅ Satsat', 'bj.betting': 'Satsar…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
     'bj.yourCards': 'Dina kort · {v}', 'bj.split': 'Dela', 'bj.noSplit': 'Du kan bara dela två lika kort.', 'bj.splitMsg': '{a} delade handen', 'bj.hTurnN': 'Hand {i} av {n}: du har {v}. Ta kort eller stå?',
     'bj.yourHandN': 'Hand {i} av {n} · {v}', 'bj.rWon': '{a} vann {n}', 'bj.rLost': '{a} förlorade {n}', 'bj.rEven': '{a} fick tillbaka insatsen', 'bj.paren': '({t})', 'bj.pBust': 'tjock på {v}', 'bj.pBJ': 'blackjack',
@@ -269,7 +269,7 @@ add({
     'bj.bust': 'Bust {v} 💥', 'bj.stands': 'Stands on {v}', 'bj.took': '{a} took a card', 'bj.tookDouble': '{a} took a card and doubled', 'bj.standMsg': '{a} stands on {v}', 'bj.draws': 'The dealer draws… {v}',
     'bj.rBust': 'Bust ({v}) – lost {b}', 'bj.rBJ': 'Blackjack! Won {w}', 'bj.rDealerBJ': 'The dealer had blackjack – lost {b}', 'bj.rWin': 'Won {b} ({v} vs {d})', 'bj.rWinBust': 'Won {b} ({v} – the dealer went bust)',
     'bj.rPush': 'Push ({v}) – got {b} back', 'bj.rLose': 'Lost {b} ({v} vs {d})', 'bj.has': '{t} · has {n}', 'bj.tDealerBust': 'The dealer went bust! 🎉', 'bj.tDealer': 'The dealer got {d}',
-    'bj.bet': 'Bet {n}', 'bj.hit': 'Hit', 'bj.stand': 'Stand', 'bj.double': 'Double', 'bj.hBet': 'How much do you want to bet? You have {n} chips.', 'bj.hWaitBets': 'Waiting for everyone to bet…',
+    'bj.bet': 'Bet {n}', 'bj.hit': 'Hit', 'bj.stand': 'Stand', 'bj.double': 'Double', 'bj.hBet': 'Tap the chips to bet – you have {n}.', 'bj.hBetting': 'Your bet: {b}. Tap more chips or Deal. Left: {n}.', 'bj.clear': 'Clear', 'bj.deal': 'Deal ({n})', 'bj.same': 'Same again ({n})', 'bj.hWaitBets': 'Waiting for everyone to bet…',
     'bj.hTurn': 'You have {v}. Take another card or stand?', 'bj.hDealer': 'The dealer is playing…', 'bj.betOk': '✅ Bet placed', 'bj.betting': 'Betting…', 'bj.dealer': 'Dealer', 'bj.dealerV': 'Dealer · {v}', 'bj.dealerV2': 'Dealer · {v} + ?',
     'bj.yourCards': 'Your cards · {v}', 'bj.split': 'Split', 'bj.noSplit': 'You can only split two cards of the same value.', 'bj.splitMsg': '{a} split the hand', 'bj.hTurnN': 'Hand {i} of {n}: you have {v}. Hit or stand?',
     'bj.yourHandN': 'Hand {i} of {n} · {v}', 'bj.rWon': '{a} won {n}', 'bj.rLost': '{a} lost {n}', 'bj.rEven': '{a} got the bet back', 'bj.paren': '({t})', 'bj.pBust': 'bust on {v}', 'bj.pBJ': 'blackjack',
@@ -289,7 +289,7 @@ function start(n, prev) {
   const note = [];
   chips.forEach((c, s) => { if (c < BETS[0]) { chips[s] = START; note.push(M('bj.newChips', { a: seat(s), n: START })); } });
   // every seat can hold several hands after a split: sp[s] = [{ cards, bet, done, status }], hi[s] = the hand being played
-  return { n, chips, bets: Array(n).fill(0), sp: Array.from({ length: n }, () => []), hi: Array(n).fill(0), done: Array(n).fill(false),
+  return { n, chips, bets: Array(n).fill(0), pend: Array(n).fill(0), sp: Array.from({ length: n }, () => []), hi: Array(n).fill(0), done: Array(n).fill(false),
     dealer: [], hole: true, deck: makeDeck(2), phase: 'bet', turn: null, msg: note.length ? note : M('bj.chooseBet'), result: null, lastBet: prev?.lastBet || Array(n).fill(25) };
 }
 const draw = G => { if (!G.deck.length) G.deck = makeDeck(2); return G.deck.pop(); };
@@ -332,10 +332,19 @@ function act(G, s, m) {
   if (m.a !== 'btn') return null;
   if (G.phase === 'bet') {
     if (G.bets[s]) return M('bj.betDone');
-    const amt = +String(m.id).replace('bet', '');
-    if (!BETS.includes(amt)) return null;
+    const id = String(m.id);
+    // tap chips to build your bet (100 three times = 300), then press Deal
+    if (id.startsWith('add')) {
+      const amt = +id.slice(3); if (!BETS.includes(amt)) return null;
+      if (G.pend[s] + amt > G.chips[s]) return M('bj.onlyChips', { n: G.chips[s] });
+      G.pend[s] += amt; return null;
+    }
+    if (id === 'clear') { G.pend[s] = 0; return null; }
+    let amt;
+    if (id === 'place') { amt = G.pend[s]; if (amt < BETS[0]) return M('bj.chooseBet'); }
+    else { amt = +id.replace('bet', ''); if (!BETS.includes(amt) && !(amt >= BETS[0])) return null; } // one tap (computer players, or the timer)
     if (amt > G.chips[s]) return M('bj.onlyChips', { n: G.chips[s] });
-    G.bets[s] = amt; G.chips[s] -= amt; G.lastBet[s] = amt;
+    G.bets[s] = amt; G.chips[s] -= amt; G.lastBet[s] = amt; G.pend[s] = 0;
     if (G.bets.every(b => b)) deal(G);
     return null;
   }
@@ -398,7 +407,10 @@ function view(G, s) {
   const me = s >= 0 ? s : -1, myTurn = G.phase === 'play' && s === G.turn;
   const buttons = [];
   if (G.phase === 'bet' && me >= 0 && !G.bets[me]) {
-    BETS.filter(b => b <= G.chips[me]).forEach(b => buttons.push({ id: 'bet' + b, label: String(b), chip: b, primary: b === G.lastBet[me] }));
+    const left = G.chips[me] - G.pend[me];
+    BETS.forEach(b => buttons.push({ id: 'add' + b, label: String(b), chip: b, off: b > left }));
+    if (G.pend[me]) { buttons.push({ id: 'clear', label: M('bj.clear'), icon: 'undo', tone: 'plain' }); buttons.push({ id: 'place', label: M('bj.deal', { n: G.pend[me] }), icon: 'cards', tone: 'good', primary: true }); }
+    else if (G.lastBet[me] <= G.chips[me]) buttons.push({ id: 'bet' + G.lastBet[me], label: M('bj.same', { n: G.lastBet[me] }), icon: 'restart', tone: 'plain' });
   }
   const mine = me >= 0 ? cur(G, me) : null;
   if (myTurn && mine) {
@@ -410,7 +422,7 @@ function view(G, s) {
   }
   const dv = value(G.hole ? G.dealer.slice(0, 1) : G.dealer).t;
   let hint;
-  if (G.phase === 'bet') hint = me >= 0 && !G.bets[me] ? M('bj.hBet', { n: G.chips[me] }) : M('bj.hWaitBets');
+  if (G.phase === 'bet') hint = me >= 0 && !G.bets[me] ? (G.pend[me] ? M('bj.hBetting', { b: G.pend[me], n: G.chips[me] - G.pend[me] }) : M('bj.hBet', { n: G.chips[me] })) : M('bj.hWaitBets');
   else if (myTurn && mine) hint = G.sp[me].length > 1 ? M('bj.hTurnN', { v: value(mine.cards).t, i: G.hi[me] + 1, n: G.sp[me].length }) : M('bj.hTurn', { v: value(mine.cards).t });
   else if (G.phase === 'play') hint = M('waitFor');
   else hint = G.phase === 'dealer' ? M('bj.hDealer') : M('roundOver');
@@ -421,7 +433,7 @@ function view(G, s) {
   const show = mine || (me >= 0 && G.sp[me][0]);
   return {
     turn: G.phase === 'play' ? G.turn : null, hint, msg: G.msg,
-    seats: G.sp.map((hs, i) => ({ chips: G.chips[i], bet: G.bets[i], shown: hs.flatMap(h => h.cards.map(pub)), label: label(i) })),
+    seats: G.sp.map((hs, i) => ({ chips: G.chips[i], bet: G.bets[i] || G.pend[i] || 0, shown: hs.flatMap(h => h.cards.map(pub)), label: label(i) })),
     center: [{ id: 'dealer', label: G.dealer.length ? M(G.hole ? 'bj.dealerV2' : 'bj.dealerV', { v: dv }) : M('bj.dealer'), layout: 'fan', row: 0,
       cards: G.dealer.map((c, i) => ({ c: G.hole && i === 1 ? null : pub(c) })) }],
     hand: show && show.cards.length ? show.cards.map(c => ({ ...pub(c), ok: true })) : null,

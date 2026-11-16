@@ -174,8 +174,9 @@ function renderEngine() {
     : waitTurn && !/(Väntar|Waiting)/.test(hint) ? `${t('waitingFor', { name: v.turnName })} ${hint}` : hint;
   const chips = (v.buttons || []).filter(b => b.chip), rest = (v.buttons || []).filter(b => !b.chip);
   $('eButtons').classList.toggle('haschips', chips.length > 0);
-  $('eButtons').innerHTML = (chips.length ? `<div class="chiprow">${chips.map(b => `<button class="betchip c${b.chip}${b.primary ? ' on' : ''}" data-btn="${esc(b.id)}" aria-label="${esc(b.label)}"><span>${esc(b.label)}</span></button>`).join('')}</div>` : '') +
-    rest.map(b => `<button class="ebtn t-${b.tone || BTN_TONE[b.id] || 'plain'}${b.primary ? ' primary' : ''}" data-btn="${esc(b.id)}" data-lobby="${v.phase === 'lobby' ? 1 : ''}"><span class="ic">${icOrText(b.icon, esc)}</span>${esc(b.label)}</button>`).join('');
+  $('eButtons').innerHTML = (chips.length ? `<div class="chiprow">${chips.map(b => `<button class="betchip c${b.chip}${b.primary ? ' on' : ''}" data-btn="${esc(b.id)}" aria-label="${esc(b.label)}" ${b.off ? 'disabled' : ''}><span>${esc(b.label)}</span></button>`).join('')}</div>` : '') +
+    (chips.length ? '<div class="btnrow">' : '') +
+    rest.map(b => `<button class="ebtn t-${b.tone || BTN_TONE[b.id] || 'plain'}${b.primary ? ' primary' : ''}" data-btn="${esc(b.id)}" data-lobby="${v.phase === 'lobby' ? 1 : ''}"><span class="ic">${icOrText(b.icon, esc)}</span>${esc(b.label)}</button>`).join('') + (chips.length ? '</div>' : '');
   tickIdle();
 
   engRenderHand(v, hw);
@@ -324,7 +325,7 @@ function engClick(e) {
   if (res) { const a = res.dataset.res; if (a === 'home') return goHome(); return send({ t: 'btn', id: a }); }
   const b = t.closest('[data-btn]');
   if (b) {
-    sfx('click');
+    sfx(b.classList.contains('betchip') ? 'place' : 'click');
     if (b.dataset.lobby) return send({ t: 'btn', id: b.dataset.btn });
     const def = (v.buttons || []).find(x => x.id === b.dataset.btn);
     if (def && def.raise) return openRaise(def);
