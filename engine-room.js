@@ -125,7 +125,7 @@ function view(r, pid, lang = 'en') {
     hint: S(v.hint), msg: S(v.msg), priv: S(v.priv), handLabel: S(v.handLabel), layout: v.layout || 'table', pot: v.pot, moves: v.moves,
     seats: seats.map((s, i) => (s ? { ...s, ...(v.seats[i] || {}), label: S((v.seats[i] || {}).label) } : null)),
     center: v.center.map(c => ({ ...c, label: S(c.label) })),
-    hand: v.hand, handTap: !!v.handTap, buttons: (v.buttons || []).map(b => ({ ...b, label: S(b.label) })),
+    hand: v.hand, handTap: !!v.handTap, ...(v.board ? { board: v.board, flip: !!v.flip, last: v.last, check: v.check } : {}), buttons: (v.buttons || []).map(b => ({ ...b, label: S(b.label) })),
     idleIn: r.idleAt && me >= 0 && waitingFor.includes(me) ? Math.max(0, r.idleAt - Date.now()) : null,
     result: res };
 }

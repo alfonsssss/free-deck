@@ -232,3 +232,27 @@
 .rline i .svgic{width:60%;height:60%}
 .prev .gbadge svg{position:static;inset:auto;width:.95em;height:.95em}
 .prev .gbadge.two svg{width:.7em;height:.7em}
+
+/* chess */
+.etable.chess .oval,.etable.chess #eSeats{display:none}
+.chesswrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.chesswrap .board{display:grid;grid-template-columns:repeat(8,var(--sq));grid-template-rows:repeat(8,var(--sq));border-radius:10px;overflow:hidden;
+  box-shadow:0 0 0 6px #6b4226,0 0 0 8px #3e2614,0 14px 30px rgba(0,0,0,.45)}
+.chesswrap .sq{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.chesswrap .sq.lt{background:#f0d9b5}.chesswrap .sq.dk{background:#b58863}
+.chesswrap .sq.last.lt{background:#f6ea8a}.chesswrap .sq.last.dk{background:#d9c45a}
+.chesswrap .sq.sel{background:#8fd18b!important}
+.chesswrap .sq.chk{background:radial-gradient(circle,#ff5a4a 0 35%,rgba(255,90,74,.4) 65%,transparent 80%)!important}
+.chesswrap .sq.tgt::after{content:"";width:28%;height:28%;border-radius:50%;background:rgba(20,60,30,.38)}
+.chesswrap .sq.cap::after{content:"";position:absolute;inset:6%;border-radius:50%;border:calc(var(--sq)*.08) solid rgba(20,60,30,.4)}
+.chesswrap .pc{font-size:calc(var(--sq)*.82);line-height:1;font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif;pointer-events:none;transition:transform .15s}
+.chesswrap .pc.w{color:#fff;-webkit-text-stroke:1.5px #2a2a2a;text-shadow:0 2px 2px rgba(0,0,0,.35)}
+.chesswrap .pc.b{color:#1d1f27;text-shadow:0 1px 0 rgba(255,255,255,.35),0 2px 3px rgba(0,0,0,.35)}
+.chesswrap .sq.sel .pc{transform:scale(1.12)}
+.chesswrap .cside{display:flex;align-items:center;gap:8px;color:#fff;font-weight:800;min-height:34px;padding:3px 12px 3px 4px;border-radius:999px;background:rgba(0,0,0,.25)}
+.chesswrap .cside.turn{background:#ffb02e;color:#3a2600}
+.chesswrap .cside i{width:28px;height:28px;border-radius:50%;background:var(--c,#9aa7b8);color:#fff;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900}
+.chesswrap .cside i .svgic{width:60%;height:60%}
+.chesswrap .ctaken{font-size:18px;letter-spacing:-2px;font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif}
+.chesswrap .ctaken.w{color:#fff;-webkit-text-stroke:1px #333}.chesswrap .ctaken.b{color:#1d1f27}
+.gbadge .chessg{font-size:1.25em;font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif}

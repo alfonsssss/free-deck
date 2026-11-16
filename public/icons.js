@@ -92,6 +92,6 @@ const GAME_BADGE = { 'g-blackjack': ['21', ''], 'g-poker': ['', '♠'], 'g-vanda
 function gameBadge(id, cls = '') {
   const [txt, suit] = GAME_BADGE[id] || ['', '♠'];
   const red = suit === '♥' || suit === '♦';
-  const inner = txt === 'fish' ? ic('fish') : txt === 'chess' ? (typeof CHESS_GLYPH !== 'undefined' ? CHESS_GLYPH : '♞') : `${txt ? `<b>${txt}</b>` : ''}${suit ? suitSVG(suit) : ''}`;
+  const inner = txt === 'fish' ? ic('fish') : txt === 'chess' ? '<b class="chessg">\u265E\uFE0E</b>' : `${txt ? `<b>${txt}</b>` : ''}${suit ? suitSVG(suit) : ''}`;
   return `<span class="gbadge${red ? ' red' : ''}${txt && suit ? ' two' : ''} ${cls}">${inner}</span>`;
 }

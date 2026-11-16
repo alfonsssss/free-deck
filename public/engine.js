@@ -90,6 +90,7 @@ function renderEngine() {
   const T = $('eTable'), W = T.clientWidth, H = T.clientHeight;
   const solo = v.layout === 'solitaire';
   T.classList.toggle('solitaire', solo);
+  T.classList.toggle('chess', v.layout === 'chess' && v.phase === 'game');
   $('eTitle').innerHTML = `${gameBadge(v.meta.id)} ${esc(v.meta.name)}`;
   $('eCode').textContent = v.code;
   $('eCode').parentElement.classList.toggle('hide', localRoom);
@@ -143,6 +144,8 @@ function renderEngine() {
       ${localRoom ? '' : `<div class="codelbl">${esc(t('codeHelp'))}</div><div class="code">${esc(v.code)}</div>`}
       ${localRoom && !hasServer() ? '' : `<button class="invite" id="eInvite2">${ic('link')} ${esc(t('inviteFriends'))}</button>`}</div>`;
     if ($('eInvite2')) $('eInvite2').onclick = () => (localRoom ? goOnline() : copyInvite($('eInvite2')));
+  } else if (v.layout === 'chess') {
+    C.innerHTML = chessHTML(v, W, H);
   } else {
     const rows = {};
     v.center.forEach(p => (rows[p.row || 0] = rows[p.row || 0] || []).push(p));
@@ -259,6 +262,35 @@ function confetti(set) {
   document.body.appendChild(box); setTimeout(() => box.remove(), 3600);
 }
 
+/* ---------- chess board ---------- */
+let evChessSel = -1, evChessKey = '';
+const CHESS_G = { K: '\u265A', Q: '\u265B', R: '\u265C', B: '\u265D', N: '\u265E', P: '\u265F' };
+function chessHTML(v, W, H) {
+  const key = v.board + v.turn; if (key !== evChessKey) { evChessKey = key; evChessSel = -1; }
+  const size = Math.floor(Math.min(W - 16, H - 70) / 8) * 8, sqz = size / 8;
+  const moves = v.moves || [], targets = new Set(moves.filter(m => m[0] === evChessSel).map(m => m[1])), movable = new Set(moves.map(m => m[0]));
+  const last = v.last || [];
+  let cells = '';
+  for (let d = 0; d < 64; d++) {
+    const sq = v.flip ? 63 - d : d, r = sq >> 3, c = sq & 7, p = v.board[sq];
+    const cls = ['sq', (r + c) % 2 ? 'dk' : 'lt', sq === evChessSel ? 'sel' : '', targets.has(sq) ? (p !== '.' ? 'cap' : 'tgt') : '', last.includes(sq) ? 'last' : '', sq === v.check ? 'chk' : '', movable.has(sq) && evChessSel < 0 ? 'mv' : ''].filter(Boolean).join(' ');
+    const piece = p === '.' ? '' : `<span class="pc ${p === p.toUpperCase() ? 'w' : 'b'}">${CHESS_G[p.toUpperCase()]}\uFE0E</span>`;
+    cells += `<div class="${cls}" data-sq="${sq}">${piece}</div>`;
+  }
+  const side = x => { const s = v.seats[x]; if (!s) return ''; const taken = (s.taken || '').split('').map(t => CHESS_G[t] + '\uFE0E').join('');
+    return `<div class="cside${v.turn === x ? ' turn' : ''}"><i style="--c:${s.color}">${s.bot ? ic('bot') : esc((s.name || '?')[0].toUpperCase())}</i><b>${s.me ? esc(t('you')) : esc(s.name)}</b><span class="ctaken ${x === 0 ? 'b' : 'w'}">${taken}</span></div>`; };
+  const top = v.flip ? 0 : 1, bottom = 1 - top;
+  return `<div class="chesswrap" style="--sq:${sqz}px">${side(top)}<div class="board">${cells}</div>${side(bottom)}</div>`;
+}
+function chessTap(sq) {
+  const v = EV; if (!v || v.layout !== 'chess') return;
+  const moves = v.moves || [];
+  if (evChessSel >= 0 && moves.some(m => m[0] === evChessSel && m[1] === sq)) { const from = evChessSel; evChessSel = -1; sfx('place'); return engAct({ a: 'move', from: String(from), to: String(sq) }); }
+  if (moves.some(m => m[0] === sq)) { evChessSel = sq === evChessSel ? -1 : sq; sfx('click'); }
+  else { if (evChessSel >= 0) sfx('error'); evChessSel = -1; if (!moves.length && v.turn !== v.me) toast(t('waitYourTurn', { name: v.turnName })); }
+  renderEngine();
+}
+
 /* ---------- sounds ---------- */
 let evSndRound = -1, evSndTurn = null;
 function engSounds(v) {
@@ -278,6 +310,7 @@ function engClick(e) {
   if (evSuppressClick) { evSuppressClick = false; return; }
   const v = EV; if (!v) return;
   const t = e.target;
+  const sq = t.closest('[data-sq]'); if (sq) return chessTap(+sq.dataset.sq);
   const sit = t.closest('[data-sit]'); if (sit) return send({ t: 'sit', seat: +sit.dataset.sit });
   const rm = t.closest('[data-rmbot]'); if (rm) return send({ t: 'removeBot', seat: +rm.dataset.rmbot });
   const res = t.closest('[data-res]');
