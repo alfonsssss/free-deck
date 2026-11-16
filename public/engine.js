@@ -403,8 +403,13 @@ function engMove(e) {
     d.moved = true;
     const r = d.el.getBoundingClientRect();
     d.ox = e.clientX - r.left; d.oy = e.clientY - r.top;
-    d.ghost = d.el.cloneNode(true); d.ghost.classList.add('ghost'); d.ghost.style.width = r.width + 'px'; d.ghost.style.height = r.height + 'px'; d.ghost.style.setProperty('--w', r.width + 'px');
-    document.body.appendChild(d.ghost); d.el.style.opacity = '.3';
+    // in a column you pick up the card and every card on top of it (like real solitaire)
+    const run = [d.el]; if (d.from) { let n = d.el.nextElementSibling; while (n) { if (n.classList.contains('ec')) run.push(n); n = n.nextElementSibling; } }
+    d.run = run;
+    d.ghost = document.createElement('div'); d.ghost.className = 'eghost';
+    run.forEach(el => { const rr = el.getBoundingClientRect(), g = el.cloneNode(true); g.classList.remove('tip', 'deal-in'); g.style.cssText = `position:absolute;left:${rr.left - r.left}px;top:${rr.top - r.top}px;width:${rr.width}px;height:${rr.height}px;--w:${rr.width}px;margin:0`; d.ghost.appendChild(g); });
+    document.body.appendChild(d.ghost); run.forEach(el => (el.style.opacity = '.25'));
+    sfx('slide');
   }
   d.ghost.style.left = (e.clientX - d.ox) + 'px'; d.ghost.style.top = (e.clientY - d.oy) + 'px';
   const target = dropAt(e);
@@ -419,8 +424,9 @@ function engUp(e) {
   document.querySelectorAll('#eng .droptarget').forEach(x => x.classList.remove('droptarget'));
   if (d.moved) {
     evSuppressClick = true; setTimeout(() => (evSuppressClick = false), 50);
-    d.ghost.remove(); d.el.style.opacity = '';
+    d.ghost.remove(); (d.run || [d.el]).forEach(el => (el.style.opacity = ''));
     const target = dropAt(e);
+    if (target) sfx('place');
     if (d.hand) {
       if (target) engAct({ a: 'drop', id: d.hand, pile: target.dataset.drop });
       else if (e.clientY < $('eHand').getBoundingClientRect().top - 10) engAct({ a: 'card', id: d.hand }); // dragged up onto the table = play it

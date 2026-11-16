@@ -81,14 +81,14 @@ function deckInit() {
     <div class="dhand" id="dkHand"><div class="hl" id="dkHandLbl"></div></div>`;
   document.body.appendChild(el);
   el.addEventListener('click', e => {
-    const gb = e.target.closest('[data-gb]'); if (gb) { sfx('click'); ddRunButton(gb.dataset.gb); return; }
+    const gb = e.target.closest('[data-gb]'); if (gb) { if (DK.noClick) { DK.noClick = false; return; } sfx('click'); ddRunButton(gb.dataset.gb); return; }
     const pl = e.target.closest('[data-pl]'); if (pl) { sfx('click'); ddPlayerSheet(pl.dataset.pl); return; }
     const b = e.target.closest('[data-dk]'); if (!b) return;
     const a = b.dataset.dk;
     if (a !== 'mute') sfx('click');
     if (a === 'home') { deckClose(); goHome(); }
     else if (a === 'mute') { sfxMute(!SFX.muted); sfx('pop'); }
-    else if (a === 'help') deckHelp();
+    else if (a === 'help') { if (DK.creating) ddGuide(); else deckHelp(); }
     else if (a === 'invite') deckInvite();
     else if (a === 'rules') deckRules();
     else if (a === 'publish') deckPublishSheet();
@@ -278,6 +278,12 @@ function deckDeal(n, to, up) {
 function dkHit(e) { return document.elementsFromPoint(e.clientX, e.clientY).find(x => x.classList && (x.classList.contains('dc') || x.classList.contains('dcount'))); }
 function deckDown(e) {
   if (!DK.open || e.button > 0 || DK.drag) return;
+  const gbt = DK.creating && e.target.closest('[data-gb]');
+  if (gbt && gbt.dataset.gb !== '__next') { // designing: drag a button to where it should be on the table
+    const r = gbt.getBoundingClientRect();
+    DK.drag = { button: gbt.dataset.gb, el: gbt, ids: [], x0: e.clientX, y0: e.clientY, dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2), moved: false, pid: e.pointerId };
+    return;
+  }
   const zl = DK.creating && e.target.closest('.dzone.edit .zl');
   if (zl) { // designing: drag a spot by its name, tap it to change it
     e.preventDefault();
@@ -303,6 +309,11 @@ function deckDown(e) {
 }
 function deckMove(e) {
   const d = DK.drag; if (!d || e.pointerId !== d.pid) return;
+  if (d.button) {
+    if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 8) return;
+    if (!d.moved) { d.moved = true; d.ghost = d.el.cloneNode(true); d.ghost.className = 'dgbtn ghost'; d.ghost.style.setProperty('--bc', getComputedStyle(d.el).getPropertyValue('--bc') || '#2f74d8'); document.body.appendChild(d.ghost); d.el.style.opacity = '.3'; sfx('slide'); }
+    e.preventDefault(); d.ghost.style.transform = `translate(calc(${e.clientX - d.dx}px - 50%),calc(${e.clientY - d.dy}px - 50%))`; return;
+  }
   if (d.zone) { if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 7 && !d.moved) return; d.moved = true; e.preventDefault();
     const z = ddZone(d.zone); if (z) { const n = dkToNorm(e.clientX - d.dx, e.clientY - d.dy); z.x = n.x; z.y = n.y; ddRenderZones(); DK.st.piles.forEach(p => { if (p.z === d.zone) { p.x = n.x; p.y = n.y; } }); deckRender(true); } return; }
   if (!d.moved) {
@@ -348,6 +359,15 @@ function deckUp(e) {
   $('dkHand').classList.remove('over');
   if (d.tgtEl) d.tgtEl.classList.remove('target');
   if (d.ztEl) d.ztEl.classList.remove('target');
+  if (d.button) { // placing a button (designing)
+    if (d.moved) {
+      DK.noClick = true; setTimeout(() => (DK.noClick = false), 60);
+      d.ghost.remove(); d.el.style.opacity = '';
+      const b = ddCfg().buttons.find(x => x.id === d.button);
+      if (b) { deckSnap(); const inBar = e.clientY > DK.H - DK.handH - DK.bar - 30; if (inBar) { b.x = null; b.y = null; } else { const n = dkToNorm(e.clientX - d.dx, e.clientY - d.dy); b.x = n.x; b.y = n.y; } sfx('place'); deckCommit(); }
+    }
+    return;
+  }
   if (d.zone) { // moving a spot (designing)
     if (d.moved) { const n = dkToNorm(e.clientX - d.dx, e.clientY - d.dy), z = ddZone(d.zone); if (z) { z.x = n.x; z.y = n.y; } sfx('place'); deckCommit(); }
     else ddZoneSheet(d.zone);
@@ -519,6 +539,8 @@ function deckCreate() {
   DK.game = null; DK.creating = true; DK.hist = [];
   DK.st = dkFreshState(); dkFix(DK.st); ddCfg();
   deckOpen(true); sfx('shuffle');
+  let seen = null; try { seen = localStorage.getItem('kortbord-designguide'); } catch (e) {}
+  if (!seen) setTimeout(() => ddGuide(0), 450); // first time: a short guide
 }
 function deckRules() {
   const g = DK.game; if (!g) return;

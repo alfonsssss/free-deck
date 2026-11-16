@@ -345,3 +345,6 @@
 .dsheet .chseek{display:flex;align-items:center;gap:10px;justify-content:center;font-weight:800;margin-top:16px}
 .dsheet .spin{width:22px;height:22px;border-radius:50%;border:3px solid #e2dbcd;border-top-color:#1f8a52;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.eghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(-3deg) scale(1.04);filter:drop-shadow(0 14px 22px rgba(0,0,0,.45))}
+#eng .ec[data-drag]{touch-action:none;cursor:grab}
+#eng .pile[data-drop]{touch-action:none}

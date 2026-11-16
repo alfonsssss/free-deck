@@ -82,10 +82,15 @@ function cleanDeckCfg(c) {
   if (!c || typeof c !== 'object') return null;
   const one = (v, list, d) => (list.includes(v) ? v : d);
   const zones = (Array.isArray(c.zones) ? c.zones : []).slice(0, 20).map(z => ({ id: str(z.id, 8), x: clamp(num(z.x, .5), 0, 1), y: clamp(num(z.y, .5), 0, 1), name: str(z.name, 20).trim(),
-    layout: one(z.layout, ['pile', 'row', 'col'], 'pile'), face: one(z.face, ['any', 'up', 'down'], 'any') }));
+    layout: one(z.layout, ['pile', 'row', 'col'], 'pile'), face: one(z.face, ['any', 'up', 'down'], 'any'), deck: !!z.deck }));
   const d = c.deck || {};
-  const buttons = (Array.isArray(c.buttons) ? c.buttons : []).slice(0, 12).map(b => ({ id: str(b.id, 8), label: str(b.label, 20).trim() || 'Button',
-    step: { k: one(b.step && b.step.k, ['dealAll', 'dealSpot', 'flip', 'toDeck', 'collect', 'next'], 'dealAll'), n: clamp(Math.floor(num(b.step && b.step.n, 1)), 1, 13), zone: str(b.step && b.step.zone, 8), face: one(b.step && b.step.face, ['up', 'down'], 'up') } }));
+  const ids = v => (Array.isArray(v) ? v : []).slice(0, 12).map(x => str(x, 8));
+  const cleanStep = st => ({ k: one(st && st.k, ['deal', 'move', 'flip', 'reveal', 'shuffle', 'collect', 'next', 'chips', 'score', 'dealAll', 'dealSpot', 'toDeck'], 'deal'),
+    n: clamp(Math.floor(num(st && st.n, 1)), -10000, 10000), to: Array.isArray(st && st.to) ? ids(st.to) : str(st && st.to, 8), from: str(st && st.from, 8), which: one(st && st.which, ['top', 'all'], 'top'),
+    face: one(st && st.face, ['up', 'down', ''], ''), spots: ids(st && st.spots), spot: str(st && st.spot, 8), zone: str(st && st.zone, 8) });
+  const buttons = (Array.isArray(c.buttons) ? c.buttons : []).slice(0, 24).map(b => ({ id: str(b.id, 8), label: str(b.label, 20).trim() || 'Button', tone: one(b.tone, ['blue', 'green', 'orange', 'red', 'dark'], 'blue'),
+    x: b.x == null ? null : clamp(num(b.x, .5), 0, 1), y: b.y == null ? null : clamp(num(b.y, .5), 0, 1),
+    steps: (Array.isArray(b.steps) ? b.steps : b.step ? [b.step] : []).slice(0, 12).map(cleanStep) }));
   return { zones, deck: { decks: clamp(Math.floor(num(d.decks, 1)), 1, 3), jokers: clamp(Math.floor(num(d.jokers, 0)), 0, 4), short: !!d.short },
     felt: one(c.felt, ['green', 'blue', 'red', 'purple', 'wood', 'night'], 'green'), back: one(c.back, ['red', 'blue', 'green', 'black', 'gold'], 'red'),
     chips: clamp(Math.floor(num(c.chips, 0)), 0, 100000), score: !!c.score, turns: !!c.turns, buttons };

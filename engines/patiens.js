@@ -115,8 +115,8 @@ function view(G) {
   const tipOn = (p, i) => !!G.tip && G.tip.pile === p && G.tip.i === i;
   const center = [
     { id: 'stock', layout: 'stack', row: 0, slot: 0, tap: true, empty: '↻', cards: G.stock.length ? [{ c: null, tip: tipOn('stock', -1) }] : [] },
-    { id: 'waste', layout: 'fan', row: 0, slot: 1, cards: G.waste.slice(-3).map((c, k, a) => ({ c: pub(c), i: G.waste.length - a.length + k, tap: k === a.length - 1, tip: tipOn('waste', G.waste.length - 1) && k === a.length - 1 })) },
-    ...G.found.map((f, k) => ({ id: 'f' + k, layout: 'stack', row: 0, slot: 3 + k, drop: true, empty: 'A', cards: f.length ? [{ c: pub(topF(f)), i: f.length - 1, tap: true }] : [] })),
+    { id: 'waste', layout: 'fan', row: 0, slot: 1, cards: G.waste.slice(-3).map((c, k, a) => ({ c: pub(c), i: G.waste.length - a.length + k, tap: k === a.length - 1, drag: k === a.length - 1, tip: tipOn('waste', G.waste.length - 1) && k === a.length - 1 })) },
+    ...G.found.map((f, k) => ({ id: 'f' + k, layout: 'stack', row: 0, slot: 3 + k, drop: true, empty: 'A', cards: f.length ? [{ c: pub(topF(f)), i: f.length - 1, tap: true, drag: true }] : [] })),
     ...G.tab.map((t, k) => ({ id: 't' + k, layout: 'col', row: 1, slot: k, drop: true, empty: 'K',
       cards: t.map((x, i) => ({ c: x.up ? pub(x.c) : null, i, tap: x.up || i === t.length - 1, tip: tipOn('t' + k, i), drag: x.up })) })),
   ];
