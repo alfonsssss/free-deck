@@ -3,7 +3,7 @@
 // Board: 64 squares, index = row * 8 + col, row 0 = black's back rank (top). Seat 0 = white, seat 1 = black.
 const { M, add, seat } = require('./i18n');
 
-const meta = { id: 'g-chess', emoji: '♞', min: 2, max: 2, fill: 2, kids: true,
+const meta = { id: 'g-chess', emoji: '♞', min: 2, max: 2, fill: 2, kids: true, seatNames: { sv: ['Vit', 'Svart'], en: ['White', 'Black'] },
   name: { sv: 'Schack', en: 'Chess' },
   desc: { sv: 'Klassiskt schack – mot datorn eller en vän.', en: 'Classic chess – against the computer or a friend.' },
   rules: {

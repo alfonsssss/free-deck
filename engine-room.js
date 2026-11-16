@@ -47,8 +47,12 @@ function setup(r, id) {
   r.seats = Array(e.meta.max).fill(null);
   people.slice(0, e.meta.max).forEach((pid, i) => (r.seats[i] = { pid, bot: false }));
 }
-function join(r, pid) { // sit down automatically if there is room and the game has not started
+// the first person at the table sits down at once; friends who join choose their own seat ("Sit here")
+// ranked games (r.rated) seat both players directly
+function join(r, pid) {
   if (r.G || seatOf(r, pid) >= 0) return;
+  const people = r.seats.filter(s => s && !s.bot).length;
+  if (people > 0 && !r.rated) return;
   const i = r.seats.findIndex(s => !s);
   if (i >= 0) r.seats[i] = { pid, bot: false };
 }
@@ -103,7 +107,7 @@ function subst(text, r, me, turn, waitingFor, lang) {
 /* ---------- what one person sees ---------- */
 function view(r, pid, lang = 'en') {
   const e = engines[r.engine], me = seatOf(r, pid);
-  const meta = { id: e.meta.id, name: pickLang(e.meta.name, lang), emoji: e.meta.emoji, rules: pickLang(e.meta.rules, lang), min: e.meta.min, max: e.meta.max, solo: !!e.meta.solo };
+  const meta = { id: e.meta.id, name: pickLang(e.meta.name, lang), emoji: e.meta.emoji, rules: pickLang(e.meta.rules, lang), min: e.meta.min, max: e.meta.max, solo: !!e.meta.solo, seatNames: e.meta.seatNames ? pickLang(e.meta.seatNames, lang) : null };
   const seats = r.seats.map((s, i) => (s ? { name: nameOf(r, i), bot: !!s.bot, away: !s.bot && !online(r, s.pid), color: colorOf(r, i), me: s.pid === pid } : null));
   const watchers = [...r.players.values()].filter(p => p.conns > 0 && seatOf(r, p.pid) < 0).length;
   const base = { mode: 'engine', code: r.code, meta, me, seats, watchers, round: r.round || 0, rated: !!r.rated, opts: r.opts || null };

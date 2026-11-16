@@ -352,3 +352,5 @@
 .pc.cghost.w{color:#fff;-webkit-text-stroke:1.5px #2a2a2a}.pc.cghost.b{color:#1d1f27}
 .chesswrap .sq.hov{box-shadow:inset 0 0 0 4px rgba(255,255,255,.75)}
 .chesswrap .sq{touch-action:none}
+.eseat .sit.pick{background:#ffb02e;color:#3a2600;animation:sitpulse 1.4s infinite;box-shadow:0 0 0 0 rgba(255,176,46,.6)}
+@keyframes sitpulse{70%{box-shadow:0 0 0 12px rgba(255,176,46,0)}}

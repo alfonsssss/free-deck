@@ -113,7 +113,7 @@ function renderEngine() {
     const p = seatPos(i, n, v.me, W, H, ow, oh);
     const style = `left:${p.x}px;top:${p.y}px`;
     if (s && s.me && compact && v.hand && v.phase === 'game') return ''; // small window: my hand + the orange bar already show my info
-    if (!s) return v.phase === 'lobby' ? `<div class="eseat empty" style="${style}"><button class="sit" data-sit="${i}">${esc(t('sitHere'))}</button></div>` : '';
+    if (!s) return v.phase === 'lobby' ? `<div class="eseat empty" style="${style}"><button class="sit${v.me < 0 ? ' pick' : ''}" data-sit="${i}">${esc(v.meta.seatNames ? t('sitAs', { name: v.meta.seatNames[i] }) : t('sitHere'))}</button></div>` : '';
     const info = [s.cards != null ? `${ic('card')} ${s.cards}` : '', s.chips != null ? `${ic('coins')} ${fmt(s.chips)}` : '', s.score != null && s.chips == null ? `${ic('star')} ${s.score}` : ''].filter(Boolean).join(' · ');
     const shown = (s.shown || []).length && !(s.me && v.hand) ? `<div class="shown">${s.shown.map(c => ecard(c)).join('')}</div>` : ''; // my own cards are shown big in the hand
     const label = s.label ? `<div class="st${/Tjock|Lade sig|Slut|Bust|Folded|Out of/.test(s.label) ? ' bad' : ''}">${esc(s.label)}</div>` : '';
@@ -122,7 +122,7 @@ function renderEngine() {
     const x = v.phase === 'lobby' && s.bot ? `<button class="x" data-rmbot="${i}" aria-label="${esc(t('removeBot'))}">✕</button>` : '';
     return `<div class="eseat${s.me ? ' me' : ''}${s.bot ? ' bot' : ''}${s.away ? ' away' : ''}${v.turn === i ? ' turn' : ''}${s.tap ? ' tap' : ''}" style="${style}" ${s.tap ? `data-seat="${i}"` : ''}>
       ${x}<div class="av" style="--c:${s.color}">${s.bot ? ic('bot') : esc((s.name || '?')[0].toUpperCase())}${s.dealer ? '<span class="dealer">D</span>' : ''}</div>
-      <div class="nm">${s.me ? esc(t('you')) : esc(s.name)}</div>${info ? `<div class="info">${info}</div>` : ''}${bet}${label}
+      <div class="nm">${s.me ? esc(t('you')) : esc(s.name)}${v.meta.seatNames && v.phase === 'lobby' ? ` · ${esc(v.meta.seatNames[i])}` : ''}</div>${info ? `<div class="info">${info}</div>` : ''}${bet}${label}
       ${s.away ? `<div class="awaytxt">${esc(t('away'))}</div>` : ''}${shown}${take}</div>`;
   }).join('');
 
