@@ -63,7 +63,9 @@ function t(key, p = {}) {
 const fmt = n => Number(n || 0).toLocaleString(NUM_LOCALE());
 function detectLang(sdkLocale) {
   let saved = null; try { saved = localStorage.getItem('kortbord-lang'); } catch (e) {}
-  const src = saved || sdkLocale || navigator.language || 'en';
+  // CrazyGames: English unless the player picked another language themselves
+  const cg = (window.KB_CONFIG || {}).platform === 'crazygames';
+  const src = saved || (cg ? 'en' : sdkLocale || navigator.language || 'en');
   return String(src).toLowerCase().startsWith('sv') ? 'sv' : 'en';
 }
 function setLang(l, remember) {

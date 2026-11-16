@@ -719,7 +719,7 @@ function setName(n){myName=(n||'').trim().slice(0,20);store.set('localStorage','
 /* =========================================================
    Connection
    ========================================================= */
-let ws=null, room=null, games=[], engGames=LocalServer.engineList(LANG), canUndo=false, localRoom=false; // the built-in games show at once, before the server answers
+let retryMs=1000, ws=null, room=null, games=[], engGames=LocalServer.engineList(LANG), canUndo=false, localRoom=false; // the built-in games show at once, before the server answers
 const allGames=()=>[...engGames,...games];
 // solo games run in the browser (local.js); the server is only needed to play with friends
 const useLocal=()=>room?localRoom:!hasServer();
@@ -727,12 +727,12 @@ function connect(){
   let sock;
   try{sock=useLocal()?new LocalSocket():new WebSocket(serverURL())}catch(e){sock=new LocalSocket();localRoom=!!room}
   ws=sock;
-  sock.onopen=()=>{if(sock!==ws)return;$('conn').classList.add('hide');
+  sock.onopen=()=>{if(sock!==ws)return;retryMs=1000;$('conn').classList.add('hide');
     sock.send(JSON.stringify(room?{t:'hello',room,pid:me,name:myName,author:authorKey,want:pendingTpl,lang:LANG,opts:pendingOpts}:{t:'lobby',author:authorKey,lang:LANG}))};
   sock.onmessage=e=>{if(sock===ws)onMessage(JSON.parse(e.data))};
   sock.onclose=()=>{if(sock!==ws)return;if(room)$('conn').classList.remove('hide');
     else if(!engGames.length){localRoom=false;const l=new LocalSocket();ws=l;l.onopen=sock.onopen;l.onmessage=sock.onmessage;return} // no server: still show the games
-    setTimeout(()=>{if(sock===ws)connect()},1000)};
+    setTimeout(()=>{if(sock===ws)connect()},retryMs);retryMs=Math.min(retryMs*2,15000)}; // wait longer each time (the server may be waking up)
 }
 function reconnect(){const old=ws;ws=null;if(old)try{old.close()}catch(e){};connect()}
 const send=m=>{if(ws&&ws.readyState===1)ws.send(JSON.stringify(m))};
