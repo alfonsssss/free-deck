@@ -391,6 +391,12 @@ function engClick(e) {
 /* ---------- input: drag a card from the hand (or a patiens card) onto a pile ---------- */
 function engDown(e) {
   if (e.button !== 0) return;
+  const csq = EV && EV.layout === 'chess' && e.target.closest('[data-sq]');
+  if (csq) { // chess: drag a piece to its square (tapping still works)
+    const v = EV, sq = +csq.dataset.sq, mine = v.turn === v.me ? v.moves : v.premoves;
+    if (!v.result && (mine || []).some(m => m[0] === sq) && csq.querySelector('.pc')) { evDrag = { chess: sq, el: csq.querySelector('.pc'), x: e.clientX, y: e.clientY, moved: false }; e.preventDefault(); }
+    return;
+  }
   const h = e.target.closest('[data-hand]'), c = e.target.closest('.ec[data-drag]');
   const el = h || c; if (!el) return;
   if (h && !EV.handTap) return;
@@ -398,6 +404,19 @@ function engDown(e) {
 }
 function engMove(e) {
   const d = evDrag; if (!d) return;
+  if (d.chess != null) {
+    if (!d.moved) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return;
+      d.moved = true; evChessSel = d.chess; renderEngine(); // show where it can go
+      const src = document.querySelector(`[data-sq="${d.chess}"] .pc`); if (src) src.style.opacity = '.25';
+      d.ghost = document.createElement('span'); d.ghost.className = 'pc cghost ' + ((src && src.classList.contains('b')) ? 'b' : 'w'); d.ghost.textContent = src ? src.textContent : '';
+      d.ghost.style.fontSize = getComputedStyle(src || document.body).fontSize; document.body.appendChild(d.ghost);
+    }
+    d.ghost.style.left = e.clientX + 'px'; d.ghost.style.top = e.clientY + 'px';
+    const over = document.elementFromPoint(e.clientX, e.clientY), osq = over && over.closest('[data-sq]');
+    document.querySelectorAll('#eng .sq.hov').forEach(x => x.classList.remove('hov')); if (osq) osq.classList.add('hov');
+    e.preventDefault(); return;
+  }
   if (!d.moved) {
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 10) return;
     d.moved = true;
@@ -421,6 +440,19 @@ function dropAt(e) { const el = document.elementFromPoint(e.clientX, e.clientY);
 function engUp(e) {
   const d = evDrag; if (!d) return;
   evDrag = null;
+  if (d.chess != null) {
+    if (!d.moved) return; // a tap: the click handler selects the piece
+    evSuppressClick = true; setTimeout(() => (evSuppressClick = false), 50);
+    if (d.ghost) d.ghost.remove();
+    document.querySelectorAll('#eng .sq.hov').forEach(x => x.classList.remove('hov'));
+    if (d.ghost) d.ghost.style.display = 'none';
+    const over = document.elementFromPoint(e.clientX, e.clientY), osq = over && over.closest('[data-sq]');
+    evChessSel = d.chess;
+    if (osq && +osq.dataset.sq !== d.chess) chessTap(+osq.dataset.sq); // same rules as tapping: legal move, promotion choice, premove
+    else { evChessSel = -1; renderEngine(); }
+    if (evPending) { const v = evPending; evPending = null; showEngine(v); }
+    return;
+  }
   document.querySelectorAll('#eng .droptarget').forEach(x => x.classList.remove('droptarget'));
   if (d.moved) {
     evSuppressClick = true; setTimeout(() => (evSuppressClick = false), 50);

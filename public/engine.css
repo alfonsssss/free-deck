@@ -348,3 +348,7 @@
 .eghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(-3deg) scale(1.04);filter:drop-shadow(0 14px 22px rgba(0,0,0,.45))}
 #eng .ec[data-drag]{touch-action:none;cursor:grab}
 #eng .pile[data-drop]{touch-action:none}
+.pc.cghost{position:fixed;z-index:10000;pointer-events:none;transform:translate(-50%,-55%) scale(1.15);font-family:"Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif;line-height:1;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
+.pc.cghost.w{color:#fff;-webkit-text-stroke:1.5px #2a2a2a}.pc.cghost.b{color:#1d1f27}
+.chesswrap .sq.hov{box-shadow:inset 0 0 0 4px rgba(255,255,255,.75)}
+.chesswrap .sq{touch-action:none}
