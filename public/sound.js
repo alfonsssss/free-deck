@@ -36,6 +36,15 @@ function tone(t, { freq = 440, dur = 0.12, vol = 0.18, type = 'sine', to = 0 } =
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
 }
+// a wooden "tock": a short low knock plus the click of the piece landing
+function wood(t, k = 1) {
+  const c = SFX.ctx, o = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter();
+  o.type = 'triangle'; o.frequency.setValueAtTime(220 * k, t); o.frequency.exponentialRampToValueAtTime(90 * k, t + 0.08);
+  f.type = 'lowpass'; f.frequency.value = 1400;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+  o.connect(f).connect(g).connect(c.destination); o.start(t); o.stop(t + 0.14);
+  paper(t, { dur: 0.025, freq: 1800 * k, q: 2, vol: 0.4 });
+}
 function sfx(name) {
   const c = sfxCtx(); if (!c) return;
   const now = c.currentTime;
@@ -54,6 +63,15 @@ function sfx(name) {
     case 'pop': tone(now, { freq: 520, to: 880, dur: 0.09, vol: 0.12, type: 'triangle' }); break;
     case 'error': tone(now, { freq: 220, to: 160, dur: 0.16, vol: 0.12, type: 'square' }); break;
     case 'win': [523, 659, 784, 1047].forEach((f, i) => tone(now + i * 0.09, { freq: f, dur: 0.22, vol: 0.14, type: 'triangle' })); break;
+    // chess: wooden pieces on a wooden board
+    case 'move': wood(now, 1); break;
+    case 'capture': wood(now, 1.4); paper(now + 0.012, { dur: 0.05, freq: 3000, q: 1.2, vol: 0.35 }); wood(now + 0.05, 0.7); break;
+    case 'castle': wood(now, 1); wood(now + 0.11, 0.9); break;
+    case 'check': wood(now, 1.1); tone(now + 0.04, { freq: 880, dur: 0.16, vol: 0.09, type: 'sine' }); tone(now + 0.04, { freq: 1320, dur: 0.12, vol: 0.05, type: 'sine' }); break;
+    case 'promote': wood(now, 1); [660, 990].forEach((f, i) => tone(now + 0.06 + i * 0.08, { freq: f, dur: 0.14, vol: 0.08, type: 'triangle' })); break;
+    case 'gameStart': [392, 523].forEach((f, i) => tone(now + i * 0.12, { freq: f, dur: 0.25, vol: 0.09, type: 'sine' })); break;
+    case 'gameEnd': [523, 392, 262].forEach((f, i) => tone(now + i * 0.14, { freq: f, dur: 0.35, vol: 0.09, type: 'sine' })); break;
+    case 'lowtime': tone(now, { freq: 1000, dur: 0.06, vol: 0.06, type: 'square' }); break;
   }
 }
 function sfxMute(on) {

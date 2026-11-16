@@ -608,6 +608,9 @@ function handle(r, ws, m) {
 function handleCommon(r, ws, m) {
   switch (m.t) {
     case 'listTemplates': sendLists(ws); return true;
+    case 'chessSeek': chessSeek(ws, m); return true;
+    case 'chessCancel': unseek(ws); return true;
+    case 'chessTop': send(ws, { t: 'chessTop', list: db.top(20), me: db.rating(ws.authorHash) }); return true;
     case 'publishDeck': { // a game made on the Free Deck table: how the table starts + rules
       const name = str(m.name, 40).trim(), desc = str(m.desc, 200).trim(), rules = str(m.rules, 3000).trim();
       if (name.length < 3 || !ws.authorHash) { send(ws, { t: 'error', msg: 'Ge spelet ett namn med minst 3 bokstäver.' }); return true; }
@@ -668,7 +671,41 @@ const server = http.createServer((req, res) => {
   });
 });
 
-engineRoom.init({ send });
+engineRoom.init({ send, onResult: chessRated });
+
+/* ---------------- Chess online: find a random opponent, ranked games ----------------
+   Players who want a game with the same time (10, 5, 3 or 1 minute) are paired in a new room.
+   Ranked games change both players' rating (Elo, db.js) when they end. */
+const seeks = new Map(); // minutes → [{ ws, id, name }]
+function unseek(ws) { for (const [k, list] of seeks) seeks.set(k, list.filter(x => x.ws !== ws)); }
+function chessSeek(ws, m) {
+  if (!ws.authorHash) return;
+  unseek(ws);
+  const tc = [1, 3, 5, 10].includes(+m.tc) ? +m.tc : 5, name = str(m.name, 20).trim() || 'Player';
+  const list = seeks.get(tc) || [];
+  const opp = list.find(x => x.id !== ws.authorHash && x.ws.readyState === 1);
+  if (!opp) { list.push({ ws, id: ws.authorHash, name }); seeks.set(tc, list); send(ws, { t: 'seeking', tc }); return; }
+  seeks.set(tc, list.filter(x => x !== opp));
+  const code = 'R' + rid().replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+  const r = getRoom(code);
+  engineRoom.setup(r, 'g-chess'); r.opts = { tc, level: 'medium' }; r.rated = true;
+  const [first, second] = Math.random() < 0.5 ? [opp, { ws, name }] : [{ ws, name }, opp]; // who plays white is random
+  const ra = db.rating(first.ws.authorHash), rb = db.rating(second.ws.authorHash);
+  send(first.ws, { t: 'matched', room: code, first: true, opp: second.name, oppRating: rb.rating, tc });
+  send(second.ws, { t: 'matched', room: code, first: false, opp: first.name, oppRating: ra.rating, tc });
+}
+function chessRated(r) {
+  if (r.engine !== 'g-chess') return;
+  const ids = r.seats.map(s => s && !s.bot && r.players.get(s.pid)).filter(Boolean);
+  if (ids.length !== 2 || !ids[0].authorHash || !ids[1].authorHash || ids[0].authorHash === ids[1].authorHash) return;
+  const lines = (r.G.result && r.G.result.lines) || [], w = lines.find(l => l.win);
+  const score = !w ? 0.5 : w.seat === 0 ? 1 : 0;
+  const res = db.rate(ids[0].authorHash, ids[0].name, ids[1].authorHash, ids[1].name, score);
+  for (const c of r.clients) {
+    const mine = c.pid === ids[0].pid ? res.a : c.pid === ids[1].pid ? res.b : null;
+    if (mine) send(c, { t: 'rating', rating: mine.rating, diff: mine.diff });
+  }
+}
 
 /* ---------------- Free Deck rooms: friends share one table ----------------
    The table itself lives in the players' browsers (public/deck.js). The server keeps the latest
@@ -711,15 +748,19 @@ wss.on('connection', ws => {
         const fresh = !r.players.size && !r.S.zones.length && r.mode !== 'engine';
         let p = r.players.get(ws.pid);
         if (!p) { p = { pid: ws.pid, name: 'Spelare', color: COLORS[r.players.size % COLORS.length], conns: 0 }; r.players.set(ws.pid, p); }
-        p.name = str(m.name, 20) || p.name; p.conns++;
+        p.name = str(m.name, 20) || p.name; p.conns++; p.authorHash = ws.authorHash;
         r.clients.add(ws);
         if (fresh && m.want) { // the first person decides which game the room plays
           const want = str(m.want, 40);
           if (want === 'deck') { r.mode = 'deck'; r.deck = null; r.deckV = 0; }
-          else if (engineRoom.engines[want]) engineRoom.setup(r, want);
+          else if (engineRoom.engines[want]) { engineRoom.setup(r, want); if (m.opts && typeof m.opts === 'object') r.opts = { tc: clamp(Math.floor(num(m.opts.tc, 0)), 0, 60), level: str(m.opts.level, 8) }; }
           else { const t = findTpl(want); if (t) { applyTemplate(r.S, t); countSandboxPlay(r, true); } }
         }
-        if (r.mode === 'engine') { engineRoom.join(r, ws.pid); engineRoom.broadcast(r); engineRoom.schedule(r); }
+        if (r.mode === 'engine') {
+          engineRoom.join(r, ws.pid);
+          if (r.rated && !r.G && r.seats.filter(x => x && !x.bot).length >= 2) { engineRoom.handle(r, ws, { t: 'btn', id: 'start' }); return; } // both players are here: play
+          engineRoom.broadcast(r); engineRoom.schedule(r);
+        }
         else if (r.mode === 'deck') deckJoin(r, ws, m);
         else broadcast(r);
         return;
@@ -728,6 +769,7 @@ wss.on('connection', ws => {
     } catch (e) { console.error('message failed', m && m.t, e); }
   });
   ws.on('close', () => {
+    unseek(ws);
     if (!r) return;
     r.clients.delete(ws);
     const p = r.players.get(ws.pid); if (p) p.conns--;

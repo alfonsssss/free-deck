@@ -27,12 +27,15 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS reports (
     game_id TEXT NOT NULL, reporter TEXT NOT NULL, reason TEXT, ts INTEGER NOT NULL,
     PRIMARY KEY (game_id, reporter));
+  CREATE TABLE IF NOT EXISTS ratings (
+    id TEXT PRIMARY KEY, name TEXT, rating INTEGER NOT NULL, games INTEGER NOT NULL DEFAULT 0, wins INTEGER NOT NULL DEFAULT 0, ts INTEGER NOT NULL);
 `);
 const HIDE_AFTER_REPORTS = 3;
 const DDL = [
   'CREATE TABLE IF NOT EXISTS games (id TEXT PRIMARY KEY, data TEXT NOT NULL, author_hash TEXT, public INTEGER NOT NULL DEFAULT 1, created INTEGER NOT NULL, hidden INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS plays (game_id TEXT NOT NULL, room TEXT NOT NULL, round INTEGER NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (game_id, room, round))',
   'CREATE TABLE IF NOT EXISTS reports (game_id TEXT NOT NULL, reporter TEXT NOT NULL, reason TEXT, ts INTEGER NOT NULL, PRIMARY KEY (game_id, reporter))',
+  'CREATE TABLE IF NOT EXISTS ratings (id TEXT PRIMARY KEY, name TEXT, rating INTEGER NOT NULL, games INTEGER NOT NULL DEFAULT 0, wins INTEGER NOT NULL DEFAULT 0, ts INTEGER NOT NULL)',
 ];
 
 /* ---------- cloud copy (Turso, over its HTTP API – no extra package) ---------- */
@@ -66,7 +69,7 @@ function toCloud(sql, args) {
 // on start: fill the local copy from the cloud
 const ready = !cloud ? Promise.resolve() : (async () => {
   await tursoRun(DDL.map(sql => [sql]));
-  const [games, plays, reports] = await tursoRun([['SELECT * FROM games'], ['SELECT * FROM plays'], ['SELECT * FROM reports']]);
+  const [games, plays, reports, ratings] = await tursoRun([['SELECT * FROM games'], ['SELECT * FROM plays'], ['SELECT * FROM reports'], ['SELECT * FROM ratings']]);
   if (!games.length && !plays.length) { // empty cloud: copy what we already have here up to it (first start)
     const local = { games: db.prepare('SELECT * FROM games').all(), plays: db.prepare('SELECT * FROM plays').all(), reports: db.prepare('SELECT * FROM reports').all() };
     const stmts = [
@@ -78,7 +81,7 @@ const ready = !cloud ? Promise.resolve() : (async () => {
     console.log(`Turso var tom – laddade upp ${local.games.length} spel och ${local.plays.length} spelningar`);
     return;
   }
-  db.exec('BEGIN; DELETE FROM games; DELETE FROM plays; DELETE FROM reports;');
+  db.exec('BEGIN; DELETE FROM games; DELETE FROM plays; DELETE FROM reports; DELETE FROM ratings;');
   try {
     const g = db.prepare('INSERT INTO games (id, data, author_hash, public, created, hidden) VALUES (?, ?, ?, ?, ?, ?)');
     for (const r of games) g.run(r.id, r.data, r.author_hash, r.public, r.created, r.hidden);
@@ -86,6 +89,8 @@ const ready = !cloud ? Promise.resolve() : (async () => {
     for (const r of plays) p.run(r.game_id, r.room, r.round, r.ts);
     const rp = db.prepare('INSERT OR IGNORE INTO reports (game_id, reporter, reason, ts) VALUES (?, ?, ?, ?)');
     for (const r of reports) rp.run(r.game_id, r.reporter, r.reason, r.ts);
+    const rt = db.prepare('INSERT OR REPLACE INTO ratings (id, name, rating, games, wins, ts) VALUES (?, ?, ?, ?, ?, ?)');
+    for (const r of ratings) rt.run(r.id, r.name, r.rating, r.games, r.wins, r.ts);
     db.exec('COMMIT');
   } catch (e) { db.exec('ROLLBACK'); throw e; }
   console.log(`Turso: hämtade ${games.length} spel, ${plays.length} spelningar, ${reports.length} rapporter`);
@@ -97,10 +102,11 @@ const SQL = { // the writes, also sent as-is to the cloud copy
   play: 'INSERT OR IGNORE INTO plays (game_id, room, round, ts) VALUES (?, ?, ?, ?)',
   report: 'INSERT OR IGNORE INTO reports (game_id, reporter, reason, ts) VALUES (?, ?, ?, ?)',
   hide: 'UPDATE games SET hidden = 1 WHERE id = ?',
+  rate: 'INSERT OR REPLACE INTO ratings (id, name, rating, games, wins, ts) VALUES (?, ?, ?, ?, ?, ?)',
 };
 const q = {
   allGames: db.prepare('SELECT id, data, author_hash, public, created, hidden FROM games'),
-  upsert: db.prepare(SQL.upsert), del: db.prepare(SQL.del), play: db.prepare(SQL.play), report: db.prepare(SQL.report), hide: db.prepare(SQL.hide),
+  upsert: db.prepare(SQL.upsert), del: db.prepare(SQL.del), play: db.prepare(SQL.play), report: db.prepare(SQL.report), hide: db.prepare(SQL.hide), rate: db.prepare(SQL.rate),
   counts: db.prepare('SELECT game_id, COUNT(*) AS n FROM plays GROUP BY game_id'),
   reportCount: db.prepare('SELECT COUNT(*) AS n FROM reports WHERE game_id = ?'),
 };
@@ -145,4 +151,24 @@ function report(gameId, reporter, reason) {
   if (n >= HIDE_AFTER_REPORTS) { q.hide.run(gameId); toCloud(SQL.hide, [gameId]); return true; }
   return false;
 }
-module.exports = { allGames, saveGame, deleteGame, countPlay, playCounts, report, FILE, ready, cloud };
+/* ---------- chess ranking (Elo) ---------- */
+const START_RATING = 1200;
+function rating(id) {
+  const r = id && db.prepare('SELECT * FROM ratings WHERE id = ?').get(id);
+  return r ? { rating: r.rating, games: r.games, wins: r.wins, name: r.name } : { rating: START_RATING, games: 0, wins: 0, name: '' };
+}
+// scoreA: 1 = A won, 0.5 = draw, 0 = B won. Returns the new ratings and the change for each player.
+function rate(a, nameA, b, nameB, scoreA) {
+  const ra = rating(a), rb = rating(b), ea = 1 / (1 + 10 ** ((rb.rating - ra.rating) / 400));
+  const k = g => (g < 20 ? 40 : 24); // new players move faster to their real level
+  const da = Math.round(k(ra.games) * (scoreA - ea)), db_ = Math.round(k(rb.games) * ((1 - scoreA) - (1 - ea)));
+  const now = Date.now();
+  const rowA = [a, String(nameA || '').slice(0, 20), Math.max(100, ra.rating + da), ra.games + 1, ra.wins + (scoreA === 1 ? 1 : 0), now];
+  const rowB = [b, String(nameB || '').slice(0, 20), Math.max(100, rb.rating + db_), rb.games + 1, rb.wins + (scoreA === 0 ? 1 : 0), now];
+  q.rate.run(...rowA); toCloud(SQL.rate, rowA);
+  q.rate.run(...rowB); toCloud(SQL.rate, rowB);
+  return { a: { rating: rowA[2], diff: rowA[2] - ra.rating }, b: { rating: rowB[2], diff: rowB[2] - rb.rating } };
+}
+const top = (n = 20) => db.prepare('SELECT name, rating, games, wins FROM ratings WHERE games > 0 ORDER BY rating DESC, games DESC LIMIT ?').all(n);
+
+module.exports = { rating, rate, top, allGames, saveGame, deleteGame, countPlay, playCounts, report, FILE, ready, cloud };

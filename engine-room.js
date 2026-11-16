@@ -24,8 +24,8 @@ const BOT_DELAY = [1100, 1700], AWAY_DELAY = 2500; // people who dropped out get
 const NEXT_ROUND_MS = 3200, NEXT_GAME_MS = 5000; // the next round starts by itself after the result has been shown
 const TURN_MS = 30000; // with other people at the table, nobody can stall the game: the computer moves for you after this long (engines may set a shorter idle(G))
 
-let send = () => {};
-const init = fns => { send = fns.send; };
+let send = () => {}, onResult = () => {};
+const init = fns => { send = fns.send; if (fns.onResult) onResult = fns.onResult; };
 const online = (r, pid) => (r.players.get(pid) || {}).conns > 0;
 const seatOf = (r, pid) => r.seats.findIndex(s => s && s.pid === pid);
 const nameOf = (r, i) => { const s = r.seats[i]; return !s ? '' : s.bot ? s.name : (r.players.get(s.pid) || {}).name || 'Player'; };
@@ -37,7 +37,7 @@ function cancelNext(r) { clearTimeout(r.nextT); r.nextT = null; r.nextAt = 0; ca
 function nextRound(r) { // start the next round (or a new game after a final result)
   cancelNext(r);
   const e = engines[r.engine];
-  r.G = e.start(r.seats.length, r.G); r.botErrors = 0; countPlay(r);
+  r.G = e.start(r.seats.length, r.G, r.opts); r.botErrors = 0; r.ratedDone = false; countPlay(r);
 }
 function setup(r, id) {
   cancelNext(r);
@@ -71,7 +71,7 @@ function startGame(r) {
   }
   r.seats = r.seats.filter(Boolean);
   if (!r.seats.length && people === 0) r.seats = [{ bot: true, name: 'Bot' }];
-  r.G = e.start(Math.max(1, r.seats.length), null);
+  r.G = e.start(Math.max(1, r.seats.length), null, r.opts); r.ratedDone = false;
   r.botErrors = 0;
   countPlay(r);
 }
@@ -106,7 +106,7 @@ function view(r, pid, lang = 'en') {
   const meta = { id: e.meta.id, name: pickLang(e.meta.name, lang), emoji: e.meta.emoji, rules: pickLang(e.meta.rules, lang), min: e.meta.min, max: e.meta.max, solo: !!e.meta.solo };
   const seats = r.seats.map((s, i) => (s ? { name: nameOf(r, i), bot: !!s.bot, away: !s.bot && !online(r, s.pid), color: colorOf(r, i), me: s.pid === pid } : null));
   const watchers = [...r.players.values()].filter(p => p.conns > 0 && seatOf(r, p.pid) < 0).length;
-  const base = { mode: 'engine', code: r.code, meta, me, seats, watchers, round: r.round || 0 };
+  const base = { mode: 'engine', code: r.code, meta, me, seats, watchers, round: r.round || 0, rated: !!r.rated, opts: r.opts || null };
   if (!r.G) {
     const filled = seats.filter(Boolean).length, empty = r.seats.length - filled;
     const buttons = [];
@@ -125,7 +125,7 @@ function view(r, pid, lang = 'en') {
     hint: S(v.hint), msg: S(v.msg), priv: S(v.priv), handLabel: S(v.handLabel), layout: v.layout || 'table', pot: v.pot, moves: v.moves,
     seats: seats.map((s, i) => (s ? { ...s, ...(v.seats[i] || {}), label: S((v.seats[i] || {}).label) } : null)),
     center: v.center.map(c => ({ ...c, label: S(c.label) })),
-    hand: v.hand, handTap: !!v.handTap, ...(v.board ? { board: v.board, flip: !!v.flip, last: v.last, check: v.check } : {}), buttons: (v.buttons || []).map(b => ({ ...b, label: S(b.label) })),
+    hand: v.hand, handTap: !!v.handTap, ...(v.board ? { board: v.board, flip: !!v.flip, last: v.last, check: v.check, premoves: v.premoves, clock: v.clock, kind: v.kind, nmoves: v.nmoves } : {}), buttons: (v.buttons || []).map(b => ({ ...b, label: S(b.label) })),
     idleIn: r.idleAt && me >= 0 && waitingFor.includes(me) ? Math.max(0, r.idleAt - Date.now()) : null,
     result: res };
 }
@@ -134,6 +134,13 @@ function broadcast(r) { for (const ws of r.clients) send(ws, { t: 'eng', v: view
 /* ---------- computer players + timed steps ---------- */
 function schedule(r) {
   if (!r.G || !r.clients.size) return;
+  const e0 = engines[r.engine];
+  // a clock (chess): end the game when the time of the player to move runs out
+  clearTimeout(r.deadT); r.deadT = null;
+  const dl = e0.deadline && e0.deadline(r.G);
+  if (dl != null) r.deadT = setTimeout(() => { r.deadT = null; if (r.G && !r.G.result) { e0.timeout(r.G); after(r); } }, dl);
+  if (r.G.result && r.rated && !r.ratedDone) { r.ratedDone = true; try { onResult(r); } catch (err) { console.error('rating failed', err); } }
+  if (r.G.result && r.rated) return; // ranked games don't restart by themselves
   if (r.G.result) { // show the result for a moment, then keep playing
     if (!r.nextT) {
       const ms = r.G.result.final ? NEXT_GAME_MS : NEXT_ROUND_MS;

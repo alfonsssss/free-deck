@@ -58,7 +58,7 @@ async function copyInvite(btn) {
 function showEngine(v) {
   engInit();
   v = deEmojiDeep(v); // the rules' texts may contain emojis – we show plain text and real symbols
-  engSounds(v);
+  if (v.layout === 'chess') chessUpdate(v); else engSounds(v);
   $('landing').classList.add('hide'); $('game').classList.add('hide'); $('eng').classList.remove('hide');
   if (evDrag) { evPending = v; return; } // don't redraw under a finger that is dragging
   const firstTime = !EV;
@@ -271,32 +271,77 @@ function confetti(set) {
 const BTN_TONE = { fold: 'bad', call: 'good', check: 'good', raise: 'warn', allin: 'hot', hit: 'good', stand: 'warn', double: 'blue', split: 'blue', start: 'good', addBot: 'plain', draw: 'good', pass: 'warn', fish: 'blue', meld: 'good', resign: 'plain', flip: 'good', restart: 'plain', tip: 'blue' };
 
 /* ---------- chess board ---------- */
-let evChessSel = -1, evChessKey = '';
-const CHESS_G = { K: '\u265A', Q: '\u265B', R: '\u265C', B: '\u265D', N: '\u265E', P: '\u265F' };
+let evChessSel = -1, evChessKey = '', evPre = null, evPromo = null, evClock = null, evChessN = -1, evChessOver = false, evLowBeep = 0;
+const CHESS_G = { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟' };
+const fmtClock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : ms < 10000 ? (Math.max(0, ms) / 1000).toFixed(1) : '0:' + String(s).padStart(2, '0'); };
 function chessHTML(v, W, H) {
   const key = v.board + v.turn; if (key !== evChessKey) { evChessKey = key; evChessSel = -1; }
-  const size = Math.floor(Math.min(W - 16, H - 70) / 8) * 8, sqz = size / 8;
-  const moves = v.moves || [], targets = new Set(moves.filter(m => m[0] === evChessSel).map(m => m[1])), movable = new Set(moves.map(m => m[0]));
-  const last = v.last || [];
+  const size = Math.floor(Math.min(W - 16, H - 96) / 8) * 8, sqz = size / 8;
+  const myTurn = v.turn === v.me && !v.result;
+  const moves = myTurn ? (v.moves || []) : (v.premoves || []); // not my turn: I can plan a premove
+  const targets = new Set(moves.filter(m => m[0] === evChessSel).map(m => m[1])), movable = new Set(moves.map(m => m[0]));
+  const last = v.last || [], pre = evPre ? [evPre.from, evPre.to] : [];
   let cells = '';
   for (let d = 0; d < 64; d++) {
     const sq = v.flip ? 63 - d : d, r = sq >> 3, c = sq & 7, p = v.board[sq];
-    const cls = ['sq', (r + c) % 2 ? 'dk' : 'lt', sq === evChessSel ? 'sel' : '', targets.has(sq) ? (p !== '.' ? 'cap' : 'tgt') : '', last.includes(sq) ? 'last' : '', sq === v.check ? 'chk' : '', movable.has(sq) && evChessSel < 0 ? 'mv' : ''].filter(Boolean).join(' ');
-    const piece = p === '.' ? '' : `<span class="pc ${p === p.toUpperCase() ? 'w' : 'b'}">${CHESS_G[p.toUpperCase()]}\uFE0E</span>`;
-    cells += `<div class="${cls}" data-sq="${sq}">${piece}</div>`;
+    const cls = ['sq', (r + c) % 2 ? 'dk' : 'lt', sq === evChessSel ? 'sel' : '', targets.has(sq) ? (p !== '.' ? 'cap' : 'tgt') : '', last.includes(sq) ? 'last' : '', pre.includes(sq) ? 'pre' : '',
+      sq === v.check ? 'chk' : '', movable.has(sq) && evChessSel < 0 ? 'mv' : '', !myTurn ? 'wait' : ''].filter(Boolean).join(' ');
+    const piece = p === '.' ? '' : `<span class="pc ${p === p.toUpperCase() ? 'w' : 'b'}">${CHESS_G[p.toUpperCase()]}︎</span>`;
+    const coord = (v.flip ? r === 0 : r === 7) ? `<i class="cf">${'abcdefgh'[c]}</i>` : '';
+    const coordR = (v.flip ? c === 7 : c === 0) ? `<i class="cr">${8 - r}</i>` : '';
+    cells += `<div class="${cls}" data-sq="${sq}">${piece}${coord}${coordR}</div>`;
   }
-  const side = x => { const s = v.seats[x]; if (!s) return ''; const taken = (s.taken || '').split('').map(t => CHESS_G[t] + '\uFE0E').join('');
-    return `<div class="cside${v.turn === x ? ' turn' : ''}"><i style="--c:${s.color}">${s.bot ? ic('bot') : esc((s.name || '?')[0].toUpperCase())}</i><b>${s.me ? esc(t('you')) : esc(s.name)}</b><span class="ctaken ${x === 0 ? 'b' : 'w'}">${taken}</span></div>`; };
+  const clock = v.clock;
+  if (clock) evClock = { t: clock.t.slice(), run: clock.run, at: Date.now() };
+  else evClock = null;
+  const side = x => { const s = v.seats[x]; if (!s) return ''; const taken = (s.taken || '').split('').map(t => CHESS_G[t] + '︎').join('');
+    const cl = clock ? `<span class="cclock${clock.run === x ? ' run' : ''}" data-clock="${x}">${fmtClock(clock.t[x])}</span>` : '';
+    return `<div class="cside${v.turn === x ? ' turn' : ''}"><i style="--c:${s.color}">${s.bot ? ic('bot') : esc((s.name || '?')[0].toUpperCase())}</i><b>${s.me ? esc(t('you')) : esc(s.name)}</b><span class="ctaken ${x === 0 ? 'b' : 'w'}">${taken}</span>${cl}</div>`; };
   const top = v.flip ? 0 : 1, bottom = 1 - top;
-  return `<div class="chesswrap" style="--sq:${sqz}px">${side(top)}<div class="board">${cells}</div>${side(bottom)}</div>`;
+  const promo = evPromo ? `<div class="cpromo"><b>${esc(ct('promoteTo'))}</b><div>${'QRBN'.split('').map(p => `<button data-promo="${p}"><span class="pc ${v.me === 1 ? 'b' : 'w'}">${CHESS_G[p]}︎</span></button>`).join('')}</div></div>` : '';
+  const rated = v.rated && v.result ? `<div class="cend"><button class="ebtn t-good" data-cend="new">${ic('globe')} ${esc(ct('newOpp'))}</button><button class="ebtn t-plain" data-cend="home">${ic('home')} ${esc(ct('home'))}</button></div>` : '';
+  return `<div class="chesswrap" style="--sq:${sqz}px">${side(top)}<div class="board">${cells}${promo}</div>${side(bottom)}${rated}</div>`;
 }
+// clocks tick on screen between messages
+setInterval(() => {
+  if (!evClock || evClock.run < 0 || !EV || EV.layout !== 'chess') return;
+  const x = evClock.run, el = document.querySelector(`[data-clock="${x}"]`); if (!el) return;
+  const ms = evClock.t[x] - (Date.now() - evClock.at);
+  el.textContent = fmtClock(ms); el.classList.toggle('low', ms < 20000);
+  if (x === EV.me && ms < 10000 && ms > 0 && Date.now() - evLowBeep > 1000) { evLowBeep = Date.now(); sfx('lowtime'); }
+}, 100);
+const isPromo = (v, from, to) => { const p = v.board[from]; return (p === 'P' && to >> 3 === 0) || (p === 'p' && to >> 3 === 7); };
+function chessSend(v, from, to, promo) { evChessSel = -1; evPre = null; engAct({ a: 'move', from: String(from), to: String(to), id: promo || 'Q' }); }
 function chessTap(sq) {
-  const v = EV; if (!v || v.layout !== 'chess') return;
-  const moves = v.moves || [];
-  if (evChessSel >= 0 && moves.some(m => m[0] === evChessSel && m[1] === sq)) { const from = evChessSel; evChessSel = -1; sfx('place'); return engAct({ a: 'move', from: String(from), to: String(sq) }); }
-  if (moves.some(m => m[0] === sq)) { evChessSel = sq === evChessSel ? -1 : sq; sfx('click'); }
-  else { if (evChessSel >= 0) sfx('error'); evChessSel = -1; if (!moves.length && v.turn !== v.me) toast(t('waitYourTurn', { name: v.turnName })); }
+  const v = EV; if (!v || v.layout !== 'chess' || v.result) return;
+  const myTurn = v.turn === v.me;
+  const moves = myTurn ? (v.moves || []) : (v.premoves || []);
+  if (evChessSel >= 0 && moves.some(m => m[0] === evChessSel && m[1] === sq)) {
+    const from = evChessSel;
+    if (myTurn) {
+      if (isPromo(v, from, sq)) { evPromo = { from, to: sq }; evChessSel = -1; sfx('click'); renderEngine(); return; } // choose the new piece
+      chessSend(v, from, sq); return;
+    }
+    evPre = { from, to: sq }; evChessSel = -1; sfx('click'); renderEngine(); return; // premove: played as soon as it is my turn
+  }
+  if (moves.some(m => m[0] === sq)) { evChessSel = sq === evChessSel ? -1 : sq; if (!myTurn) evPre = null; sfx('click'); }
+  else { if (evChessSel >= 0 || evPre) sfx('error'); evChessSel = -1; evPre = null; if (!moves.length && !myTurn) toast(t('waitYourTurn', { name: v.turnName })); }
   renderEngine();
+}
+// after each new position: sounds, and a planned premove is played if it is still allowed
+function chessUpdate(v) {
+  if (v.layout !== 'chess' || v.phase !== 'game') return;
+  if (v.nmoves !== evChessN) {
+    if (evChessN >= 0 && v.nmoves > evChessN) sfx(v.check >= 0 ? 'check' : v.kind === 'capture' ? 'capture' : v.kind === 'castle' ? 'castle' : v.kind === 'promo' ? 'promote' : 'move');
+    else if (v.nmoves === 0) sfx('gameStart');
+    evChessN = v.nmoves; evPromo = null;
+  }
+  if (v.result && !evChessOver) { evChessOver = true; sfx('gameEnd'); evPre = null; }
+  if (!v.result) evChessOver = false;
+  if (evPre && v.turn === v.me && !v.result) {
+    const p = evPre; evPre = null;
+    if ((v.moves || []).some(m => m[0] === p.from && m[1] === p.to)) setTimeout(() => chessSend(v, p.from, p.to, 'Q'), 60);
+  }
 }
 
 /* ---------- sounds ---------- */
@@ -318,6 +363,8 @@ function engClick(e) {
   if (evSuppressClick) { evSuppressClick = false; return; }
   const v = EV; if (!v) return;
   const t = e.target;
+  const pr = t.closest('[data-promo]'); if (pr && evPromo) { const p = evPromo; evPromo = null; sfx('promote'); return chessSend(v, p.from, p.to, pr.dataset.promo); }
+  const ce = t.closest('[data-cend]'); if (ce) { if (ce.dataset.cend === 'home') return goHome(); goHome(); setTimeout(() => { CHS.tab = 'online'; chessMenu(); }, 300); return; }
   const sq = t.closest('[data-sq]'); if (sq) return chessTap(+sq.dataset.sq);
   const sit = t.closest('[data-sit]'); if (sit) return send({ t: 'sit', seat: +sit.dataset.sit });
   const rm = t.closest('[data-rmbot]'); if (rm) return send({ t: 'removeBot', seat: +rm.dataset.rmbot });

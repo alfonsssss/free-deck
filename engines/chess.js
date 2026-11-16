@@ -12,10 +12,10 @@ const meta = { id: 'g-chess', emoji: '♞', min: 2, max: 2, fill: 2, kids: true,
 add({
   sv: { 'ch.white': 'Vit', 'ch.black': 'Svart', 'ch.yourMove': 'Tryck på en pjäs och sedan dit den ska.', 'ch.check': 'Schack!', 'ch.mate': 'Schack matt! {a} vann!', 'ch.stale': 'Patt – oavgjort!',
     'ch.draw': 'Oavgjort!', 'ch.moved': '{a} flyttade {p}', 'ch.took': '{a} tog en {p}', 'ch.illegal': 'Det draget går inte.', 'ch.resign': 'Ge upp', 'ch.resigned': '{a} gav upp.', 'ch.wins': '{a} vann!',
-    'ch.P': 'bonde', 'ch.N': 'springare', 'ch.B': 'löpare', 'ch.R': 'torn', 'ch.Q': 'dam', 'ch.K': 'kung', 'ch.castle': '{a} gjorde rockad', 'ch.promo': '{a} fick en ny dam!' },
+    'ch.P': 'bonde', 'ch.N': 'springare', 'ch.B': 'löpare', 'ch.R': 'torn', 'ch.Q': 'dam', 'ch.K': 'kung', 'ch.castle': '{a} gjorde rockad', 'ch.promo': '{a} fick en ny pjäs!', 'ch.flag': 'Tiden tog slut! {a} vann!', 'ch.timeDraw': 'Tiden tog slut – oavgjort!' },
   en: { 'ch.white': 'White', 'ch.black': 'Black', 'ch.yourMove': 'Tap a piece, then the square to move to.', 'ch.check': 'Check!', 'ch.mate': 'Checkmate! {a} won!', 'ch.stale': 'Stalemate – a draw!',
     'ch.draw': 'A draw!', 'ch.moved': '{a} moved a {p}', 'ch.took': '{a} took a {p}', 'ch.illegal': 'That move is not allowed.', 'ch.resign': 'Resign', 'ch.resigned': '{a} resigned.', 'ch.wins': '{a} won!',
-    'ch.P': 'pawn', 'ch.N': 'knight', 'ch.B': 'bishop', 'ch.R': 'rook', 'ch.Q': 'queen', 'ch.K': 'king', 'ch.castle': '{a} castled', 'ch.promo': '{a} got a new queen!' },
+    'ch.P': 'pawn', 'ch.N': 'knight', 'ch.B': 'bishop', 'ch.R': 'rook', 'ch.Q': 'queen', 'ch.K': 'king', 'ch.castle': '{a} castled', 'ch.promo': '{a} promoted a pawn!', 'ch.flag': 'Time ran out! {a} won!', 'ch.timeDraw': 'Time ran out – a draw!' },
 });
 
 const START = 'rnbqkbnrpppppppp' + '.'.repeat(32) + 'PPPPPPPPRNBQKBNR';
@@ -27,8 +27,12 @@ const KG = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]
 const DIAG = [[-1, -1], [-1, 1], [1, -1], [1, 1]], ORTH = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 const on = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8;
 
-function start() {
-  return { b: START.split(''), turn: 0, castle: { K: true, Q: true, k: true, q: true }, ep: -1, half: 0, moves: 0, last: null, msg: null, result: null, taken: [[], []] };
+// opts: { tc: minutes per player (0 = no clock), level: 'easy' | 'medium' | 'hard' }
+function start(n, prev, opts) {
+  const o = opts || (prev && prev.opts) || {};
+  const tc = Math.max(0, Math.min(60, +o.tc || 0)) * 60000;
+  return { b: START.split(''), turn: 0, castle: { K: true, Q: true, k: true, q: true }, ep: -1, half: 0, moves: 0, last: null, lastKind: null, msg: null, result: null, taken: [[], []],
+    opts: { tc: o.tc || 0, level: ['easy', 'medium', 'hard'].includes(o.level) ? o.level : 'medium' }, tc, time: [tc, tc], ts: Date.now() };
 }
 // is square sq attacked by side `by`?
 function attacked(b, sq, by) {
@@ -85,10 +89,11 @@ function pseudo(G, side) {
   return out;
 }
 // play a move on a copy-able state (mutates G); returns the captured piece
-function apply(G, m) {
+function apply(G, m, promoTo) {
   const b = G.b, p = b[m.from], side = colorOf(p);
   let cap = b[m.to];
-  b[m.to] = m.promo ? (side === 0 ? 'Q' : 'q') : p; b[m.from] = '.';
+  const pp = 'QRBN'.includes(promoTo) ? promoTo : 'Q'; // the player chooses; a queen unless told otherwise
+  b[m.to] = m.promo ? (side === 0 ? pp : pp.toLowerCase()) : p; b[m.from] = '.';
   if (m.enpassant) { const capSq = m.to + (side === 0 ? 8 : -8); cap = b[capSq]; b[capSq] = '.'; }
   if (m.castle) { const row = side === 0 ? 7 : 0; if (m.castle === 'k') { b[row * 8 + 5] = b[row * 8 + 7]; b[row * 8 + 7] = '.'; } else { b[row * 8 + 3] = b[row * 8]; b[row * 8] = '.'; } }
   G.ep = m.double ? (m.from + m.to) / 2 : -1;
@@ -106,7 +111,7 @@ function legal(G, side = G.turn) {
 const waiting = G => (G.result ? [] : [G.turn]);
 
 function finish(G, winner, title) {
-  G.result = { final: true, title, lines: [0, 1].map(x => ({ seat: x, text: M(x === 0 ? 'ch.white' : 'ch.black'), win: x === winner })) };
+  G.result = { final: true, title, lines: [0, 1].map(x => ({ seat: x, text: '', win: x === winner })) }; // the title says it all
 }
 function after(G, mover) {
   const opp = 1 - mover, moves = legal(G, opp), check = attacked(G.b, kingSq(G.b, opp), mover);
@@ -115,17 +120,30 @@ function after(G, mover) {
   if (!left.length || G.half >= 100 || G.moves >= 300) { finish(G, -1, M('ch.draw')); return; }
   if (check) G.msg = M('ch.check');
 }
+// the clock: time left for each side, counted down while it is their move
+const left = (G, side) => G.time[side] - (side === G.turn && !G.result ? Date.now() - G.ts : 0);
+function deadline(G) { return G.tc && !G.result ? Math.max(0, left(G, G.turn)) + 30 : null; }
+function timeout(G) {
+  if (!G.tc || G.result || left(G, G.turn) > 0) return;
+  G.time[G.turn] = 0;
+  const w = 1 - G.turn, mat = G.b.filter(p => p !== '.' && colorOf(p) === w && p.toUpperCase() !== 'K');
+  if (!mat.length) finish(G, -1, M('ch.timeDraw')); else finish(G, w, M('ch.flag', { a: seat(w) }));
+}
 function act(G, s, m) {
   if (G.result) return null;
   if (m.a === 'btn' && m.id === 'resign') { finish(G, 1 - s, M('ch.resigned', { a: seat(s) })); return null; }
   if (m.a !== 'move') return null;
   if (s !== G.turn) return M('waitTurn');
+  if (G.tc && left(G, s) <= 0) { timeout(G); return null; }
   const from = parseInt(m.from, 10), to = parseInt(m.to, 10);
   const mv = legal(G).find(x => x.from === from && x.to === to);
   if (!mv) return M('ch.illegal');
   const piece = G.b[from].toUpperCase();
-  const cap = apply(G, mv);
+  if (G.tc) { G.time[s] = left(G, s); }
+  const cap = apply(G, mv, String(m.id || '').toUpperCase());
+  G.ts = Date.now();
   if (cap !== '.') G.taken[s].push(cap.toUpperCase());
+  G.lastKind = mv.castle ? 'castle' : mv.promo ? 'promo' : cap !== '.' ? 'capture' : 'move';
   G.moves++; G.last = [from, to];
   G.msg = mv.castle ? M('ch.castle', { a: seat(s) }) : mv.promo ? M('ch.promo', { a: seat(s) }) : cap !== '.' ? M('ch.took', { a: seat(s), p: M('ch.' + cap.toUpperCase()) }) : M('ch.moved', { a: seat(s), p: M('ch.' + piece) });
   after(G, s);
@@ -158,16 +176,19 @@ function search(G, depth, alpha, beta, side) {
   }
   return alpha;
 }
+const LEVEL = { easy: { depth: 0, noise: 160, blunder: 0.25 }, medium: { depth: 1, noise: 40, blunder: 0.04 }, hard: { depth: 2, noise: 10, blunder: 0 } };
 function bot(G, s) {
   const moves = legal(G, s); if (!moves.length) return null;
+  const L = LEVEL[(G.opts && G.opts.level) || 'medium'] || LEVEL.medium;
+  if (Math.random() < L.blunder) { const m = moves[Math.floor(Math.random() * moves.length)]; return { a: 'move', from: String(m.from), to: String(m.to), id: 'Q' }; }
   let best = [], bestSc = -Infinity;
   for (const m of moves) {
     const g = clone(G); apply(g, m);
-    const sc = -search(g, 2, -Infinity, Infinity, 1 - s) + Math.random() * 12; // a little randomness: not the same game every time
+    const sc = -search(g, L.depth, -Infinity, Infinity, 1 - s) + Math.random() * L.noise; // randomness: easier levels make more mistakes
     if (sc > bestSc + 0.5) { bestSc = sc; best = [m]; } else if (Math.abs(sc - bestSc) <= 0.5) best.push(m);
   }
   const m = best[Math.floor(Math.random() * best.length)];
-  return { a: 'move', from: String(m.from), to: String(m.to) };
+  return { a: 'move', from: String(m.from), to: String(m.to), id: 'Q' };
 }
 
 function view(G, s) {
@@ -179,10 +200,14 @@ function view(G, s) {
     hint: G.result ? M('gameOver') : myTurn ? (inCheck ? [M('ch.check'), M('ch.yourMove')] : M('ch.yourMove')) : M('waitFor'),
     board: G.b.join(''), flip: me === 1, last: G.last, check: inCheck ? kingSq(G.b, G.turn) : -1,
     moves: myTurn ? legal(G).map(m => [m.from, m.to]) : [],
+    // moves I could make next, so I can plan one ahead (premove) while the other player thinks
+    premoves: !myTurn && s >= 0 && !G.result ? legal({ ...clone(G), turn: s, ep: -1 }, s).map(m => [m.from, m.to]) : [],
+    clock: G.tc ? { t: [Math.max(0, left(G, 0)), Math.max(0, left(G, 1))], run: G.result ? -1 : G.turn } : null,
+    kind: G.lastKind, nmoves: G.moves,
     seats: [0, 1].map(x => ({ label: M(x === 0 ? 'ch.white' : 'ch.black'), taken: G.taken[x].join('') })),
     center: [], hand: null,
     buttons: s >= 0 && !G.result && G.moves > 1 ? [{ id: 'resign', label: M('ch.resign'), icon: 'flag' }] : [],
   };
 }
 const idle = () => 90000; // with a friend: the computer moves for you after 90 s of nothing
-module.exports = { meta, start, view, act, waiting, bot, auto: () => null, step() {}, idle, _legal: legal, _apply: apply, _start: start };
+module.exports = { meta, start, view, act, waiting, bot, auto: () => null, step() {}, idle, deadline, timeout, _legal: legal, _apply: apply, _start: start };
