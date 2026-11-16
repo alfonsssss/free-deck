@@ -472,7 +472,7 @@ function deckHelp() {
   deckSheet(`${dkHead(esc(dt('help')))}<ul class="help">
     <li><b>${ic('hand')}</b>${esc(dt('help1'))}</li><li><b>${ic('flip')}</b>${esc(dt('help2'))}</li><li><b>${ic('down')}</b>${esc(dt('help3'))}</li>
     <li><b>${ic('dots')}</b>${esc(dt('help4'))}</li><li><b>${ic('layers')}</b>${esc(dt('help5'))}</li></ul>
-    <button class="go" data-close>${esc(dt('gotIt'))}</button>`);
+    <button class="go" data-close>${esc(dt('gotIt'))}</button><p style="text-align:center;margin:12px 0 0;font-size:13px"><a href="privacy.html" target="_blank" rel="noopener" style="color:#8a8172">${esc(t('privacy'))}</a></p>`);
 }
 
 /* ---------- playing together (the server passes the table on to everyone in the room) ---------- */
