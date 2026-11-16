@@ -56,8 +56,8 @@
 .dc .mid .suit{width:calc(var(--cw)*.5);height:calc(var(--cw)*.5)}
 .dc .mid.face{font-weight:900;font-size:calc(var(--cw)*.62);letter-spacing:-.05em}
 .dc .mid.face .suit{position:absolute;width:calc(var(--cw)*.22);height:calc(var(--cw)*.22);transform:translate(calc(var(--cw)*.2),calc(var(--cw)*.3))}
-.dc.lift{cursor:grabbing;transition:none}
-.dc.lift .f,.dc.lift .b{box-shadow:0 14px 28px rgba(0,0,0,.4),0 4px 8px rgba(0,0,0,.25)}
+.dc.dlift{cursor:grabbing;transition:none}
+.dc.dlift .f,.dc.dlift .b{box-shadow:0 14px 28px rgba(0,0,0,.4),0 4px 8px rgba(0,0,0,.25)}
 .dc.hand.raised{filter:drop-shadow(0 0 0 #ffd066)}
 .dc.target .f,.dc.target .b{box-shadow:0 0 0 3px #ffd066,0 8px 18px rgba(0,0,0,.35)}
 @keyframes dshake{0%,100%{translate:0 0}20%{translate:-6px -2px}40%{translate:5px 2px}60%{translate:-4px 1px}80%{translate:3px -1px}}

@@ -310,7 +310,7 @@ function deckMove(e) {
     d.moved = true; clearTimeout(DK.holdT); sfx('slide');
     document.querySelectorAll('#deck .dc.held').forEach(el => el.classList.remove('held'));
     d.els = d.ids.map(id => DK.els.get(id)).filter(Boolean);
-    d.els.forEach((el, i) => { el.classList.add('lift'); el.style.zIndex = 5000 + i; el.style.display = ''; });
+    d.els.forEach((el, i) => { el.classList.add('dlift'); el.style.zIndex = 5000 + i; el.style.display = ''; });
     if (d.whole) d.hit.classList.add('nt');
   }
   e.preventDefault();
@@ -352,7 +352,7 @@ function deckUp(e) {
     else ddZoneSheet(d.zone);
     return;
   }
-  (d.els || []).forEach(el => el.classList.remove('lift'));
+  (d.els || []).forEach(el => el.classList.remove('dlift'));
   if (d.whole) d.hit.classList.remove('nt');
   document.querySelectorAll('#deck .dc.held').forEach(el => el.classList.remove('held'));
   if (!d.moved && d.held) { deckPileMenu(d.pile); return; }
